@@ -55,8 +55,8 @@ const Contact: React.FC = () => {
       icon: <Phone className="h-8 w-8 text-yellow-400" />,
       title: "Call Us",
       description: "Speak directly with our support team",
-      contact: "+254 700 123 456",
-      action: "tel:+254700123456"
+      contact: "+254 746 129446",
+      action: "tel:+254 746 129446"
     },
     {
       icon: <MapPin className="h-8 w-8 text-yellow-400" />,
