@@ -30,20 +30,27 @@ import {
   Brain,
   Zap,
   BarChart3,
-  Camera
+  Camera,
+  Video,
+  Phone,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
 import { useCertificates } from '../hooks/useCertificates';
 import { useOpportunities } from '../hooks/useOpportunities';
 import { useAI } from '../hooks/useAI';
+import { useNotifications } from '../hooks/useNotifications';
+import { useVideos } from '../hooks/useVideos';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { profile, loading: profileLoading, updateProfile, uploadProfilePicture } = useProfile();
+  const { profile, loading: profileLoading, updateProfile, uploadProfilePicture, uploadCV } = useProfile();
   const { certificates, loading: certsLoading, uploadCertificate } = useCertificates();
   const { opportunities, loading: oppsLoading } = useOpportunities();
   const { analysis, insights, loading: aiLoading, analyzeProfile, generateMatches } = useAI();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { videos, uploadVideo, deleteVideo } = useVideos();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditingSkills, setIsEditingSkills] = useState(false);
@@ -58,11 +65,21 @@ const Dashboard: React.FC = () => {
   const [newSkillCategory, setNewSkillCategory] = useState('programming');
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [uploadingCV, setUploadingCV] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showVideoUpload, setShowVideoUpload] = useState(false);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoDescription, setVideoDescription] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Initialize profile data
   useEffect(() => {
     if (profile?.skills) {
       setSkills(profile.skills);
+    }
+    if (profile?.phone) {
+      setPhoneNumber(profile.phone);
     }
   }, [profile]);
 
@@ -154,9 +171,76 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleCVUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && user?.id) {
+      if (!file.type.includes('pdf') && !file.type.includes('document')) {
+        alert('Please select a PDF or document file');
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      setUploadingCV(true);
+      try {
+        await uploadCV(file);
+        alert('CV uploaded successfully!');
+      } catch (error) {
+        console.error('CV upload failed:', error);
+        alert('Failed to upload CV. Please try again.');
+      } finally {
+        setUploadingCV(false);
+      }
+    }
+  };
+
+  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && user?.id) {
+      if (!file.type.startsWith('video/')) {
+        alert('Please select a video file');
+        return;
+      }
+
+      if (file.size > 100 * 1024 * 1024) {
+        alert('Video size must be less than 100MB');
+        return;
+      }
+
+      if (!videoTitle.trim()) {
+        alert('Please enter a video title');
+        return;
+      }
+
+      setUploadingVideo(true);
+      try {
+        await uploadVideo(file, { title: videoTitle, description: videoDescription });
+        setVideoTitle('');
+        setVideoDescription('');
+        setShowVideoUpload(false);
+        alert('Video uploaded successfully!');
+      } catch (error) {
+        console.error('Video upload failed:', error);
+        alert('Failed to upload video. Please try again.');
+      } finally {
+        setUploadingVideo(false);
+      }
+    }
+  };
+
+  const handlePhoneUpdate = async () => {
+    if (phoneNumber && user?.id) {
+      await updateProfile({ phone: phoneNumber });
+    }
+  };
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <User className="h-5 w-5" /> },
     { id: 'profile', label: 'Profile', icon: <FileText className="h-5 w-5" /> },
+    { id: 'videos', label: 'Videos', icon: <Video className="h-5 w-5" /> },
     { id: 'certificates', label: 'Certificates', icon: <Award className="h-5 w-5" /> },
     { id: 'ai-insights', label: 'AI Insights', icon: <Brain className="h-5 w-5" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> }
@@ -262,8 +346,16 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="p-2 glass bg-white/10 backdrop-blur-lg rounded-lg hover:bg-white/20 transition-all hover-lift">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 glass bg-white/10 backdrop-blur-lg rounded-lg hover:bg-white/20 transition-all hover-lift"
+              >
                 <Bell className="h-5 w-5 text-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -526,6 +618,63 @@ const Dashboard: React.FC = () => {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                    <div className="flex space-x-2">
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="+254 712 345 678"
+                        className="flex-1 px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                      />
+                      <button
+                        onClick={handlePhoneUpdate}
+                        className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift flex items-center space-x-2"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Save</span>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">CV/Resume</label>
+                    <div className="space-y-2">
+                      {profile?.cvUrl && (
+                        <div className="flex items-center justify-between glass bg-white/5 backdrop-blur-lg p-3 rounded-lg border border-white/10">
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-5 w-5 text-green-400" />
+                            <span className="text-white text-sm">CV Uploaded</span>
+                            {profile.cvUploadedAt && (
+                              <span className="text-gray-400 text-xs">
+                                ({new Date(profile.cvUploadedAt).toLocaleDateString()})
+                              </span>
+                            )}
+                          </div>
+                          <a
+                            href={profile.cvUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                          >
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </div>
+                      )}
+                      <label className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift cursor-pointer w-full justify-center">
+                        <Upload className="h-4 w-4" />
+                        <span>{uploadingCV ? 'Uploading...' : profile?.cvUrl ? 'Replace CV' : 'Upload CV'}</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleCVUpload}
+                          className="hidden"
+                          disabled={uploadingCV}
+                        />
+                      </label>
+                      <p className="text-xs text-gray-400">PDF or DOC. Max 10MB.</p>
+                    </div>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">User Type</label>
                     <select 
                       defaultValue={user?.userType || 'attachee'}
@@ -683,6 +832,63 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'videos' && (
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white flex items-center">
+                  <Video className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
+                  Portfolio Videos
+                </h3>
+                <button
+                  onClick={() => setShowVideoUpload(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Video</span>
+                </button>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.length > 0 ? videos.map((video, index) => (
+                  <div key={video.id} className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
+                      <Video className="h-16 w-16 text-white/30" />
+                    </div>
+                    <div className="p-4">
+                      <h4 className="font-semibold text-white mb-2">{video.title}</h4>
+                      {video.description && (
+                        <p className="text-gray-400 text-sm mb-3 line-clamp-2">{video.description}</p>
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center space-x-3 text-gray-400">
+                          <span className="flex items-center">
+                            <Eye className="h-4 w-4 mr-1" />
+                            {video.viewsCount}
+                          </span>
+                          {video.duration && (
+                            <span>{Math.floor(video.duration / 60)}:{(video.duration % 60).toString().padStart(2, '0')}</span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => deleteVideo(video.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="col-span-full text-center py-8">
+                    <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">No videos uploaded yet</p>
+                    <p className="text-gray-500 text-sm">Upload your first portfolio video</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -901,6 +1107,155 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Video Upload Modal */}
+        {showVideoUpload && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white">Upload Video</h3>
+                <button
+                  onClick={() => setShowVideoUpload(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Video Title</label>
+                  <input
+                    type="text"
+                    value={videoTitle}
+                    onChange={(e) => setVideoTitle(e.target.value)}
+                    placeholder="My Portfolio Project"
+                    className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Description (Optional)</label>
+                  <textarea
+                    rows={3}
+                    value={videoDescription}
+                    onChange={(e) => setVideoDescription(e.target.value)}
+                    placeholder="Describe your video..."
+                    className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Video File</label>
+                  <label className="flex items-center justify-center space-x-2 px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift cursor-pointer">
+                    <Upload className="h-4 w-4" />
+                    <span>{uploadingVideo ? 'Uploading...' : 'Choose Video'}</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoUpload}
+                      className="hidden"
+                      disabled={uploadingVideo}
+                    />
+                  </label>
+                  <p className="text-xs text-gray-400 mt-2">MP4, MOV, AVI. Max 100MB.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notifications Panel */}
+        {showNotifications && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowNotifications(false)}>
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-white flex items-center">
+                  <Bell className="h-6 w-6 mr-2 text-yellow-400" />
+                  Notifications
+                  {unreadCount > 0 && (
+                    <span className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-sm text-yellow-400 hover:text-yellow-300 transition-colors"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-400 text-lg">No notifications yet</p>
+                  <p className="text-gray-500 text-sm">You'll be notified about new opportunities and updates</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      className={`glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border ${
+                        notif.isRead ? 'border-white/10' : 'border-yellow-400/50'
+                      } hover:border-yellow-400/50 transition-all`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            {notif.type === 'placement_success' ? (
+                              <CheckCircle className="h-5 w-5 text-green-400" />
+                            ) : notif.type === 'opportunity_update' ? (
+                              <Briefcase className="h-5 w-5 text-blue-400" />
+                            ) : (
+                              <AlertCircle className="h-5 w-5 text-yellow-400" />
+                            )}
+                            <h4 className="font-semibold text-white">{notif.title}</h4>
+                            {!notif.isRead && (
+                              <span className="w-2 h-2 bg-yellow-400 rounded-full"></span>
+                            )}
+                          </div>
+                          <p className="text-gray-300 text-sm mb-2">{notif.message}</p>
+                          <p className="text-gray-400 text-xs">
+                            {new Date(notif.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          {!notif.isRead && (
+                            <button
+                              onClick={() => markAsRead(notif.id)}
+                              className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                              title="Mark as read"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteNotification(notif.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

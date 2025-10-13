@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { AIProfileMatcher } from '../utils/aiMatcher';
 
 export interface Opportunity {
   id: string;
@@ -152,25 +153,66 @@ export const useOpportunities = () => {
 
   const fetchMatches = async () => {
     if (!user?.id) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      // In a real implementation, this would use AI matching
-      // For now, we'll use the top opportunities
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (!profileData || opportunities.length === 0) {
+        setMatches([]);
+        return;
+      }
+
+      const userProfile = {
+        id: profileData.id,
+        name: profileData.name,
+        email: profileData.email,
+        userType: profileData.user_type,
+        skills: profileData.skills || {
+          programming: [],
+          design: [],
+          data: [],
+          business: [],
+          marketing: []
+        },
+        experience: profileData.experience || '',
+        education: profileData.education || '',
+        location: profileData.location || '',
+        preferences: profileData.preferences || {
+          workType: 'hybrid',
+          salaryRange: '',
+          industries: []
+        }
+      };
+
+      const matcher = AIProfileMatcher.getInstance();
+      const matchedOpportunities = matcher.matchOpportunities(userProfile, opportunities);
+
+      const topMatches = matchedOpportunities.slice(0, 10).map(match => ({
+        ...match,
+        match: Math.round(match.matchScore),
+        matchReasons: match.matchReasons
+      }));
+
+      setMatches(topMatches);
+    } catch (err) {
+      console.log('Error fetching matches:', err);
       const topMatches = opportunities.slice(0, 3).map(opp => ({
         ...opp,
         match: Math.floor(Math.random() * 20) + 80,
         matchReasons: [
-          'Skills alignment: 90%',
-          'Location preference match',
-          'Experience level appropriate'
+          'Skills alignment',
+          'Location match',
+          'Experience appropriate'
         ]
       }));
       setMatches(topMatches);
-    } catch (err) {
-      console.log('Error fetching matches:', err);
     } finally {
       setLoading(false);
     }

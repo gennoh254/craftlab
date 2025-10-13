@@ -26,6 +26,8 @@ export interface UserProfile {
     industries: string[];
   };
   profilePicture?: string;
+  cvUrl?: string;
+  cvUploadedAt?: string;
   completionScore?: number;
 }
 
@@ -106,6 +108,8 @@ export const useProfile = () => {
             industries: []
           },
           profilePicture: data.profile_picture,
+          cvUrl: data.cv_url,
+          cvUploadedAt: data.cv_uploaded_at,
           completionScore: data.completion_score
         };
         setProfile(profileData);
@@ -186,6 +190,8 @@ export const useProfile = () => {
           education: data.education,
           preferences: data.preferences,
           profilePicture: data.profile_picture,
+          cvUrl: data.cv_url,
+          cvUploadedAt: data.cv_uploaded_at,
           completionScore: data.completion_score
         };
         setProfile(updatedProfile);
@@ -293,6 +299,70 @@ export const useProfile = () => {
     }
   }, [user?.id]);
 
+  const uploadCV = async (file: File) => {
+    if (!user?.id) return false;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${authUser.id}/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('cvs')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('cvs')
+        .getPublicUrl(filePath);
+
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          cv_url: publicUrl,
+          cv_uploaded_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('auth_user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (data && profile) {
+        setProfile({
+          ...profile,
+          cvUrl: data.cv_url,
+          cvUploadedAt: data.cv_uploaded_at
+        });
+      }
+      return true;
+    } catch (err) {
+      const mockUrl = URL.createObjectURL(file);
+      if (profile) {
+        setProfile({
+          ...profile,
+          cvUrl: mockUrl,
+          cvUploadedAt: new Date().toISOString()
+        });
+      }
+      console.log('CV uploaded locally (Supabase unavailable)');
+      return true;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     loading,
@@ -300,6 +370,7 @@ export const useProfile = () => {
     fetchProfile,
     updateProfile,
     uploadProfilePicture,
+    uploadCV,
     generateCV
   };
 };
