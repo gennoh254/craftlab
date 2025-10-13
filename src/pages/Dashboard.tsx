@@ -54,14 +54,15 @@ const Dashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditingSkills, setIsEditingSkills] = useState(false);
-  const [skills, setSkills] = useState({
-    programming: ['JavaScript', 'Python', 'React', 'Node.js'],
-    design: ['UI/UX Design', 'Figma', 'Adobe Creative Suite'],
-    data: ['Data Analysis', 'SQL', 'Excel'],
-    business: ['Project Management', 'Strategic Planning'],
-    marketing: ['Digital Marketing', 'Content Creation']
+  const [skills, setSkills] = useState<{[key: string]: Array<{name: string, description: string}>}>({
+    programming: [],
+    design: [],
+    data: [],
+    business: [],
+    marketing: []
   });
   const [newSkill, setNewSkill] = useState('');
+  const [newSkillDescription, setNewSkillDescription] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState('programming');
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
@@ -94,38 +95,36 @@ const Dashboard: React.FC = () => {
     if (newSkill.trim() && user?.id) {
       const updatedSkills = {
         ...skills,
-        [newSkillCategory]: [...skills[newSkillCategory], newSkill.trim()]
+        [newSkillCategory]: [...skills[newSkillCategory], { name: newSkill.trim(), description: newSkillDescription.trim() }]
       };
       setSkills(updatedSkills);
       setNewSkill('');
-      
+      setNewSkillDescription('');
+
       // Update profile with new skills
       await updateProfile({ skills: updatedSkills });
     }
   };
 
-  const removeSkill = async (category: string, skillToRemove: string) => {
+  const removeSkill = async (category: string, skillNameToRemove: string) => {
     if (user?.id) {
       const updatedSkills = {
         ...skills,
-        [category]: skills[category].filter(skill => skill !== skillToRemove)
+        [category]: skills[category].filter(skill => skill.name !== skillNameToRemove)
       };
       setSkills(updatedSkills);
-      
+
       // Update profile with removed skill
       await updateProfile({ skills: updatedSkills });
     }
   };
 
   const handleDownloadCV = () => {
-    // Create a mock PDF download
-    const element = document.createElement('a');
-    const file = new Blob(['This is your generated CV from CraftLab platform'], { type: 'application/pdf' });
-    element.href = URL.createObjectURL(file);
-    element.download = `${user?.name || 'user'}-cv.pdf`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    if (profile?.cvUrl) {
+      window.open(profile.cvUrl, '_blank');
+    } else {
+      alert('Please upload your CV first');
+    }
   };
 
   const handleCertificateUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -507,7 +506,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-white">Download CV</p>
-                      <p className="text-sm text-gray-400">Get your professional CV</p>
+                      <p className="text-sm text-gray-400">{profile?.cvUrl ? 'Get your uploaded CV' : 'Upload CV first in Profile tab'}</p>
                     </div>
                   </button>
 
@@ -714,43 +713,78 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                  {Object.entries(skills).map(([category, skillList]) => (
-                    <div key={category}>
-                      <h4 className="text-lg font-medium text-white mb-3 capitalize">{category}</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {skillList.map((skill, index) => (
-                          <span
-                            key={index}
-                            className={`px-3 py-1 rounded-full text-sm flex items-center space-x-2 ${
-                              category === 'programming' ? 'bg-blue-500/20 text-blue-400' :
-                              category === 'design' ? 'bg-purple-500/20 text-purple-400' :
-                              category === 'data' ? 'bg-green-500/20 text-green-400' :
-                              category === 'business' ? 'bg-orange-500/20 text-orange-400' :
-                              'bg-pink-500/20 text-pink-400'
-                            }`}
-                          >
-                            <span>{skill}</span>
-                            {isEditingSkills && (
-                              <button
-                                onClick={() => removeSkill(category, skill)}
-                                className="hover:text-red-400 transition-colors"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            )}
-                          </span>
-                        ))}
-                      </div>
+                  {Object.keys(skills).length === 0 || Object.values(skills).every(arr => arr.length === 0) ? (
+                    <div className="text-center py-8 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                      <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-400 text-lg mb-2">No skills added yet</p>
+                      <p className="text-gray-500 text-sm">Click Edit to start adding your skills and expertise</p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.entries(skills).map(([category, skillList]) => skillList.length > 0 && (
+                        <div key={category}>
+                          <h4 className="text-lg font-medium text-white mb-3 capitalize flex items-center">
+                            <span className={`w-3 h-3 rounded-full mr-2 ${
+                              category === 'programming' ? 'bg-blue-400' :
+                              category === 'design' ? 'bg-purple-400' :
+                              category === 'data' ? 'bg-green-400' :
+                              category === 'business' ? 'bg-orange-400' :
+                              'bg-pink-400'
+                            }`}></span>
+                            {category}
+                          </h4>
+                          <div className="space-y-2">
+                            {skillList.map((skill, index) => (
+                              <div
+                                key={index}
+                                className={`glass bg-white/5 backdrop-blur-lg p-3 rounded-lg border border-white/10 ${
+                                  category === 'programming' ? 'hover:border-blue-400/50' :
+                                  category === 'design' ? 'hover:border-purple-400/50' :
+                                  category === 'data' ? 'hover:border-green-400/50' :
+                                  category === 'business' ? 'hover:border-orange-400/50' :
+                                  'hover:border-pink-400/50'
+                                } transition-all`}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <h5 className={`font-medium ${
+                                        category === 'programming' ? 'text-blue-400' :
+                                        category === 'design' ? 'text-purple-400' :
+                                        category === 'data' ? 'text-green-400' :
+                                        category === 'business' ? 'text-orange-400' :
+                                        'text-pink-400'
+                                      }`}>{skill.name}</h5>
+                                    </div>
+                                    {skill.description && (
+                                      <p className="text-gray-400 text-sm">{skill.description}</p>
+                                    )}
+                                  </div>
+                                  {isEditingSkills && (
+                                    <button
+                                      onClick={() => removeSkill(category, skill.name)}
+                                      className="text-red-400 hover:text-red-300 transition-colors ml-2"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {isEditingSkills && (
                     <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
-                      <div className="flex space-x-2">
+                      <h5 className="text-white font-medium mb-3">Add New Skill</h5>
+                      <div className="space-y-3">
                         <select
                           value={newSkillCategory}
                           onChange={(e) => setNewSkillCategory(e.target.value)}
-                          className="px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         >
                           <option value="programming">Programming</option>
                           <option value="design">Design</option>
@@ -762,15 +796,23 @@ const Dashboard: React.FC = () => {
                           type="text"
                           value={newSkill}
                           onChange={(e) => setNewSkill(e.target.value)}
-                          placeholder="Add new skill..."
-                          className="flex-1 px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                          onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+                          placeholder="Skill name (e.g., React, Python, UI Design)"
+                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                        />
+                        <textarea
+                          value={newSkillDescription}
+                          onChange={(e) => setNewSkillDescription(e.target.value)}
+                          placeholder="Describe your experience with this skill..."
+                          rows={2}
+                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         />
                         <button
                           onClick={addSkill}
-                          className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift"
+                          disabled={!newSkill.trim()}
+                          className="w-full px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                         >
                           <Plus className="h-4 w-4" />
+                          <span>Add Skill</span>
                         </button>
                       </div>
                     </div>
@@ -804,32 +846,36 @@ const Dashboard: React.FC = () => {
                   <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mx-auto"></div>
                   <p className="mt-4 text-white">Loading certificates...</p>
                 </div>
-              ) : (
+              ) : certificates.length > 0 ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {certificates.length > 0 ? certificates.map((cert, index) => (
+                  {certificates.map((cert, index) => (
                     <div key={cert.id || index} className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift animate-fadeInUp" style={{animationDelay: `${index * 0.1}s`}}>
                       <div className="flex items-start justify-between mb-4">
                         <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: `${index * 0.5}s`}}>
                           <Award className="h-6 w-6 text-black" />
                         </div>
-                        <span className={`px-2 py-1 text-xs rounded-full flex items-center space-x-1 ${
-                          cert.status === 'verified' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {cert.status === 'verified' ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          <span className="capitalize">{cert.status || 'pending'}</span>
-                        </span>
                       </div>
                       <h4 className="font-semibold text-white mb-2">{cert.name}</h4>
                       <p className="text-gray-300 text-sm mb-1">{cert.university || cert.issuer || 'Unknown Issuer'}</p>
                       <p className="text-gray-400 text-sm">{cert.date || new Date().getFullYear()}</p>
                     </div>
-                  )) : (
-                    <div className="col-span-full text-center py-8">
-                      <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">No certificates uploaded yet</p>
-                      <p className="text-gray-500 text-sm">Upload your first certificate to get started</p>
-                    </div>
-                  )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                  <Award className="h-20 w-20 text-gray-400 mx-auto mb-4 animate-float" />
+                  <h4 className="text-white text-xl font-semibold mb-2">No certificates uploaded yet</h4>
+                  <p className="text-gray-400 text-sm mb-6">Upload your certificates to showcase your credentials and achievements</p>
+                  <label className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift cursor-pointer">
+                    <Upload className="h-5 w-5" />
+                    <span>Upload Your First Certificate</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleCertificateUpload}
+                      className="hidden"
+                    />
+                  </label>
                 </div>
               )}
             </div>

@@ -5,11 +5,11 @@ export interface UserProfile {
   email: string;
   userType: 'attachee' | 'intern' | 'apprentice' | 'volunteer' | 'organization';
   skills: {
-    programming: string[];
-    design: string[];
-    data: string[];
-    business: string[];
-    marketing: string[];
+    programming: Array<string | {name: string, description: string}>;
+    design: Array<string | {name: string, description: string}>;
+    data: Array<string | {name: string, description: string}>;
+    business: Array<string | {name: string, description: string}>;
+    marketing: Array<string | {name: string, description: string}>;
   };
   experience: string;
   education: string;
@@ -50,6 +50,10 @@ export class AIProfileMatcher {
     return AIProfileMatcher.instance;
   }
 
+  private extractSkillNames(skills: Array<string | {name: string, description: string}>): string[] {
+    return skills.map(skill => typeof skill === 'string' ? skill : skill.name);
+  }
+
   // Simulate AI analysis with sophisticated matching algorithm
   public analyzeProfile(profile: UserProfile): {
     strengths: string[];
@@ -58,11 +62,11 @@ export class AIProfileMatcher {
     skillGaps: string[];
   } {
     const allSkills = [
-      ...profile.skills.programming,
-      ...profile.skills.design,
-      ...profile.skills.data,
-      ...profile.skills.business || [],
-      ...profile.skills.marketing || []
+      ...this.extractSkillNames(profile.skills.programming),
+      ...this.extractSkillNames(profile.skills.design),
+      ...this.extractSkillNames(profile.skills.data),
+      ...this.extractSkillNames(profile.skills.business || []),
+      ...this.extractSkillNames(profile.skills.marketing || [])
     ];
 
     const strengths = this.identifyStrengths(profile, allSkills);
@@ -91,14 +95,14 @@ export class AIProfileMatcher {
 
   private identifyStrengths(profile: UserProfile, allSkills: string[]): string[] {
     const strengths: string[] = [];
-    
-    if (profile.skills.programming.length > 3) {
+
+    if (this.extractSkillNames(profile.skills.programming).length > 3) {
       strengths.push('Strong technical programming skills');
     }
-    if (profile.skills.design.length > 2) {
+    if (this.extractSkillNames(profile.skills.design).length > 2) {
       strengths.push('Creative design capabilities');
     }
-    if (profile.skills.data.length > 2) {
+    if (this.extractSkillNames(profile.skills.data).length > 2) {
       strengths.push('Data analysis and insights');
     }
     if (allSkills.length > 8) {
@@ -127,11 +131,14 @@ export class AIProfileMatcher {
   private generateRecommendations(profile: UserProfile, allSkills: string[]): string[] {
     const recommendations: string[] = [];
 
+    const programmingSkills = this.extractSkillNames(profile.skills.programming);
+    const dataSkills = this.extractSkillNames(profile.skills.data);
+
     // Skill-based recommendations
-    if (profile.skills.programming.length > 0 && !profile.skills.programming.includes('React')) {
+    if (programmingSkills.length > 0 && !programmingSkills.some(s => s.toLowerCase().includes('react'))) {
       recommendations.push('Consider learning React for modern web development');
     }
-    if (profile.skills.data.length > 0 && !profile.skills.data.includes('Python')) {
+    if (dataSkills.length > 0 && !dataSkills.some(s => s.toLowerCase().includes('python'))) {
       recommendations.push('Add Python to your data analysis toolkit');
     }
     if (allSkills.length < 5) {
@@ -190,7 +197,7 @@ export class AIProfileMatcher {
   private identifySkillGaps(profile: UserProfile, allSkills: string[]): string[] {
     const gaps: string[] = [];
     const commonSkills = ['Communication', 'Teamwork', 'Problem Solving', 'Time Management'];
-    
+
     commonSkills.forEach(skill => {
       if (!allSkills.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
         gaps.push(skill);
@@ -198,7 +205,8 @@ export class AIProfileMatcher {
     });
 
     // Industry-specific gaps
-    if (profile.skills.programming.length > 0) {
+    const programmingSkills = this.extractSkillNames(profile.skills.programming);
+    if (programmingSkills.length > 0) {
       const techSkills = ['Git', 'Testing', 'Agile', 'Cloud Computing'];
       techSkills.forEach(skill => {
         if (!allSkills.some(s => s.toLowerCase().includes(skill.toLowerCase()))) {
@@ -291,18 +299,18 @@ export class AIProfileMatcher {
 
   private calculateSkillsMatch(profile: UserProfile, opportunity: Opportunity): { score: number; reasons: string[] } {
     const userSkills = [
-      ...profile.skills.programming,
-      ...profile.skills.design,
-      ...profile.skills.data,
-      ...profile.skills.business || [],
-      ...profile.skills.marketing || []
+      ...this.extractSkillNames(profile.skills.programming),
+      ...this.extractSkillNames(profile.skills.design),
+      ...this.extractSkillNames(profile.skills.data),
+      ...this.extractSkillNames(profile.skills.business || []),
+      ...this.extractSkillNames(profile.skills.marketing || [])
     ].map(s => s.toLowerCase());
 
     const requiredSkills = opportunity.requirements.skills.map(s => s.toLowerCase());
     const matchedSkills: string[] = [];
-    
+
     requiredSkills.forEach(reqSkill => {
-      const match = userSkills.find(userSkill => 
+      const match = userSkills.find(userSkill =>
         userSkill.includes(reqSkill) || reqSkill.includes(userSkill)
       );
       if (match) {
