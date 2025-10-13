@@ -78,74 +78,14 @@ export const useOpportunities = () => {
         requirements: opp.requirements || { skills: [], experience: '', education: '' },
         benefits: opp.benefits || [],
         workType: opp.work_type as Opportunity['workType'],
-        industry: opp.industry || '',
-        match: Math.floor(Math.random() * 20) + 80 // Mock match score
+        industry: opp.industry || ''
       }));
 
       setOpportunities(opportunitiesData);
     } catch (err) {
-      // Fallback to mock data if Supabase fails
-      const mockOpportunities: Opportunity[] = [
-        {
-          id: '1',
-          title: "Software Development Internship",
-          company: "TechCorp Kenya",
-          location: "Nairobi, Kenya",
-          type: 'internship',
-          salary: "KSh 25,000/month",
-          deadline: "Dec 31, 2024",
-          description: "Join our development team to build cutting-edge web applications using modern technologies.",
-          requirements: {
-            skills: ['JavaScript', 'React', 'Node.js', 'Git'],
-            experience: 'Basic programming knowledge',
-            education: 'Computer Science or related field'
-          },
-          benefits: ['Mentorship', 'Flexible hours', 'Learning opportunities', 'Certificate'],
-          workType: 'hybrid',
-          industry: 'Technology',
-          match: 95
-        },
-        {
-          id: '2',
-          title: "Digital Marketing Volunteer",
-          company: "NGO Impact",
-          location: "Remote",
-          type: 'volunteer',
-          salary: "Volunteer",
-          deadline: "Jan 15, 2025",
-          description: "Help us create impactful digital campaigns for social causes.",
-          requirements: {
-            skills: ['Social Media', 'Content Creation', 'Analytics'],
-            experience: 'Basic marketing knowledge',
-            education: 'Any field'
-          },
-          benefits: ['Social impact', 'Portfolio building', 'Networking', 'Reference letter'],
-          workType: 'remote',
-          industry: 'Non-profit',
-          match: 88
-        },
-        {
-          id: '3',
-          title: "Data Analysis Attachment",
-          company: "Analytics Plus",
-          location: "Mombasa, Kenya",
-          type: 'attachment',
-          salary: "KSh 20,000/month",
-          deadline: "Jan 20, 2025",
-          description: "Work with our data science team to analyze business metrics and create insights.",
-          requirements: {
-            skills: ['Python', 'SQL', 'Excel', 'Statistics'],
-            experience: 'Academic data analysis projects',
-            education: 'Statistics, Mathematics, or Computer Science'
-          },
-          benefits: ['Real-world experience', 'Industry exposure', 'Mentorship', 'Job opportunity'],
-          workType: 'onsite',
-          industry: 'Analytics',
-          match: 92
-        }
-      ];
-      setOpportunities(mockOpportunities);
-      console.log('Using mock opportunities data (Supabase unavailable)');
+      console.error('Error fetching opportunities:', err);
+      setError('Failed to load opportunities');
+      setOpportunities([]);
     } finally {
       setLoading(false);
     }
@@ -202,17 +142,8 @@ export const useOpportunities = () => {
 
       setMatches(topMatches);
     } catch (err) {
-      console.log('Error fetching matches:', err);
-      const topMatches = opportunities.slice(0, 3).map(opp => ({
-        ...opp,
-        match: Math.floor(Math.random() * 20) + 80,
-        matchReasons: [
-          'Skills alignment',
-          'Location match',
-          'Experience appropriate'
-        ]
-      }));
-      setMatches(topMatches);
+      console.error('Error fetching matches:', err);
+      setMatches([]);
     } finally {
       setLoading(false);
     }
@@ -256,21 +187,8 @@ export const useOpportunities = () => {
       }
       return false;
     } catch (err) {
-      // Fallback: add application locally
-      const opportunity = opportunities.find(opp => opp.id === opportunityId);
-      if (opportunity) {
-        const newApplication: Application = {
-          id: Date.now().toString(),
-          opportunityId,
-          userId: user.id,
-          status: 'pending',
-          appliedDate: new Date().toISOString(),
-          opportunity
-        };
-        setApplications(prev => [newApplication, ...prev]);
-        console.log('Application added locally (Supabase unavailable)');
-        return true;
-      }
+      console.error('Error applying to opportunity:', err);
+      setError('Failed to submit application');
       return false;
     } finally {
       setLoading(false);
@@ -319,10 +237,8 @@ export const useOpportunities = () => {
 
       setApplications(applicationsData);
     } catch (err) {
-      // Mock applications data
-      const mockApplications: Application[] = [];
-      setApplications(mockApplications);
-      console.log('Using mock applications data (Supabase unavailable)');
+      console.error('Error fetching applications:', err);
+      setApplications([]);
     } finally {
       setLoading(false);
     }
