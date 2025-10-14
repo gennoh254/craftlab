@@ -245,40 +245,6 @@ const Dashboard: React.FC = () => {
     { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> }
   ];
 
-  const mockOpportunities = [
-    {
-      id: '1',
-      title: "Software Development Internship",
-      company: "TechCorp Kenya",
-      location: "Nairobi, Kenya",
-      salary: "KSh 25,000/month",
-      deadline: "Dec 31, 2024",
-      match: 95,
-      type: "Internship"
-    },
-    {
-      id: '2',
-      title: "Digital Marketing Volunteer",
-      company: "NGO Impact",
-      location: "Remote",
-      salary: "Volunteer",
-      deadline: "Jan 15, 2025",
-      match: 88,
-      type: "Volunteer"
-    },
-    {
-      id: '3',
-      title: "Data Analysis Attachment",
-      company: "Analytics Plus",
-      location: "Mombasa, Kenya",
-      salary: "KSh 20,000/month",
-      deadline: "Jan 20, 2025",
-      match: 92,
-      type: "Attachment"
-    }
-  ];
-
-  const displayOpportunities = opportunities.length > 0 ? opportunities : mockOpportunities;
 
   if (profileLoading) {
     return (
@@ -382,10 +348,10 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-300 text-sm">Opportunities</p>
-                <p className="text-3xl font-bold text-white">{displayOpportunities.length}</p>
-                <p className="text-yellow-400 text-sm flex items-center">
-                  <Target className="h-4 w-4 mr-1" />
-                  Matched for you
+                <p className="text-3xl font-bold text-white">{opportunities.length}</p>
+                <p className="text-blue-400 text-sm flex items-center">
+                  <Briefcase className="h-4 w-4 mr-1" />
+                  Available positions
                 </p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
@@ -451,43 +417,51 @@ const Dashboard: React.FC = () => {
         <div className="space-y-8">
           {activeTab === 'overview' && (
             <div className="grid lg:grid-cols-2 gap-8">
-              {/* Recent Opportunities */}
+              {/* Available Opportunities */}
               <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInLeft">
                 <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
                   <Briefcase className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
-                  Matched Opportunities
+                  Available Opportunities
                 </h3>
-                <div className="space-y-4">
-                  {displayOpportunities.slice(0, 3).map((opportunity, index) => (
-                    <div key={opportunity.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-white">{opportunity.title}</h4>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          opportunity.match >= 90 ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {opportunity.match}% match
-                        </span>
-                      </div>
-                      <p className="text-gray-300 text-sm mb-3">{opportunity.company}</p>
-                      <div className="flex items-center justify-between text-sm text-gray-400">
-                        <div className="flex items-center space-x-4">
-                          <span className="flex items-center">
-                            <MapPin className="h-4 w-4 mr-1" />
-                            {opportunity.location}
-                          </span>
-                          <span className="flex items-center">
-                            <DollarSign className="h-4 w-4 mr-1" />
-                            {opportunity.salary}
+                {opportunities.length > 0 ? (
+                  <div className="space-y-4">
+                    {opportunities.slice(0, 3).map((opportunity, index) => (
+                      <div key={opportunity.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-semibold text-white">{opportunity.title}</h4>
+                          <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-400 capitalize">
+                            {opportunity.type}
                           </span>
                         </div>
-                        <span className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {opportunity.deadline}
-                        </span>
+                        <p className="text-gray-300 text-sm mb-3">{opportunity.company}</p>
+                        <div className="flex items-center justify-between text-sm text-gray-400">
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {opportunity.location}
+                            </span>
+                            <span className="flex items-center">
+                              <DollarSign className="h-4 w-4 mr-1" />
+                              {opportunity.salary}
+                            </span>
+                          </div>
+                          {opportunity.deadline && (
+                            <span className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1" />
+                              {new Date(opportunity.deadline).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                    <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4 animate-float" />
+                    <h4 className="text-white text-lg font-semibold mb-2">No opportunities available yet</h4>
+                    <p className="text-gray-400 text-sm">Check back later for new opportunities posted by administrators</p>
+                  </div>
+                )}
               </div>
 
               {/* Quick Actions */}
@@ -708,116 +682,117 @@ const Dashboard: React.FC = () => {
                     className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift"
                   >
                     <Edit3 className="h-4 w-4" />
-                    <span>{isEditingSkills ? 'Save' : 'Edit'}</span>
+                    <span>{isEditingSkills ? 'Done' : 'Edit'}</span>
                   </button>
                 </div>
 
-                <div className="space-y-6">
-                  {Object.keys(skills).length === 0 || Object.values(skills).every(arr => arr.length === 0) ? (
-                    <div className="text-center py-8 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
-                      <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg mb-2">No skills added yet</p>
-                      <p className="text-gray-500 text-sm">Click Edit to start adding your skills and expertise</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {Object.entries(skills).map(([category, skillList]) => skillList.length > 0 && (
-                        <div key={category}>
-                          <h4 className="text-lg font-medium text-white mb-3 capitalize flex items-center">
-                            <span className={`w-3 h-3 rounded-full mr-2 ${
-                              category === 'programming' ? 'bg-blue-400' :
-                              category === 'design' ? 'bg-purple-400' :
-                              category === 'data' ? 'bg-green-400' :
-                              category === 'business' ? 'bg-orange-400' :
-                              'bg-pink-400'
-                            }`}></span>
-                            {category}
-                          </h4>
-                          <div className="space-y-2">
-                            {skillList.map((skill, index) => (
-                              <div
-                                key={index}
-                                className={`glass bg-white/5 backdrop-blur-lg p-3 rounded-lg border border-white/10 ${
-                                  category === 'programming' ? 'hover:border-blue-400/50' :
-                                  category === 'design' ? 'hover:border-purple-400/50' :
-                                  category === 'data' ? 'hover:border-green-400/50' :
-                                  category === 'business' ? 'hover:border-orange-400/50' :
-                                  'hover:border-pink-400/50'
-                                } transition-all`}
-                              >
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                      <h5 className={`font-medium ${
-                                        category === 'programming' ? 'text-blue-400' :
-                                        category === 'design' ? 'text-purple-400' :
-                                        category === 'data' ? 'text-green-400' :
-                                        category === 'business' ? 'text-orange-400' :
-                                        'text-pink-400'
-                                      }`}>{skill.name}</h5>
-                                    </div>
-                                    {skill.description && (
-                                      <p className="text-gray-400 text-sm">{skill.description}</p>
-                                    )}
-                                  </div>
+                {Object.values(skills).every(arr => arr.length === 0) ? (
+                  <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                    <BookOpen className="h-20 w-20 text-gray-400 mx-auto mb-4 animate-float" />
+                    <h4 className="text-white text-xl font-semibold mb-2">No skills added yet</h4>
+                    <p className="text-gray-400 text-sm mb-6">Start building your skills portfolio by adding your expertise</p>
+                    <button
+                      onClick={() => setIsEditingSkills(true)}
+                      className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span>Add Your First Skill</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {Object.entries(skills).map(([category, skillList]) => skillList.length > 0 && (
+                      <div key={category}>
+                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-2 ${
+                            category === 'programming' ? 'bg-blue-400' :
+                            category === 'design' ? 'bg-purple-400' :
+                            category === 'data' ? 'bg-green-400' :
+                            category === 'business' ? 'bg-orange-400' :
+                            'bg-pink-400'
+                          }`}></span>
+                          {category}
+                        </h4>
+                        <div className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 overflow-hidden">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-white/10">
+                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-300 w-1/3">Skill</th>
+                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-300">Description</th>
+                                {isEditingSkills && <th className="w-12"></th>}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {skillList.map((skill, index) => (
+                                <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                  <td className="px-4 py-3 text-white font-medium">{skill.name}</td>
+                                  <td className="px-4 py-3 text-gray-400 text-sm">{skill.description || 'No description provided'}</td>
                                   {isEditingSkills && (
-                                    <button
-                                      onClick={() => removeSkill(category, skill.name)}
-                                      className="text-red-400 hover:text-red-300 transition-colors ml-2"
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </button>
+                                    <td className="px-4 py-3">
+                                      <button
+                                        onClick={() => removeSkill(category, skill.name)}
+                                        className="text-red-400 hover:text-red-300 transition-colors"
+                                        title="Remove skill"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </td>
                                   )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                  {isEditingSkills && (
-                    <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
-                      <h5 className="text-white font-medium mb-3">Add New Skill</h5>
-                      <div className="space-y-3">
-                        <select
-                          value={newSkillCategory}
-                          onChange={(e) => setNewSkillCategory(e.target.value)}
-                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                        >
-                          <option value="programming">Programming</option>
-                          <option value="design">Design</option>
-                          <option value="data">Data</option>
-                          <option value="business">Business</option>
-                          <option value="marketing">Marketing</option>
-                        </select>
+                {isEditingSkills && (
+                  <div className="mt-6 glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
+                    <h5 className="text-white font-medium mb-4 flex items-center">
+                      <Plus className="h-5 w-5 mr-2 text-yellow-400" />
+                      Add New Skill
+                    </h5>
+                    <div className="grid grid-cols-1 gap-3">
+                      <select
+                        value={newSkillCategory}
+                        onChange={(e) => setNewSkillCategory(e.target.value)}
+                        className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                      >
+                        <option value="programming">Programming</option>
+                        <option value="design">Design</option>
+                        <option value="data">Data</option>
+                        <option value="business">Business</option>
+                        <option value="marketing">Marketing</option>
+                      </select>
+                      <div className="grid md:grid-cols-2 gap-3">
                         <input
                           type="text"
                           value={newSkill}
                           onChange={(e) => setNewSkill(e.target.value)}
-                          placeholder="Skill name (e.g., React, Python, UI Design)"
-                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          placeholder="Skill name (e.g., React, Python)"
+                          className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         />
-                        <textarea
+                        <input
+                          type="text"
                           value={newSkillDescription}
                           onChange={(e) => setNewSkillDescription(e.target.value)}
-                          placeholder="Describe your experience with this skill..."
-                          rows={2}
-                          className="w-full px-3 py-2 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 text-sm focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          placeholder="Description (e.g., 3 years experience)"
+                          className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         />
-                        <button
-                          onClick={addSkill}
-                          disabled={!newSkill.trim()}
-                          className="w-full px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Add Skill</span>
-                        </button>
                       </div>
+                      <button
+                        onClick={addSkill}
+                        disabled={!newSkill.trim()}
+                        className="px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Add Skill</span>
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
