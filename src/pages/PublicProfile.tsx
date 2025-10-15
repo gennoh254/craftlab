@@ -27,16 +27,21 @@ interface PublicProfileData {
   phone?: string;
   website?: string;
   profilePicture?: string;
-  skills: {
-    programming: string[];
-    design: string[];
-    data: string[];
-    business: string[];
-    marketing: string[];
-  };
+  cvUrl?: string;
+  skills: Array<{name: string, description: string}>;
   experience?: string;
   education?: string;
   completionScore?: number;
+  createdAt: string;
+}
+
+interface Video {
+  id: string;
+  title: string;
+  description?: string;
+  videoUrl: string;
+  thumbnailUrl?: string;
+  viewsCount: number;
   createdAt: string;
 }
 

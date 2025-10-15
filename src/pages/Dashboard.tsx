@@ -54,16 +54,9 @@ const Dashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditingSkills, setIsEditingSkills] = useState(false);
-  const [skills, setSkills] = useState<{[key: string]: Array<{name: string, description: string}>}>({
-    programming: [],
-    design: [],
-    data: [],
-    business: [],
-    marketing: []
-  });
+  const [skills, setSkills] = useState<Array<{name: string, description: string}>>([]);
   const [newSkill, setNewSkill] = useState('');
   const [newSkillDescription, setNewSkillDescription] = useState('');
-  const [newSkillCategory, setNewSkillCategory] = useState('programming');
   const [uploadingCert, setUploadingCert] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
@@ -93,10 +86,7 @@ const Dashboard: React.FC = () => {
 
   const addSkill = async () => {
     if (newSkill.trim() && user?.id) {
-      const updatedSkills = {
-        ...skills,
-        [newSkillCategory]: [...skills[newSkillCategory], { name: newSkill.trim(), description: newSkillDescription.trim() }]
-      };
+      const updatedSkills = [...skills, { name: newSkill.trim(), description: newSkillDescription.trim() }];
       setSkills(updatedSkills);
       setNewSkill('');
       setNewSkillDescription('');
@@ -106,12 +96,9 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const removeSkill = async (category: string, skillNameToRemove: string) => {
+  const removeSkill = async (skillNameToRemove: string) => {
     if (user?.id) {
-      const updatedSkills = {
-        ...skills,
-        [category]: skills[category].filter(skill => skill.name !== skillNameToRemove)
-      };
+      const updatedSkills = skills.filter(skill => skill.name !== skillNameToRemove);
       setSkills(updatedSkills);
 
       // Update profile with removed skill
@@ -484,7 +471,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </button>
 
-                  <button className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift flex items-center space-x-3">
+                  <Link to={`/profile/${profile?.id}`} className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
                       <ExternalLink className="h-5 w-5 text-white" />
                     </div>
@@ -492,7 +479,7 @@ const Dashboard: React.FC = () => {
                       <p className="font-semibold text-white">View Portfolio</p>
                       <p className="text-sm text-gray-400">See your public profile</p>
                     </div>
-                  </button>
+                  </Link>
 
                   <label className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift flex items-center space-x-3 cursor-pointer">
                     <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '2s'}}>
@@ -686,7 +673,7 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                {Object.values(skills).every(arr => arr.length === 0) ? (
+                {skills.length === 0 ? (
                   <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
                     <BookOpen className="h-20 w-20 text-gray-400 mx-auto mb-4 animate-float" />
                     <h4 className="text-white text-xl font-semibold mb-2">No skills added yet</h4>
@@ -700,97 +687,74 @@ const Dashboard: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    {Object.entries(skills).map(([category, skillList]) => skillList.length > 0 && (
-                      <div key={category}>
-                        <h4 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-3 flex items-center">
-                          <span className={`w-2 h-2 rounded-full mr-2 ${
-                            category === 'programming' ? 'bg-blue-400' :
-                            category === 'design' ? 'bg-purple-400' :
-                            category === 'data' ? 'bg-green-400' :
-                            category === 'business' ? 'bg-orange-400' :
-                            'bg-pink-400'
-                          }`}></span>
-                          {category}
-                        </h4>
-                        <div className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 overflow-hidden">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-white/10">
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-300 w-1/3">Skill</th>
-                                <th className="text-left px-4 py-3 text-sm font-medium text-gray-300">Description</th>
-                                {isEditingSkills && <th className="w-12"></th>}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {skillList.map((skill, index) => (
-                                <tr key={index} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                  <td className="px-4 py-3 text-white font-medium">{skill.name}</td>
-                                  <td className="px-4 py-3 text-gray-400 text-sm">{skill.description || 'No description provided'}</td>
-                                  {isEditingSkills && (
-                                    <td className="px-4 py-3">
-                                      <button
-                                        onClick={() => removeSkill(category, skill.name)}
-                                        className="text-red-400 hover:text-red-300 transition-colors"
-                                        title="Remove skill"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </button>
-                                    </td>
-                                  )}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 overflow-hidden">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10 bg-white/5">
+                          <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider w-1/3">Skill</th>
+                          <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Description</th>
+                          {isEditingSkills && <th className="w-16"></th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {skills.map((skill, index) => (
+                          <tr key={index} className="hover:bg-white/5 transition-colors">
+                            <td className="px-6 py-4 text-white font-medium">{skill.name}</td>
+                            <td className="px-6 py-4 text-gray-400 text-sm">{skill.description || 'No description provided'}</td>
+                            {isEditingSkills && (
+                              <td className="px-6 py-4 text-right">
+                                <button
+                                  onClick={() => removeSkill(skill.name)}
+                                  className="text-red-400 hover:text-red-300 transition-colors"
+                                  title="Remove skill"
+                                >
+                                  <Trash2 className="h-5 w-5" />
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
 
                 {isEditingSkills && (
-                  <div className="mt-6 glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
-                    <h5 className="text-white font-medium mb-4 flex items-center">
+                  <div className="mt-6 glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10">
+                    <h5 className="text-white font-semibold mb-4 flex items-center text-lg">
                       <Plus className="h-5 w-5 mr-2 text-yellow-400" />
                       Add New Skill
                     </h5>
-                    <div className="grid grid-cols-1 gap-3">
-                      <select
-                        value={newSkillCategory}
-                        onChange={(e) => setNewSkillCategory(e.target.value)}
-                        className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                      >
-                        <option value="programming">Programming</option>
-                        <option value="design">Design</option>
-                        <option value="data">Data</option>
-                        <option value="business">Business</option>
-                        <option value="marketing">Marketing</option>
-                      </select>
-                      <div className="grid md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Skill Name</label>
                         <input
                           type="text"
                           value={newSkill}
                           onChange={(e) => setNewSkill(e.target.value)}
-                          placeholder="Skill name (e.g., React, Python)"
-                          className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          placeholder="e.g., React, Python, Project Management"
+                          className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
                         <input
                           type="text"
                           value={newSkillDescription}
                           onChange={(e) => setNewSkillDescription(e.target.value)}
-                          placeholder="Description (e.g., 3 years experience)"
-                          className="px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                          placeholder="e.g., 3 years experience building web apps"
+                          className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                         />
                       </div>
-                      <button
-                        onClick={addSkill}
-                        disabled={!newSkill.trim()}
-                        className="px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add Skill</span>
-                      </button>
                     </div>
+                    <button
+                      onClick={addSkill}
+                      disabled={!newSkill.trim()}
+                      className="mt-4 w-full px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-semibold text-base"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span>Add Skill</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -829,10 +793,34 @@ const Dashboard: React.FC = () => {
                         <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: `${index * 0.5}s`}}>
                           <Award className="h-6 w-6 text-black" />
                         </div>
+                        {cert.fileUrl && (
+                          <a
+                            href={cert.fileUrl}
+                            download
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 transition-colors"
+                            title="Download certificate"
+                          >
+                            <Download className="h-5 w-5" />
+                          </a>
+                        )}
                       </div>
                       <h4 className="font-semibold text-white mb-2">{cert.name}</h4>
                       <p className="text-gray-300 text-sm mb-1">{cert.university || cert.issuer || 'Unknown Issuer'}</p>
-                      <p className="text-gray-400 text-sm">{cert.date || new Date().getFullYear()}</p>
+                      <p className="text-gray-400 text-sm mb-2">{cert.date || new Date().getFullYear()}</p>
+                      {cert.fileUrl && (
+                        <a
+                          href={cert.fileUrl}
+                          download
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center space-x-1 text-yellow-400 hover:text-yellow-300 transition-colors text-sm mt-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          <span>Download</span>
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>

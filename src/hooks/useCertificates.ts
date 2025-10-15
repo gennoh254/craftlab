@@ -49,38 +49,8 @@ export const useCertificates = () => {
 
       setCertificates(certificatesData);
     } catch (err) {
-      // Fallback to mock data if Supabase fails
-      const mockCertificates: Certificate[] = [
-        {
-          id: '1',
-          name: "Bachelor's Degree in Computer Science",
-          status: 'verified',
-          university: 'University of Nairobi',
-          date: '2023',
-          userId: user.id,
-          uploadDate: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: "AWS Cloud Practitioner",
-          status: 'pending',
-          university: 'Amazon Web Services',
-          date: '2024',
-          userId: user.id,
-          uploadDate: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: "Google Analytics Certification",
-          status: 'verified',
-          university: 'Google',
-          date: '2024',
-          userId: user.id,
-          uploadDate: new Date().toISOString()
-        }
-      ];
-      setCertificates(mockCertificates);
-      console.log('Using mock certificates data (Supabase unavailable)');
+      console.error('Error fetching certificates:', err);
+      setCertificates([]);
     } finally {
       setLoading(false);
     }
