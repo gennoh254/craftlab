@@ -13,7 +13,8 @@ import {
   AlertCircle,
   ArrowLeft,
   ExternalLink,
-  Download
+  Download,
+  Video as VideoIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -29,6 +30,7 @@ interface PublicProfileData {
   profilePicture?: string;
   cvUrl?: string;
   skills: Array<{name: string, description: string}>;
+  cvUrl?: string;
   experience?: string;
   education?: string;
   completionScore?: number;
@@ -90,13 +92,8 @@ const PublicProfile: React.FC = () => {
           phone: profileData.phone,
           website: profileData.website,
           profilePicture: profileData.profile_picture,
-          skills: profileData.skills || {
-            programming: [],
-            design: [],
-            data: [],
-            business: [],
-            marketing: []
-          },
+          cvUrl: profileData.cv_url,
+          skills: profileData.skills || [],
           experience: profileData.experience,
           education: profileData.education,
           completionScore: profileData.completion_score,
@@ -142,9 +139,7 @@ User Type: ${profile.userType}
 ${profile.bio ? `About:\n${profile.bio}\n` : ''}
 
 Skills:
-${Object.entries(profile.skills).map(([category, skills]) =>
-  skills.length > 0 ? `${category.charAt(0).toUpperCase() + category.slice(1)}: ${skills.join(', ')}` : ''
-).filter(Boolean).join('\n')}
+${profile.skills.map(skill => `- ${skill.name}${skill.description ? `: ${skill.description}` : ''}`).join('\n')}
 
 ${profile.experience ? `Experience:\n${profile.experience}\n` : ''}
 ${profile.education ? `Education:\n${profile.education}\n` : ''}
@@ -195,9 +190,42 @@ Generated from CraftLab Platform
     );
   }
 
-  const allSkills = Object.entries(profile.skills).flatMap(([category, skills]) =>
-    skills.map(skill => ({ category, skill }))
-  );
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+
+  useEffect(() => {
+    if (userId) {
+      fetchVideos();
+    }
+  }, [userId]);
+
+  const fetchVideos = async () => {
+    setLoadingVideos(true);
+    try {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const videosData: Video[] = data.map(video => ({
+          id: video.id,
+          title: video.title,
+          description: video.description,
+          videoUrl: video.video_url,
+          thumbnailUrl: video.thumbnail_url,
+          viewsCount: video.views_count || 0,
+          createdAt: video.created_at
+        }));
+        setVideos(videosData);
+      }
+    } catch (err) {
+      console.error('Error fetching videos:', err);
+    } finally {
+      setLoadingVideos(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 relative page-transition"
@@ -298,13 +326,26 @@ Generated from CraftLab Platform
                 </div>
               </div>
 
-              <button
-                onClick={handleDownloadCV}
-                className="w-full mt-6 flex items-center justify-center space-x-2 px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift font-semibold"
-              >
-                <Download className="h-5 w-5" />
-                <span>Download Portfolio</span>
-              </button>
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={handleDownloadCV}
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift font-semibold"
+                >
+                  <Download className="h-5 w-5" />
+                  <span>Download Portfolio</span>
+                </button>
+                {profile.cvUrl && (
+                  <a
+                    href={profile.cvUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-semibold"
+                  >
+                    <Download className="h-5 w-5" />
+                    <span>Download CV</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
@@ -319,37 +360,30 @@ Generated from CraftLab Platform
               </div>
             )}
 
-            {allSkills.length > 0 && (
+            {profile.skills && profile.skills.length > 0 && (
               <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp" style={{animationDelay: '0.1s'}}>
                 <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
                   <Briefcase className="h-6 w-6 mr-2 text-yellow-400" />
                   Skills & Expertise
                 </h2>
 
-                <div className="space-y-4">
-                  {Object.entries(profile.skills).map(([category, skillList]) => (
-                    skillList.length > 0 && (
-                      <div key={category}>
-                        <h3 className="text-lg font-medium text-white mb-2 capitalize">{category}</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {skillList.map((skill, index) => (
-                            <span
-                              key={index}
-                              className={`px-3 py-1 rounded-full text-sm ${
-                                category === 'programming' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                category === 'design' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                                category === 'data' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                                category === 'business' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                                'bg-pink-500/20 text-pink-400 border border-pink-500/30'
-                              }`}
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  ))}
+                <div className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider w-1/3">Skill</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {profile.skills.map((skill, index) => (
+                        <tr key={index} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-white font-medium">{skill.name}</td>
+                          <td className="px-6 py-4 text-gray-400 text-sm">{skill.description || 'No description provided'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -375,6 +409,40 @@ Generated from CraftLab Platform
                 </div>
               )}
             </div>
+
+            {videos.length > 0 && (
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp" style={{animationDelay: '0.4s'}}>
+                <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
+                  <VideoIcon className="h-6 w-6 mr-2 text-yellow-400" />
+                  Portfolio Videos
+                </h2>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {videos.map((video) => (
+                    <div
+                      key={video.id}
+                      className="glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all overflow-hidden"
+                    >
+                      <div className="aspect-video bg-gradient-to-br from-blue-900 to-purple-900 flex items-center justify-center">
+                        <VideoIcon className="h-16 w-16 text-white/30" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-white mb-1">{video.title}</h3>
+                        {video.description && (
+                          <p className="text-gray-400 text-sm mb-2 line-clamp-2">{video.description}</p>
+                        )}
+                        <div className="flex items-center space-x-3 text-gray-400 text-sm">
+                          <span className="flex items-center">
+                            <VideoIcon className="h-4 w-4 mr-1" />
+                            {video.viewsCount} views
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {certificates.length > 0 && (
               <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp" style={{animationDelay: '0.4s'}}>

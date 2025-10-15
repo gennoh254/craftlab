@@ -11,13 +11,7 @@ export interface UserProfile {
   location?: string;
   phone?: string;
   website?: string;
-  skills: {
-    programming: string[];
-    design: string[];
-    data: string[];
-    business: string[];
-    marketing: string[];
-  };
+  skills: Array<{name: string, description: string}>;
   experience?: string;
   education?: string;
   preferences?: {
@@ -60,13 +54,7 @@ export const useProfile = () => {
             name: user.name,
             email: user.email,
             user_type: user.userType,
-            skills: {
-              programming: [],
-              design: [],
-              data: [],
-              business: [],
-              marketing: []
-            },
+            skills: [],
             preferences: {
               workType: 'hybrid',
               salaryRange: '',
@@ -93,13 +81,7 @@ export const useProfile = () => {
           location: data.location,
           phone: data.phone,
           website: data.website,
-          skills: data.skills || {
-            programming: [],
-            design: [],
-            data: [],
-            business: [],
-            marketing: []
-          },
+          skills: data.skills || [],
           experience: data.experience,
           education: data.education,
           preferences: data.preferences || {
@@ -123,13 +105,12 @@ export const useProfile = () => {
         userType: user.userType,
         bio: 'Passionate about technology and career development.',
         location: 'Nairobi, Kenya',
-        skills: {
-          programming: ['JavaScript', 'Python', 'React', 'Node.js'],
-          design: ['UI/UX Design', 'Figma'],
-          data: ['Data Analysis', 'SQL'],
-          business: ['Project Management'],
-          marketing: ['Digital Marketing']
-        },
+        skills: [
+          { name: 'JavaScript', description: '3 years of experience' },
+          { name: 'Python', description: 'Data analysis and automation' },
+          { name: 'React', description: 'Building modern web applications' },
+          { name: 'UI/UX Design', description: 'User-centered design' }
+        ],
         experience: '2 years of web development experience',
         education: "Bachelor's in Computer Science",
         preferences: {
