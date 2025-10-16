@@ -902,142 +902,148 @@ const Dashboard: React.FC = () => {
           )}
 
           {activeTab === 'ai-insights' && (
-            <div className="grid lg:grid-cols-2 gap-8">
-              {/* AI Analysis */}
-              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInLeft">
-                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                  <Brain className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
-                  AI Profile Analysis
-                </h3>
-                
-                {aiLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-400 mx-auto"></div>
-                    <p className="mt-4 text-white">Analyzing your profile...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Completion Score */}
-                    <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-white font-medium">Profile Completion</span>
-                        <span className="text-yellow-400 font-bold">{analysis?.completionScore || 75}%</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000"
-                          style={{ width: `${analysis?.completionScore || 75}%` }}
-                        ></div>
-                      </div>
-                    </div>
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+              <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                <Brain className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
+                AI Matched Opportunities
+              </h3>
 
-                    {/* Strengths */}
-                    <div>
-                      <h4 className="text-lg font-medium text-white mb-3 flex items-center">
-                        <Star className="h-5 w-5 mr-2 text-green-400" />
-                        Your Strengths
-                      </h4>
-                      <div className="space-y-2">
-                        {(analysis?.strengths || [
-                          'Strong technical programming skills',
-                          'Diverse skill set across multiple domains',
-                          'Academic foundation ready for practical application'
-                        ]).map((strength, index) => (
-                          <div key={index} className="flex items-center space-x-2 text-green-400">
-                            <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                            <span className="text-sm">{strength}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Recommendations */}
-                    <div>
-                      <h4 className="text-lg font-medium text-white mb-3 flex items-center">
-                        <Target className="h-5 w-5 mr-2 text-blue-400" />
-                        AI Recommendations
-                      </h4>
-                      <div className="space-y-2">
-                        {(analysis?.recommendations || [
-                          'Consider learning React for modern web development',
-                          'Build a strong portfolio showcasing your projects',
-                          'Focus on building practical project experience'
-                        ]).map((recommendation, index) => (
-                          <div key={index} className="flex items-center space-x-2 text-blue-400">
-                            <Zap className="h-4 w-4 flex-shrink-0" />
-                            <span className="text-sm">{recommendation}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* AI Insights */}
-              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInRight">
-                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                  <BarChart3 className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
-                  Career Insights
-                </h3>
-                
-                <div className="space-y-6">
-                  {/* Skill Gaps */}
-                  <div>
-                    <h4 className="text-lg font-medium text-white mb-3 flex items-center">
-                      <AlertCircle className="h-5 w-5 mr-2 text-orange-400" />
-                      Skill Gaps to Address
-                    </h4>
-                    <div className="space-y-2">
-                      {(analysis?.skillGaps || [
-                        'Communication',
-                        'Project Management',
-                        'Git Version Control'
-                      ]).map((gap, index) => (
-                        <div key={index} className="flex items-center space-x-2 text-orange-400">
-                          <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                          <span className="text-sm">{gap}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Career Path */}
-                  <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
-                    <h4 className="text-lg font-medium text-white mb-3">Recommended Career Path</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center text-black font-bold text-sm">1</div>
-                        <span className="text-white">Complete current skills development</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                        <span className="text-gray-300">Apply for internship opportunities</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                        <span className="text-gray-300">Build professional portfolio</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Generate New Analysis */}
+              {skills.length === 0 ? (
+                <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                  <Brain className="h-20 w-20 text-gray-400 mx-auto mb-4 animate-float" />
+                  <h4 className="text-white text-xl font-semibold mb-2">Add Your Skills First</h4>
+                  <p className="text-gray-400 text-sm mb-6">Our AI needs to know your skills to match you with relevant opportunities</p>
                   <button
-                    onClick={() => user?.id && analyzeProfile(user.id)}
-                    disabled={aiLoading}
-                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-black px-6 py-3 rounded-lg font-semibold hover:from-yellow-300 hover:to-yellow-400 transition-all hover-lift disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setActiveTab('profile')}
+                    className="inline-flex items-center space-x-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift"
                   >
-                    {aiLoading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-                        <span>Analyzing...</span>
-                      </div>
-                    ) : (
-                      'Refresh AI Analysis'
-                    )}
+                    <Plus className="h-5 w-5" />
+                    <span>Add Skills in Profile</span>
                   </button>
                 </div>
-              </div>
+              ) : opportunities.length === 0 ? (
+                <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                  <Briefcase className="h-20 w-20 text-gray-400 mx-auto mb-4 animate-float" />
+                  <h4 className="text-white text-xl font-semibold mb-2">No Opportunities Available Yet</h4>
+                  <p className="text-gray-400 text-sm">Check back later when administrators post new opportunities</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-gray-300 text-sm">
+                      Analyzing <span className="text-yellow-400 font-semibold">{skills.length}</span> skills against <span className="text-yellow-400 font-semibold">{opportunities.length}</span> opportunities
+                    </p>
+                    <button
+                      onClick={() => user?.id && generateMatches(user.id)}
+                      disabled={aiLoading}
+                      className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift text-sm font-medium disabled:opacity-50"
+                    >
+                      {aiLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                          <span>Matching...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Zap className="h-4 w-4" />
+                          <span>Refresh Matches</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {(() => {
+                    const userSkillNames = skills.map(s => s.name.toLowerCase());
+                    const matchedOpps = opportunities.map(opp => {
+                      const oppSkills = opp.requirements?.skills || [];
+                      const matchedSkills = oppSkills.filter(oppSkill =>
+                        userSkillNames.some(userSkill =>
+                          userSkill.includes(oppSkill.toLowerCase()) ||
+                          oppSkill.toLowerCase().includes(userSkill)
+                        )
+                      );
+                      const matchScore = oppSkills.length > 0
+                        ? Math.round((matchedSkills.length / oppSkills.length) * 100)
+                        : 0;
+                      return { ...opp, matchScore, matchedSkills };
+                    }).filter(opp => opp.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore);
+
+                    return matchedOpps.length > 0 ? (
+                      matchedOpps.map((opportunity, index) => (
+                        <div key={opportunity.id} className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift animate-fadeInUp" style={{animationDelay: `${index * 0.1}s`}}>
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-2">
+                                <h4 className="text-lg font-semibold text-white">{opportunity.title}</h4>
+                                <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                                  opportunity.matchScore >= 80 ? 'bg-green-500/20 text-green-400' :
+                                  opportunity.matchScore >= 60 ? 'bg-blue-500/20 text-blue-400' :
+                                  opportunity.matchScore >= 40 ? 'bg-yellow-500/20 text-yellow-400' :
+                                  'bg-orange-500/20 text-orange-400'
+                                }`}>
+                                  {opportunity.matchScore}% Match
+                                </span>
+                              </div>
+                              <p className="text-gray-300 text-sm mb-3">{opportunity.company}</p>
+
+                              {opportunity.matchedSkills.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs text-gray-400 mb-2 flex items-center">
+                                    <CheckCircle className="h-3 w-3 mr-1 text-green-400" />
+                                    Matched Skills:
+                                  </p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {opportunity.matchedSkills.map((skill, idx) => (
+                                      <span key={idx} className="px-2 py-1 bg-green-500/10 text-green-400 rounded text-xs border border-green-500/20">
+                                        {skill}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-4 text-gray-400">
+                              <span className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {opportunity.location}
+                              </span>
+                              <span className="flex items-center">
+                                <DollarSign className="h-4 w-4 mr-1" />
+                                {opportunity.salary}
+                              </span>
+                              <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs capitalize">
+                                {opportunity.type}
+                              </span>
+                            </div>
+                            {opportunity.deadline && (
+                              <span className="flex items-center text-gray-400">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {new Date(opportunity.deadline).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                        <AlertCircle className="h-16 w-16 text-orange-400 mx-auto mb-4" />
+                        <h4 className="text-white text-lg font-semibold mb-2">No Matching Opportunities Found</h4>
+                        <p className="text-gray-400 text-sm mb-4">None of the available opportunities match your current skills</p>
+                        <button
+                          onClick={() => setActiveTab('profile')}
+                          className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift text-sm"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Add More Skills</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           )}
 
