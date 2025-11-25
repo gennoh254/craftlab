@@ -636,14 +636,13 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">User Type</label>
-                    <select 
+                    <select
                       defaultValue={user?.userType || 'attachee'}
                       className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                     >
                       <option value="attachee">Attachee</option>
                       <option value="intern">Intern</option>
-                      <option value="apprentice">Apprentice</option>
-                      <option value="volunteer">Volunteer</option>
+                      <option value="organization">Organization</option>
                     </select>
                   </div>
                   <div>

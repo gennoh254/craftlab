@@ -3,7 +3,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  userType: 'attachee' | 'intern' | 'apprentice' | 'volunteer' | 'organization';
+  userType: 'attachee' | 'intern' | 'organization';
   skills: {
     programming: Array<string | {name: string, description: string}>;
     design: Array<string | {name: string, description: string}>;
@@ -26,7 +26,7 @@ export interface Opportunity {
   title: string;
   company: string;
   location: string;
-  type: 'internship' | 'attachment' | 'apprenticeship' | 'volunteer' | 'full-time';
+  type: 'internship' | 'attachment' | 'full-time';
   salary: string;
   deadline: string;
   description: string;
@@ -117,11 +117,8 @@ export class AIProfileMatcher {
       case 'intern':
         strengths.push('Eager to learn and gain professional experience');
         break;
-      case 'apprentice':
-        strengths.push('Hands-on learning approach and practical skills');
-        break;
-      case 'volunteer':
-        strengths.push('Community-minded with strong social impact focus');
+      case 'organization':
+        strengths.push('Professional organization seeking quality talent');
         break;
     }
 
@@ -155,13 +152,9 @@ export class AIProfileMatcher {
         recommendations.push('Build a strong portfolio showcasing your projects');
         recommendations.push('Network with professionals in your field');
         break;
-      case 'apprentice':
-        recommendations.push('Seek mentorship opportunities');
-        recommendations.push('Document your hands-on learning journey');
-        break;
-      case 'volunteer':
-        recommendations.push('Highlight your community impact and leadership');
-        recommendations.push('Consider skills-based volunteering opportunities');
+      case 'organization':
+        recommendations.push('Define clear job requirements and expectations');
+        recommendations.push('Provide structured onboarding programs');
         break;
     }
 
@@ -267,30 +260,17 @@ export class AIProfileMatcher {
       attachee: {
         attachment: { score: 25, reason: 'Perfect match for industrial attachment' },
         internship: { score: 20, reason: 'Great opportunity for practical experience' },
-        apprenticeship: { score: 15, reason: 'Good for hands-on learning' },
-        volunteer: { score: 10, reason: 'Valuable for community experience' },
-        'full-time': { score: 5, reason: 'Consider after gaining more experience' }
+        'full-time': { score: 10, reason: 'Consider after gaining more experience' }
       },
       intern: {
         internship: { score: 25, reason: 'Perfect internship opportunity' },
         attachment: { score: 20, reason: 'Excellent for gaining experience' },
-        apprenticeship: { score: 15, reason: 'Good for skill development' },
-        volunteer: { score: 12, reason: 'Great for building portfolio' },
-        'full-time': { score: 8, reason: 'Future career opportunity' }
+        'full-time': { score: 12, reason: 'Future career opportunity' }
       },
-      apprentice: {
-        apprenticeship: { score: 25, reason: 'Ideal apprenticeship program' },
-        internship: { score: 18, reason: 'Good for structured learning' },
-        attachment: { score: 15, reason: 'Practical experience opportunity' },
-        volunteer: { score: 10, reason: 'Community engagement experience' },
-        'full-time': { score: 12, reason: 'Potential career path' }
-      },
-      volunteer: {
-        volunteer: { score: 25, reason: 'Perfect volunteer opportunity' },
-        internship: { score: 15, reason: 'Professional development opportunity' },
-        apprenticeship: { score: 12, reason: 'Skill-building opportunity' },
-        attachment: { score: 10, reason: 'Academic credit opportunity' },
-        'full-time': { score: 8, reason: 'Consider for career transition' }
+      organization: {
+        internship: { score: 25, reason: 'Excellent for recruiting interns' },
+        attachment: { score: 25, reason: 'Ideal for training programs' },
+        'full-time': { score: 25, reason: 'Perfect for permanent positions' }
       }
     };
 

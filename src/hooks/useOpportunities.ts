@@ -8,7 +8,7 @@ export interface Opportunity {
   title: string;
   company: string;
   location: string;
-  type: 'internship' | 'attachment' | 'apprenticeship' | 'volunteer' | 'full-time';
+  type: 'internship' | 'attachment' | 'full-time';
   salary: string;
   deadline: string;
   description: string;

@@ -6,7 +6,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  userType: 'attachee' | 'intern' | 'apprentice' | 'volunteer' | 'organization';
+  userType: 'attachee' | 'intern' | 'organization';
   createdAt: string;
   profilePicture?: string;
 }

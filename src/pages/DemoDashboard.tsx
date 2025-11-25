@@ -90,15 +90,6 @@ const DemoDashboard: React.FC = () => {
       type: "Internship"
     },
     {
-      title: "Digital Marketing Volunteer",
-      company: "NGO Impact",
-      location: "Remote",
-      salary: "Volunteer",
-      deadline: "Jan 15, 2025",
-      match: 88,
-      type: "Volunteer"
-    },
-    {
       title: "Data Analysis Attachment",
       company: "Analytics Plus",
       location: "Mombasa, Kenya",

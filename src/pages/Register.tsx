@@ -71,9 +71,7 @@ const Register: React.FC = () => {
   const userTypes = [
     { value: 'attachee', label: 'Industrial Attachee', description: 'Student seeking industrial attachment' },
     { value: 'intern', label: 'Intern', description: 'Looking for internship opportunities' },
-    { value: 'apprentice', label: 'Apprentice', description: 'Seeking apprenticeship programs' },
-    { value: 'volunteer', label: 'Volunteer', description: 'Interested in volunteer work' },
-    { value: 'organization', label: 'organization',description: 'partner with great organizations' }
+    { value: 'organization', label: 'Organization', description: 'Company offering opportunities' }
   ];
 
   return (
