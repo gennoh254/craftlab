@@ -33,7 +33,9 @@ import {
   Camera,
   Video,
   Phone,
-  Trash2
+  Trash2,
+  ThumbsUp,
+  ThumbsDown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProfile } from '../hooks/useProfile';
@@ -66,6 +68,14 @@ const Dashboard: React.FC = () => {
   const [videoTitle, setVideoTitle] = useState('');
   const [videoDescription, setVideoDescription] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+
+  const [showNewOpportunity, setShowNewOpportunity] = useState(false);
+  const [opportunityTitle, setOpportunityTitle] = useState('');
+  const [opportunityDescription, setOpportunityDescription] = useState('');
+  const [applicants] = useState<Array<{id: string, name: string, email: string, status: 'pending'|'shortlisted'|'hired'}>>([
+    { id: '1', name: 'John Doe', email: 'john@example.com', status: 'pending' },
+    { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'shortlisted' },
+  ]);
 
   // Initialize profile data
   useEffect(() => {
@@ -239,6 +249,475 @@ const Dashboard: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-yellow-400 mx-auto"></div>
           <p className="mt-4 text-white text-lg">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user?.userType === 'organization') {
+    return (
+      <div className="min-h-screen bg-slate-900 relative page-transition"
+           style={{
+             backgroundImage: `url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080')`,
+             backgroundSize: 'cover',
+             backgroundPosition: 'center',
+             backgroundAttachment: 'fixed'
+           }}>
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
+
+        <div className="relative z-10 container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center animate-float">
+                  <Building className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{user?.name || 'Organization'} Dashboard</h1>
+                  <p className="text-gray-300">Manage opportunities and applicants</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 glass bg-white/10 backdrop-blur-lg rounded-lg hover:bg-white/20 transition-all hover-lift"
+              >
+                <Bell className="h-5 w-5 text-white" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-300 text-sm">Total Applicants</p>
+                  <p className="text-3xl font-bold text-white">24</p>
+                  <p className="text-blue-400 text-sm flex items-center">
+                    <Users className="h-4 w-4 mr-1" />
+                    Active applications
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center animate-float">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp" style={{animationDelay: '0.1s'}}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-300 text-sm">Open Opportunities</p>
+                  <p className="text-3xl font-bold text-white">5</p>
+                  <p className="text-green-400 text-sm flex items-center">
+                    <Briefcase className="h-4 w-4 mr-1" />
+                    Posted positions
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
+                  <Briefcase className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp" style={{animationDelay: '0.2s'}}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-300 text-sm">Hired Candidates</p>
+                  <p className="text-3xl font-bold text-white">8</p>
+                  <p className="text-yellow-400 text-sm flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    Successful hires
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '2s'}}>
+                  <CheckCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="glass bg-white/10 backdrop-blur-lg p-2 rounded-xl shadow-lg border border-white/20 mb-8 animate-fadeInUp">
+            <div className="flex space-x-2 overflow-x-auto">
+              {[
+                { id: 'overview', label: 'Overview', icon: <User className="h-5 w-5" /> },
+                { id: 'applicants', label: 'Applicants', icon: <Users className="h-5 w-5" /> },
+                { id: 'opportunities', label: 'Opportunities', icon: <Briefcase className="h-5 w-5" /> },
+                { id: 'profile', label: 'Profile', icon: <Building className="h-5 w-5" /> },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all hover-lift whitespace-nowrap ${
+                    activeTab === tab.id
+                      ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg'
+                      : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="space-y-8">
+            {activeTab === 'overview' && (
+              <div className="grid lg:grid-cols-2 gap-8">
+                {/* Recent Applicants */}
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInLeft">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                    <Users className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                    Recent Applicants
+                  </h3>
+                  <div className="space-y-3">
+                    {applicants.map((applicant, index) => (
+                      <div key={applicant.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold text-white">{applicant.name}</h4>
+                            <p className="text-gray-400 text-sm">{applicant.email}</p>
+                          </div>
+                          <span className={`px-3 py-1 text-xs rounded-full capitalize font-medium ${
+                            applicant.status === 'hired' ? 'bg-green-500/20 text-green-400' :
+                            applicant.status === 'shortlisted' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {applicant.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInRight">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                    <Target className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                    Quick Actions
+                  </h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setShowNewOpportunity(true)}
+                      className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3"
+                    >
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center animate-float">
+                        <Plus className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-white">Post Opportunity</p>
+                        <p className="text-sm text-gray-400">Create a new job listing</p>
+                      </div>
+                    </button>
+
+                    <Link to="/profiles" className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
+                        <Users className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-white">Browse Candidates</p>
+                        <p className="text-sm text-gray-400">View all available candidates</p>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'applicants' && (
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                  <Users className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                  All Applicants
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-white/10 bg-white/5">
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Name</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Email</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Status</th>
+                        <th className="text-left px-6 py-4 text-sm font-semibold text-gray-300 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {applicants.map((applicant) => (
+                        <tr key={applicant.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4 text-white font-medium">{applicant.name}</td>
+                          <td className="px-6 py-4 text-gray-400 text-sm">{applicant.email}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-3 py-1 text-xs rounded-full capitalize font-medium ${
+                              applicant.status === 'hired' ? 'bg-green-500/20 text-green-400' :
+                              applicant.status === 'shortlisted' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {applicant.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center space-x-2">
+                              <button className="text-green-400 hover:text-green-300 transition-colors" title="Hire">
+                                <ThumbsUp className="h-4 w-4" />
+                              </button>
+                              <button className="text-yellow-400 hover:text-yellow-300 transition-colors" title="Shortlist">
+                                <Star className="h-4 w-4" />
+                              </button>
+                              <button className="text-red-400 hover:text-red-300 transition-colors" title="Reject">
+                                <ThumbsDown className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'opportunities' && (
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Briefcase className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                    Posted Opportunities
+                  </h3>
+                  <button
+                    onClick={() => setShowNewOpportunity(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>New Opportunity</span>
+                  </button>
+                </div>
+                <div className="grid gap-6">
+                  {opportunities.map((opp, index) => (
+                    <div key={opp.id} className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-semibold text-white mb-1">{opp.title}</h4>
+                          <p className="text-gray-300 text-sm mb-3">{opp.company}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs capitalize">{opp.type}</span>
+                            <span className="px-2 py-1 bg-gray-500/20 text-gray-400 rounded text-xs flex items-center">
+                              <Users className="h-3 w-3 mr-1" />
+                              8 applicants
+                            </span>
+                          </div>
+                        </div>
+                        <button className="text-gray-400 hover:text-white transition-colors">
+                          <X className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-400 pt-4 border-t border-white/10">
+                        <span className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          {opp.location}
+                        </span>
+                        <span className="flex items-center">
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          {opp.salary}
+                        </span>
+                        {opp.deadline && (
+                          <span className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            {new Date(opp.deadline).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                  <Building className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                  Organization Profile
+                </h3>
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Organization Name</label>
+                    <input
+                      type="text"
+                      defaultValue={user?.name || ''}
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    <input
+                      type="email"
+                      defaultValue={user?.email || ''}
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="+254 712 345 678"
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">About Organization</label>
+                    <textarea
+                      rows={4}
+                      placeholder="Tell us about your organization..."
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-medium">
+                      Save Changes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Post Opportunity Modal */}
+          {showNewOpportunity && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 max-w-2xl w-full mx-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white">Post New Opportunity</h3>
+                  <button
+                    onClick={() => setShowNewOpportunity(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Opportunity Title</label>
+                    <input
+                      type="text"
+                      value={opportunityTitle}
+                      onChange={(e) => setOpportunityTitle(e.target.value)}
+                      placeholder="e.g., Senior React Developer"
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                    <textarea
+                      rows={4}
+                      value={opportunityDescription}
+                      onChange={(e) => setOpportunityDescription(e.target.value)}
+                      placeholder="Describe the opportunity..."
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                      <input
+                        type="text"
+                        placeholder="Nairobi, Kenya"
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Salary Range</label>
+                      <input
+                        type="text"
+                        placeholder="KES 50,000 - 100,000"
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => {
+                        setShowNewOpportunity(false);
+                        setOpportunityTitle('');
+                        setOpportunityDescription('');
+                      }}
+                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-medium"
+                    >
+                      Post Opportunity
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Notifications Panel */}
+          {showNotifications && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowNotifications(false)}>
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Bell className="h-6 w-6 mr-2 text-blue-400" />
+                    Notifications
+                  </h3>
+                  <button
+                    onClick={() => setShowNotifications(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400 text-lg">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-white">{notif.title}</h4>
+                            <p className="text-gray-300 text-sm">{notif.message}</p>
+                            <p className="text-gray-400 text-xs mt-1">{new Date(notif.createdAt).toLocaleString()}</p>
+                          </div>
+                          <button
+                            onClick={() => deleteNotification(notif.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
