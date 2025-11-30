@@ -70,33 +70,7 @@ const UserProfiles: React.FC = () => {
       setProfiles(profilesWithFollowStatus);
     } catch (error) {
       console.error('Error fetching profiles:', error);
-      // Fallback to mock data
-      setProfiles([
-        {
-          id: '1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          userType: 'attachee',
-          bio: 'Computer Science student passionate about web development',
-          location: 'Nairobi, Kenya',
-          skills: { programming: ['JavaScript', 'React'], design: [] },
-          followersCount: 45,
-          followingCount: 23,
-          videosCount: 3
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          email: 'jane@example.com',
-          userType: 'intern',
-          bio: 'UI/UX Designer with a passion for creating beautiful interfaces',
-          location: 'Mombasa, Kenya',
-          skills: { design: ['Figma', 'Adobe XD'], programming: [] },
-          followersCount: 67,
-          followingCount: 34,
-          videosCount: 5
-        }
-      ]);
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -293,18 +267,25 @@ const UserProfiles: React.FC = () => {
                 {profile.skills && (
                   <div className={`${viewMode === 'list' ? 'mt-2' : 'mt-3'}`}>
                     <div className="flex flex-wrap gap-1 justify-center">
-                      {[...profile.skills.programming || [], ...profile.skills.design || [], ...profile.skills.data || []]
-                        .slice(0, 3)
-                        .map((skill, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
-                            {skill}
-                          </span>
-                        ))}
-                      {([...profile.skills.programming || [], ...profile.skills.design || [], ...profile.skills.data || []].length > 3) && (
-                        <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">
-                          +{([...profile.skills.programming || [], ...profile.skills.design || [], ...profile.skills.data || []].length - 3)} more
-                        </span>
-                      )}
+                      {(() => {
+                        const skillsArray = Array.isArray(profile.skills)
+                          ? profile.skills.map(s => s.name || s)
+                          : [];
+                        return (
+                          <>
+                            {skillsArray.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                                {skill}
+                              </span>
+                            ))}
+                            {skillsArray.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-500/20 text-gray-400 text-xs rounded-full">
+                                +{skillsArray.length - 3} more
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}

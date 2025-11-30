@@ -98,33 +98,8 @@ const AdminDashboard: React.FC = () => {
       setOpportunities(formattedOpps);
     } catch (error) {
       console.error('Error fetching admin data:', error);
-      // Mock data fallback
-      setUsers([
-        {
-          id: '1',
-          name: 'John Doe',
-          email: 'john@example.com',
-          userType: 'attachee',
-          location: 'Nairobi, Kenya',
-          createdAt: new Date().toISOString(),
-          followersCount: 45,
-          videosCount: 3,
-          completionScore: 85
-        }
-      ]);
-      setOpportunities([
-        {
-          id: '1',
-          title: 'Software Development Internship',
-          company: 'TechCorp Kenya',
-          location: 'Nairobi, Kenya',
-          type: 'internship',
-          salary: 'KSh 25,000/month',
-          applicationsCount: 12,
-          isActive: true,
-          createdAt: new Date().toISOString()
-        }
-      ]);
+      setUsers([]);
+      setOpportunities([]);
     } finally {
       setLoading(false);
     }
