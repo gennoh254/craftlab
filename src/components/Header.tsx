@@ -19,7 +19,6 @@ const Header: React.FC = () => {
     { path: '/', label: 'Home' },
     { path: '/about', label: 'About' },
     { path: '/profiles', label: 'Discover Talent' },
-    { path: '/opportunities', label: 'Opportunities' },
     { path: '/demo-dashboard', label: 'Dashboard Preview' },
     { path: '/contact', label: 'Contact' },
   ];

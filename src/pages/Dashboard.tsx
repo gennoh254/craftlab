@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile, uploadProfilePicture, uploadCV } = useProfile();
   const { certificates, loading: certsLoading, uploadCertificate } = useCertificates();
-  const { opportunities, loading: oppsLoading } = useOpportunities();
+  const { opportunities, myOpportunities, loading: oppsLoading } = useOpportunities();
   const { analysis, insights, loading: aiLoading, analyzeProfile, generateMatches } = useAI();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const { videos, uploadVideo, deleteVideo } = useVideos();
@@ -499,8 +499,9 @@ const Dashboard: React.FC = () => {
                     <span>New Opportunity</span>
                   </button>
                 </div>
-                <div className="grid gap-6">
-                  {opportunities.map((opp, index) => (
+                {myOpportunities.length > 0 ? (
+                  <div className="grid gap-6">
+                    {myOpportunities.map((opp, index) => (
                     <div key={opp.id} className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
@@ -536,7 +537,14 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                    <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4 animate-float" />
+                    <h4 className="text-white text-lg font-semibold mb-2">No opportunities posted yet</h4>
+                    <p className="text-gray-400 text-sm mb-4">Click the button above to post your first opportunity</p>
+                  </div>
+                )}
               </div>
             )}
 

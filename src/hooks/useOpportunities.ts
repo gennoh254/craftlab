@@ -36,6 +36,7 @@ export interface Application {
 export const useOpportunities = () => {
   const { user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [myOpportunities, setMyOpportunities] = useState<Opportunity[]>([]);
   const [matches, setMatches] = useState<Opportunity[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,11 +45,12 @@ export const useOpportunities = () => {
   const fetchOpportunities = async (filters?: any) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       let query = supabase
         .from('opportunities')
         .select('*')
+        .eq('is_active', true)
         .order('created_at', { ascending: false });
 
       // Apply filters if provided
@@ -86,6 +88,45 @@ export const useOpportunities = () => {
       console.error('Error fetching opportunities:', err);
       setError('Failed to load opportunities');
       setOpportunities([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMyOpportunities = async () => {
+    if (!user?.id) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false });
+
+      if (supabaseError) throw supabaseError;
+
+      const opportunitiesData: Opportunity[] = (data || []).map(opp => ({
+        id: opp.id,
+        title: opp.title,
+        company: opp.company,
+        location: opp.location,
+        type: opp.type as Opportunity['type'],
+        salary: opp.salary || '',
+        deadline: opp.deadline || '',
+        description: opp.description || '',
+        requirements: opp.requirements || { skills: [], experience: '', education: '' },
+        benefits: opp.benefits || [],
+        workType: opp.work_type as Opportunity['workType'],
+        industry: opp.industry || ''
+      }));
+
+      setMyOpportunities(opportunitiesData);
+    } catch (err) {
+      console.error('Error fetching my opportunities:', err);
+      setMyOpportunities([]);
     } finally {
       setLoading(false);
     }
@@ -257,16 +298,21 @@ export const useOpportunities = () => {
   useEffect(() => {
     if (user?.id) {
       fetchApplications();
+      if (user.userType === 'organization') {
+        fetchMyOpportunities();
+      }
     }
-  }, [user?.id]);
+  }, [user?.id, user?.userType]);
 
   return {
     opportunities,
+    myOpportunities,
     matches,
     applications,
     loading,
     error,
     fetchOpportunities,
+    fetchMyOpportunities,
     fetchMatches,
     applyToOpportunity,
     fetchApplications

@@ -13,7 +13,6 @@ import DemoDashboard from './pages/DemoDashboard';
 import UserProfiles from './pages/UserProfiles';
 import PublicProfile from './pages/PublicProfile';
 import AdminDashboard from './pages/AdminDashboard';
-import Opportunities from './pages/Opportunities';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -32,7 +31,6 @@ function App() {
               <Route path="/demo-dashboard" element={<DemoDashboard />} />
               <Route path="/profiles" element={<UserProfiles />} />
               <Route path="/profiles/:userId" element={<PublicProfile />} />
-              <Route path="/opportunities" element={<Opportunities />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/dashboard" element={
                 <ProtectedRoute>
