@@ -100,10 +100,22 @@ export const useOpportunities = () => {
     setError(null);
 
     try {
+      // Get user's profile ID first
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (!profileData) {
+        setMyOpportunities([]);
+        return;
+      }
+
       const { data, error: supabaseError } = await supabase
         .from('opportunities')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('created_by', profileData.id)
         .order('created_at', { ascending: false });
 
       if (supabaseError) throw supabaseError;
@@ -169,7 +181,11 @@ export const useOpportunities = () => {
           workType: 'hybrid',
           salaryRange: '',
           industries: []
-        }
+        },
+        videosCount: profileData.videos_count || 0,
+        completionScore: profileData.completion_score || 0,
+        portfolioUrl: profileData.portfolio_url,
+        cvUrl: profileData.cv_url
       };
 
       const matcher = AIProfileMatcher.getInstance();

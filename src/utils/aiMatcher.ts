@@ -19,6 +19,10 @@ export interface UserProfile {
     salaryRange: string;
     industries: string[];
   };
+  videosCount?: number;
+  completionScore?: number;
+  portfolioUrl?: string;
+  cvUrl?: string;
 }
 
 export interface Opportunity {
@@ -216,36 +220,51 @@ export class AIProfileMatcher {
     const reasons: string[] = [];
     const maxScore = 100;
 
-    // User type compatibility (25 points)
+    // User type compatibility (20 points)
     const typeMatch = this.getTypeCompatibility(profile.userType, opportunity.type);
-    score += typeMatch.score;
+    score += typeMatch.score * 0.8; // Reduced from 25 to 20 points
     if (typeMatch.score > 15) {
       reasons.push(typeMatch.reason);
     }
 
-    // Skills match (35 points)
+    // Skills match (30 points)
     const skillsMatch = this.calculateSkillsMatch(profile, opportunity);
-    score += skillsMatch.score;
+    score += skillsMatch.score * 0.86; // Reduced from 35 to 30 points
     reasons.push(...skillsMatch.reasons);
 
-    // Location preference (15 points)
+    // Portfolio strength (15 points) - NEW
+    const portfolioScore = this.calculatePortfolioScore(profile);
+    score += portfolioScore.score;
+    if (portfolioScore.score > 8) {
+      reasons.push(portfolioScore.reason);
+    }
+
+    // Profile completion (10 points) - NEW
+    if (profile.completionScore && profile.completionScore >= 80) {
+      score += 10;
+      reasons.push('Strong profile completion');
+    } else if (profile.completionScore && profile.completionScore >= 60) {
+      score += 6;
+    }
+
+    // Location preference (10 points)
     if (profile.location && opportunity.location.includes(profile.location)) {
-      score += 15;
+      score += 10;
       reasons.push('Location matches your preference');
     } else if (opportunity.workType === 'remote' || opportunity.workType === 'hybrid') {
-      score += 10;
+      score += 7;
       reasons.push('Offers flexible work arrangement');
     }
 
-    // Work type preference (15 points)
+    // Work type preference (10 points)
     if (profile.preferences?.workType === opportunity.workType) {
-      score += 15;
+      score += 10;
       reasons.push('Work type matches your preference');
     }
 
-    // Industry match (10 points)
+    // Industry match (5 points)
     if (profile.preferences?.industries?.includes(opportunity.industry)) {
-      score += 10;
+      score += 5;
       reasons.push('Industry aligns with your interests');
     }
 
@@ -253,6 +272,30 @@ export class AIProfileMatcher {
       score: Math.min(score, maxScore),
       reasons: reasons.slice(0, 4) // Top 4 reasons
     };
+  }
+
+  private calculatePortfolioScore(profile: UserProfile): { score: number; reason: string } {
+    let portfolioScore = 0;
+    let reason = '';
+
+    // Videos boost matching (10 points max)
+    if (profile.videosCount && profile.videosCount > 0) {
+      if (profile.videosCount >= 3) {
+        portfolioScore = 15;
+        reason = 'Impressive portfolio with multiple projects';
+      } else if (profile.videosCount >= 2) {
+        portfolioScore = 12;
+        reason = 'Good portfolio showcasing work';
+      } else {
+        portfolioScore = 8;
+        reason = 'Portfolio demonstrates capabilities';
+      }
+    } else if (profile.cvUrl) {
+      portfolioScore = 5;
+      reason = 'Professional CV uploaded';
+    }
+
+    return { score: portfolioScore, reason };
   }
 
   private getTypeCompatibility(userType: string, opportunityType: string): { score: number; reason: string } {

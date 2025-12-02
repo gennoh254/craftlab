@@ -88,6 +88,18 @@ const OpportunitiesPage: React.FC = () => {
     }
 
     try {
+      // Get user's profile ID
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (!profileData) {
+        alert('Profile not found. Please complete your profile first.');
+        return;
+      }
+
       if (editingId) {
         const { error } = await supabase
           .from('opportunities')
@@ -102,7 +114,7 @@ const OpportunitiesPage: React.FC = () => {
             updated_at: new Date().toISOString()
           })
           .eq('id', editingId)
-          .eq('created_by', user.id);
+          .eq('created_by', profileData.id);
 
         if (error) throw error;
       } else {
@@ -116,8 +128,10 @@ const OpportunitiesPage: React.FC = () => {
             salary: formData.salary,
             description: formData.description,
             deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-            created_by: user.id,
-            is_active: true
+            created_by: profileData.id,
+            is_active: true,
+            requirements: { skills: [], experience: '', education: '' },
+            work_type: 'hybrid'
           });
 
         if (error) throw error;
@@ -147,11 +161,20 @@ const OpportunitiesPage: React.FC = () => {
     }
 
     try {
+      // Get user's profile ID
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('auth_user_id', user?.id)
+        .maybeSingle();
+
+      if (!profileData) return;
+
       const { error } = await supabase
         .from('opportunities')
         .delete()
         .eq('id', oppId)
-        .eq('created_by', user?.id);
+        .eq('created_by', profileData.id);
 
       if (error) throw error;
       fetchOpportunities();
@@ -161,8 +184,15 @@ const OpportunitiesPage: React.FC = () => {
     }
   };
 
-  const handleEdit = (opp: Opportunity) => {
-    if (opp.createdBy !== user?.id) {
+  const handleEdit = async (opp: Opportunity) => {
+    // Get user's profile ID
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('auth_user_id', user?.id)
+      .maybeSingle();
+
+    if (!profileData || opp.createdBy !== profileData.id) {
       alert('You can only edit your own opportunities');
       return;
     }
