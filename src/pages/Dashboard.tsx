@@ -44,12 +44,13 @@ import { useOpportunities } from '../hooks/useOpportunities';
 import { useAI } from '../hooks/useAI';
 import { useNotifications } from '../hooks/useNotifications';
 import { useVideos } from '../hooks/useVideos';
+import { supabase } from '../lib/supabase';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { profile, loading: profileLoading, updateProfile, uploadProfilePicture, uploadCV } = useProfile();
   const { certificates, loading: certsLoading, uploadCertificate } = useCertificates();
-  const { opportunities, myOpportunities, loading: oppsLoading } = useOpportunities();
+  const { opportunities, myOpportunities, loading: oppsLoading, fetchMyOpportunities } = useOpportunities();
   const { analysis, insights, loading: aiLoading, analyzeProfile, generateMatches } = useAI();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const { videos, uploadVideo, deleteVideo } = useVideos();
@@ -72,6 +73,12 @@ const Dashboard: React.FC = () => {
   const [showNewOpportunity, setShowNewOpportunity] = useState(false);
   const [opportunityTitle, setOpportunityTitle] = useState('');
   const [opportunityDescription, setOpportunityDescription] = useState('');
+  const [opportunityLocation, setOpportunityLocation] = useState('');
+  const [opportunitySalary, setOpportunitySalary] = useState('');
+  const [opportunityType, setOpportunityType] = useState('internship');
+  const [opportunityDeadline, setOpportunityDeadline] = useState('');
+  const [opportunityCompany, setOpportunityCompany] = useState('');
+  const [postingOpportunity, setPostingOpportunity] = useState(false);
   const [applicants] = useState<Array<{id: string, name: string, email: string, status: 'pending'|'shortlisted'|'hired'}>>([
     { id: '1', name: 'John Doe', email: 'john@example.com', status: 'pending' },
     { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'shortlisted' },
@@ -230,6 +237,68 @@ const Dashboard: React.FC = () => {
   const handlePhoneUpdate = async () => {
     if (phoneNumber && user?.id) {
       await updateProfile({ phone: phoneNumber });
+    }
+  };
+
+  const handlePostOpportunity = async () => {
+    if (!user?.id) {
+      alert('You must be logged in to post opportunities');
+      return;
+    }
+
+    if (!opportunityTitle || !opportunityCompany || !opportunityLocation) {
+      alert('Please fill in title, company, and location');
+      return;
+    }
+
+    setPostingOpportunity(true);
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+
+      if (!profileData) {
+        alert('Profile not found. Please complete your profile first.');
+        setPostingOpportunity(false);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('opportunities')
+        .insert({
+          title: opportunityTitle,
+          company: opportunityCompany,
+          location: opportunityLocation,
+          type: opportunityType,
+          salary: opportunitySalary,
+          description: opportunityDescription,
+          deadline: opportunityDeadline ? new Date(opportunityDeadline).toISOString() : null,
+          created_by: profileData.id,
+          is_active: true,
+          requirements: { skills: [], experience: '', education: '' },
+          work_type: 'hybrid'
+        });
+
+      if (error) throw error;
+
+      setOpportunityTitle('');
+      setOpportunityCompany('');
+      setOpportunityDescription('');
+      setOpportunityLocation('');
+      setOpportunitySalary('');
+      setOpportunityType('internship');
+      setOpportunityDeadline('');
+      setShowNewOpportunity(false);
+
+      alert('Opportunity posted successfully!');
+      await fetchMyOpportunities();
+    } catch (error) {
+      console.error('Error posting opportunity:', error);
+      alert('Error posting opportunity. Please try again.');
+    } finally {
+      setPostingOpportunity(false);
     }
   };
 
@@ -685,16 +754,30 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Opportunity Title</label>
-                    <input
-                      type="text"
-                      value={opportunityTitle}
-                      onChange={(e) => setOpportunityTitle(e.target.value)}
-                      placeholder="e.g., Senior React Developer"
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
+                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handlePostOpportunity(); }}>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                      <input
+                        type="text"
+                        value={opportunityTitle}
+                        onChange={(e) => setOpportunityTitle(e.target.value)}
+                        placeholder="e.g., Senior React Developer"
+                        required
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Company *</label>
+                      <input
+                        type="text"
+                        value={opportunityCompany}
+                        onChange={(e) => setOpportunityCompany(e.target.value)}
+                        placeholder="e.g., TechCorp Kenya"
+                        required
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
@@ -702,41 +785,72 @@ const Dashboard: React.FC = () => {
                       rows={4}
                       value={opportunityDescription}
                       onChange={(e) => setOpportunityDescription(e.target.value)}
-                      placeholder="Describe the opportunity..."
+                      placeholder="Describe the opportunity, responsibilities, and expectations..."
                       className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Location *</label>
                       <input
                         type="text"
+                        value={opportunityLocation}
+                        onChange={(e) => setOpportunityLocation(e.target.value)}
                         placeholder="Nairobi, Kenya"
+                        required
                         className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+                      <select
+                        value={opportunityType}
+                        onChange={(e) => setOpportunityType(e.target.value)}
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      >
+                        <option value="internship">Internship</option>
+                        <option value="attachment">Attachment</option>
+                        <option value="full-time">Full-time</option>
+                        <option value="apprentice">Apprentice</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">Salary Range</label>
                       <input
                         type="text"
+                        value={opportunitySalary}
+                        onChange={(e) => setOpportunitySalary(e.target.value)}
                         placeholder="KES 50,000 - 100,000"
                         className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                       />
                     </div>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Application Deadline</label>
+                    <input
+                      type="date"
+                      value={opportunityDeadline}
+                      onChange={(e) => setOpportunityDeadline(e.target.value)}
+                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex gap-4">
                     <button
-                      onClick={() => {
-                        setShowNewOpportunity(false);
-                        setOpportunityTitle('');
-                        setOpportunityDescription('');
-                      }}
-                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-medium"
+                      type="submit"
+                      disabled={postingOpportunity}
+                      className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-600 transition-all hover-lift font-medium"
                     >
-                      Post Opportunity
+                      {postingOpportunity ? 'Posting...' : 'Post Opportunity'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewOpportunity(false)}
+                      className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover-lift font-medium"
+                    >
+                      Cancel
                     </button>
                   </div>
-                </div>
+                </form>
               </div>
             </div>
           )}
