@@ -314,7 +314,7 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-300 text-sm">Open Opportunities</p>
-                  <p className="text-3xl font-bold text-white">5</p>
+                  <p className="text-3xl font-bold text-white">{myOpportunities.length}</p>
                   <p className="text-green-400 text-sm flex items-center">
                     <Briefcase className="h-4 w-4 mr-1" />
                     Posted positions
@@ -371,64 +371,128 @@ const Dashboard: React.FC = () => {
           {/* Tab Content */}
           <div className="space-y-8">
             {activeTab === 'overview' && (
-              <div className="grid lg:grid-cols-2 gap-8">
-                {/* Recent Applicants */}
-                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInLeft">
-                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                    <Users className="h-6 w-6 mr-2 text-blue-400 animate-float" />
-                    Recent Applicants
-                  </h3>
-                  <div className="space-y-3">
-                    {applicants.map((applicant, index) => (
-                      <div key={applicant.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h4 className="font-semibold text-white">{applicant.name}</h4>
-                            <p className="text-gray-400 text-sm">{applicant.email}</p>
+              <div className="space-y-8">
+                <div className="grid lg:grid-cols-2 gap-8">
+                  {/* Recent Applicants */}
+                  <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInLeft">
+                    <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                      <Users className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                      Recent Applicants
+                    </h3>
+                    <div className="space-y-3">
+                      {applicants.map((applicant, index) => (
+                        <div key={applicant.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-white">{applicant.name}</h4>
+                              <p className="text-gray-400 text-sm">{applicant.email}</p>
+                            </div>
+                            <span className={`px-3 py-1 text-xs rounded-full capitalize font-medium ${
+                              applicant.status === 'hired' ? 'bg-green-500/20 text-green-400' :
+                              applicant.status === 'shortlisted' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {applicant.status}
+                            </span>
                           </div>
-                          <span className={`px-3 py-1 text-xs rounded-full capitalize font-medium ${
-                            applicant.status === 'hired' ? 'bg-green-500/20 text-green-400' :
-                            applicant.status === 'shortlisted' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-gray-500/20 text-gray-400'
-                          }`}>
-                            {applicant.status}
-                          </span>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInRight">
+                    <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                      <Target className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                      Quick Actions
+                    </h3>
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowNewOpportunity(true)}
+                        className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3"
+                      >
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center animate-float">
+                          <Plus className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-white">Post Opportunity</p>
+                          <p className="text-sm text-gray-400">Create a new job listing</p>
+                        </div>
+                      </button>
+
+                      <Link to="/profiles" className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
+                          <Users className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-left">
+                          <p className="font-semibold text-white">Browse Candidates</p>
+                          <p className="text-sm text-gray-400">View all available candidates</p>
+                        </div>
+                      </Link>
+                    </div>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
-                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInRight">
-                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                    <Target className="h-6 w-6 mr-2 text-blue-400 animate-float" />
-                    Quick Actions
-                  </h3>
-                  <div className="space-y-3">
+                {/* Posted Opportunities */}
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-semibold text-white flex items-center">
+                      <Briefcase className="h-6 w-6 mr-2 text-green-400 animate-float" />
+                      Posted Opportunities
+                    </h3>
                     <button
                       onClick={() => setShowNewOpportunity(true)}
-                      className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3"
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover-lift text-sm font-medium"
                     >
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center animate-float">
-                        <Plus className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-white">Post Opportunity</p>
-                        <p className="text-sm text-gray-400">Create a new job listing</p>
-                      </div>
+                      <Plus className="h-4 w-4" />
+                      <span>Post New</span>
                     </button>
-
-                    <Link to="/profiles" className="w-full glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
-                        <Users className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-white">Browse Candidates</p>
-                        <p className="text-sm text-gray-400">View all available candidates</p>
-                      </div>
-                    </Link>
                   </div>
+                  {myOpportunities.length > 0 ? (
+                    <div className="grid gap-4">
+                      {myOpportunities.slice(0, 5).map((opp) => (
+                        <div key={opp.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-green-400/50 transition-all hover-lift">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-white mb-1">{opp.title}</h4>
+                              <p className="text-gray-400 text-sm">{opp.company}</p>
+                            </div>
+                            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs capitalize font-medium">{opp.type}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-gray-400 pt-3 border-t border-white/10">
+                            <div className="flex items-center space-x-3">
+                              <span className="flex items-center">
+                                <MapPin className="h-4 w-4 mr-1" />
+                                {opp.location}
+                              </span>
+                              <span className="flex items-center">
+                                <DollarSign className="h-4 w-4 mr-1" />
+                                {opp.salary}
+                              </span>
+                            </div>
+                            {opp.deadline && (
+                              <span className="flex items-center">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {new Date(opp.deadline).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                      <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-3 animate-float" />
+                      <p className="text-gray-400 text-sm mb-3">No opportunities posted yet</p>
+                      <button
+                        onClick={() => setShowNewOpportunity(true)}
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover-lift text-sm font-medium"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>Post Your First Opportunity</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
