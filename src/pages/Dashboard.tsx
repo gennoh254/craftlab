@@ -241,8 +241,8 @@ const Dashboard: React.FC = () => {
   };
 
   const handlePostOpportunity = async () => {
-    if (!user?.id) {
-      alert('You must be logged in to post opportunities');
+    if (!profile?.id) {
+      alert('Profile not found. Please complete your profile first.');
       return;
     }
 
@@ -253,18 +253,6 @@ const Dashboard: React.FC = () => {
 
     setPostingOpportunity(true);
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .maybeSingle();
-
-      if (!profileData) {
-        alert('Profile not found. Please complete your profile first.');
-        setPostingOpportunity(false);
-        return;
-      }
-
       const { error } = await supabase
         .from('opportunities')
         .insert({
@@ -275,7 +263,7 @@ const Dashboard: React.FC = () => {
           salary: opportunitySalary,
           description: opportunityDescription,
           deadline: opportunityDeadline ? new Date(opportunityDeadline).toISOString() : null,
-          created_by: profileData.id,
+          created_by: profile.id,
           is_active: true,
           requirements: { skills: [], experience: '', education: '' },
           work_type: 'hybrid'

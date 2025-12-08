@@ -88,11 +88,17 @@ const OpportunitiesPage: React.FC = () => {
     }
 
     try {
-      // Get user's profile ID
+      // Get user's profile ID from auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user.id) {
+        alert('Authentication session not found. Please login again.');
+        return;
+      }
+
       const { data: profileData } = await supabase
         .from('profiles')
         .select('id')
-        .eq('auth_user_id', user.id)
+        .eq('auth_user_id', session.user.id)
         .maybeSingle();
 
       if (!profileData) {
@@ -161,11 +167,16 @@ const OpportunitiesPage: React.FC = () => {
     }
 
     try {
-      // Get user's profile ID
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user.id) {
+        alert('Authentication session not found. Please login again.');
+        return;
+      }
+
       const { data: profileData } = await supabase
         .from('profiles')
         .select('id')
-        .eq('auth_user_id', user?.id)
+        .eq('auth_user_id', session.user.id)
         .maybeSingle();
 
       if (!profileData) return;
@@ -185,11 +196,16 @@ const OpportunitiesPage: React.FC = () => {
   };
 
   const handleEdit = async (opp: Opportunity) => {
-    // Get user's profile ID
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user.id) {
+      alert('Authentication session not found. Please login again.');
+      return;
+    }
+
     const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
-      .eq('auth_user_id', user?.id)
+      .eq('auth_user_id', session.user.id)
       .maybeSingle();
 
     if (!profileData || opp.createdBy !== profileData.id) {
