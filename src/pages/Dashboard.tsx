@@ -966,72 +966,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Profile Completion</p>
-                <p className="text-3xl font-bold text-white">{profile?.completionScore || 75}%</p>
-                <p className="text-green-400 text-sm flex items-center">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  Looking good!
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center animate-float">
-                <User className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp" style={{animationDelay: '0.1s'}}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Opportunities</p>
-                <p className="text-3xl font-bold text-white">{opportunities.length}</p>
-                <p className="text-blue-400 text-sm flex items-center">
-                  <Briefcase className="h-4 w-4 mr-1" />
-                  Available positions
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '1s'}}>
-                <Briefcase className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp" style={{animationDelay: '0.2s'}}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">Certificates</p>
-                <p className="text-3xl font-bold text-white">{certificates.length}</p>
-                <p className="text-green-400 text-sm flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Verified
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '2s'}}>
-                <Award className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-
-          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 hover:shadow-2xl transition-all hover-lift animate-fadeInUp" style={{animationDelay: '0.3s'}}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-300 text-sm">AI Match Score</p>
-                <p className="text-3xl font-bold text-white">{analysis?.completionScore || 85}%</p>
-                <p className="text-blue-400 text-sm flex items-center">
-                  <Brain className="h-4 w-4 mr-1" />
-                  AI Powered
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg flex items-center justify-center animate-float" style={{animationDelay: '3s'}}>
-                <Zap className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Navigation Tabs */}
         <div className="glass bg-white/10 backdrop-blur-lg p-2 rounded-xl shadow-lg border border-white/20 mb-8 animate-fadeInUp">
@@ -1554,11 +1488,98 @@ const Dashboard: React.FC = () => {
           )}
 
           {activeTab === 'ai-insights' && (
-            <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
-              <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                <Brain className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
-                AI Matched Opportunities
-              </h3>
+            <div className="space-y-8">
+              {/* AI Analysis Section */}
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white flex items-center">
+                    <Brain className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
+                    AI Profile Analysis
+                  </h3>
+                  <button
+                    onClick={() => user?.id && analyzeProfile(user.id)}
+                    disabled={aiLoading}
+                    className="flex items-center space-x-2 px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift text-sm font-medium disabled:opacity-50"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4" />
+                        <span>Refresh Analysis</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {analysis ? (
+                  <div className="space-y-6">
+                    {/* Analysis Score */}
+                    <div className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-semibold text-white">Profile Strength</h4>
+                        <div className="text-3xl font-bold text-yellow-400">{analysis?.completionScore || 0}%</div>
+                      </div>
+                      <div className="w-full bg-white/10 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-500"
+                          style={{width: `${analysis?.completionScore || 0}%`}}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Analysis Insights */}
+                    {insights && insights.length > 0 && (
+                      <div className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10">
+                        <h4 className="text-lg font-semibold text-white mb-4">Key Insights</h4>
+                        <ul className="space-y-3">
+                          {insights.slice(0, 5).map((insight, index) => (
+                            <li key={index} className="flex items-start space-x-3">
+                              <CheckCircle className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                              <span className="text-gray-300">{insight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    <div className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10">
+                      <h4 className="text-lg font-semibold text-white mb-4">Recommendations</h4>
+                      <ul className="space-y-3">
+                        <li className="flex items-start space-x-3">
+                          <div className="h-5 w-5 rounded-full bg-blue-400/20 text-blue-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">1</div>
+                          <span className="text-gray-300">Add more skills to your profile to improve AI matching accuracy</span>
+                        </li>
+                        <li className="flex items-start space-x-3">
+                          <div className="h-5 w-5 rounded-full bg-blue-400/20 text-blue-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">2</div>
+                          <span className="text-gray-300">Upload relevant certifications to stand out to organizations</span>
+                        </li>
+                        <li className="flex items-start space-x-3">
+                          <div className="h-5 w-5 rounded-full bg-blue-400/20 text-blue-400 flex items-center justify-center text-xs flex-shrink-0 mt-0.5">3</div>
+                          <span className="text-gray-300">Add a profile picture to increase engagement with employers</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
+                    <Brain className="h-16 w-16 text-gray-400 mx-auto mb-4 animate-float" />
+                    <h4 className="text-white text-lg font-semibold mb-2">No Analysis Yet</h4>
+                    <p className="text-gray-400 text-sm mb-6">Click the Refresh Analysis button to generate your profile insights</p>
+                  </div>
+                )}
+              </div>
+
+              {/* AI Matched Opportunities Section */}
+              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                  <Briefcase className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
+                  AI Matched Opportunities
+                </h3>
 
               {skills.length === 0 ? (
                 <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
@@ -1696,6 +1717,7 @@ const Dashboard: React.FC = () => {
                   })()}
                 </div>
               )}
+              </div>
             </div>
           )}
 
