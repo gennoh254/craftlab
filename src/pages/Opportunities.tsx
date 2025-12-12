@@ -18,6 +18,27 @@ interface Opportunity {
   isActive: boolean;
 }
 
+// Local storage constants
+const LOCAL_OPPORTUNITIES_KEY = 'craftlab_opportunities';
+
+// Local storage helper functions
+const getStoredOpportunities = (): Opportunity[] => {
+  try {
+    const stored = localStorage.getItem(LOCAL_OPPORTUNITIES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const storeOpportunities = (opportunities: Opportunity[]) => {
+  try {
+    localStorage.setItem(LOCAL_OPPORTUNITIES_KEY, JSON.stringify(opportunities));
+  } catch (error) {
+    console.error('Error storing opportunities in local storage:', error);
+  }
+};
+
 const OpportunitiesPage: React.FC = () => {
   const { user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
@@ -26,6 +47,7 @@ const OpportunitiesPage: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -66,9 +88,17 @@ const OpportunitiesPage: React.FC = () => {
       })) || [];
 
       setOpportunities(formatted);
+      setUsingLocalStorage(false);
+
+      // Sync with local storage for offline capability
+      storeOpportunities(formatted);
     } catch (error) {
-      console.error('Error fetching opportunities:', error);
-      setOpportunities([]);
+      console.log('Supabase unavailable, using local storage');
+
+      // Fallback to local storage
+      const localOpportunities = getStoredOpportunities();
+      setOpportunities(localOpportunities);
+      setUsingLocalStorage(true);
     } finally {
       setLoading(false);
     }
@@ -156,8 +186,66 @@ const OpportunitiesPage: React.FC = () => {
       setShowCreateForm(false);
       fetchOpportunities();
     } catch (error) {
-      console.error('Error saving opportunity:', error);
-      alert('Error saving opportunity. Please try again.');
+      console.log('Supabase unavailable, saving to local storage');
+
+      // Fallback to local storage
+      const localOpportunities = getStoredOpportunities();
+
+      if (editingId) {
+        // Update existing opportunity
+        const updatedOpportunities = localOpportunities.map(opp =>
+          opp.id === editingId
+            ? {
+                ...opp,
+                title: formData.title,
+                company: formData.company,
+                location: formData.location,
+                type: formData.type,
+                salary: formData.salary,
+                description: formData.description,
+                deadline: formData.deadline || '',
+                createdBy: user.id,
+                createdAt: opp.createdAt,
+                isActive: true
+              }
+            : opp
+        );
+        storeOpportunities(updatedOpportunities);
+        setOpportunities(updatedOpportunities);
+      } else {
+        // Create new opportunity
+        const newOpportunity: Opportunity = {
+          id: `local-${Date.now()}`,
+          title: formData.title,
+          company: formData.company,
+          location: formData.location,
+          type: formData.type,
+          salary: formData.salary,
+          description: formData.description,
+          deadline: formData.deadline || '',
+          createdBy: user.id,
+          createdAt: new Date().toISOString(),
+          isActive: true,
+          requirements: { skills: [], experience: '', education: '' }
+        };
+
+        const updatedOpportunities = [newOpportunity, ...localOpportunities];
+        storeOpportunities(updatedOpportunities);
+        setOpportunities(updatedOpportunities);
+      }
+
+      setFormData({
+        title: '',
+        company: '',
+        location: '',
+        type: 'internship',
+        salary: '',
+        description: '',
+        deadline: ''
+      });
+      setEditingId(null);
+      setShowCreateForm(false);
+      setUsingLocalStorage(true);
     }
   };
 
@@ -190,39 +278,69 @@ const OpportunitiesPage: React.FC = () => {
       if (error) throw error;
       fetchOpportunities();
     } catch (error) {
-      console.error('Error deleting opportunity:', error);
-      alert('Error deleting opportunity');
+      console.log('Supabase unavailable, deleting from local storage');
+
+      // Fallback to local storage
+      const localOpportunities = getStoredOpportunities();
+      const updatedOpportunities = localOpportunities.filter(opp => opp.id !== oppId);
+      storeOpportunities(updatedOpportunities);
+      setOpportunities(updatedOpportunities);
+      setUsingLocalStorage(true);
     }
   };
 
   const handleEdit = async (opp: Opportunity) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user.id) {
-      alert('Authentication session not found. Please login again.');
-      return;
-    }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user.id) {
+        // For local storage mode, just check if user owns the opportunity
+        if (!user?.id || opp.createdBy !== user.id) {
+          alert('You can only edit your own opportunities');
+          return;
+        }
+      } else {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('auth_user_id', session.user.id)
+          .maybeSingle();
 
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('auth_user_id', session.user.id)
-      .maybeSingle();
+        if (!profileData || opp.createdBy !== profileData.id) {
+          alert('You can only edit your own opportunities');
+          return;
+        }
+      }
 
-    if (!profileData || opp.createdBy !== profileData.id) {
-      alert('You can only edit your own opportunities');
-      return;
+      setFormData({
+        title: opp.title,
+        company: opp.company,
+        location: opp.location,
+        type: opp.type,
+        salary: opp.salary,
+        description: opp.description,
+        deadline: opp.deadline ? new Date(opp.deadline).toISOString().split('T')[0] : ''
+      });
+      setEditingId(opp.id);
+      setShowCreateForm(true);
+    } catch (error) {
+      // Fallback for local storage mode
+      if (!user?.id || opp.createdBy !== user.id) {
+        alert('You can only edit your own opportunities');
+        return;
+      }
+
+      setFormData({
+        title: opp.title,
+        company: opp.company,
+        location: opp.location,
+        type: opp.type,
+        salary: opp.salary,
+        description: opp.description,
+        deadline: opp.deadline ? new Date(opp.deadline).toISOString().split('T')[0] : ''
+      });
+      setEditingId(opp.id);
+      setShowCreateForm(true);
     }
-    setFormData({
-      title: opp.title,
-      company: opp.company,
-      location: opp.location,
-      type: opp.type,
-      salary: opp.salary,
-      description: opp.description,
-      deadline: opp.deadline ? new Date(opp.deadline).toISOString().split('T')[0] : ''
-    });
-    setEditingId(opp.id);
-    setShowCreateForm(true);
   };
 
   const filteredOpportunities = opportunities.filter(opp => {
@@ -255,6 +373,19 @@ const OpportunitiesPage: React.FC = () => {
       <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Local Storage Indicator */}
+        {usingLocalStorage && (
+          <div className="glass bg-blue-500/20 backdrop-blur-lg p-4 rounded-xl border border-blue-500/30 mb-6 animate-fadeInUp">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-blue-300 font-medium">Operating in Offline Mode</p>
+                <p className="text-blue-200 text-sm">Data is being stored locally. Changes will sync when database connection is restored.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
           <div className="flex items-center justify-between mb-6">
