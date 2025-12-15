@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, Mail, Phone, MapPin } from 'lucide-react';
+import { Briefcase, Mail, Phone, MapPin, Linkedin } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -44,6 +44,24 @@ const Footer: React.FC = () => {
               <li className="flex items-center space-x-2">
                 <MapPin className="h-4 w-4" />
                 <span>Nairobi, Kenya</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Social Media */}
+          <div>
+            <h3 className="text-yellow-400 font-semibold mb-4">Follow Us</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li>
+                <a
+                  href="https://www.linkedin.com/in/craftlab-hub-b9b057399"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 hover:text-yellow-400 transition-colors"
+                >
+                  <Linkedin className="h-4 w-4" />
+                  <span>LinkedIn</span>
+                </a>
               </li>
             </ul>
           </div>
