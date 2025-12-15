@@ -9,7 +9,6 @@ import Contact from './pages/Contact';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import DemoDashboard from './pages/DemoDashboard';
 import UserProfiles from './pages/UserProfiles';
 import PublicProfile from './pages/PublicProfile';
 import AdminDashboard from './pages/AdminDashboard';
@@ -29,7 +28,6 @@ function App() {
               <Route path="/contact" element={<Contact />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/demo-dashboard" element={<DemoDashboard />} />
               <Route path="/profiles" element={<UserProfiles />} />
               <Route path="/profiles/:userId" element={<PublicProfile />} />
               <Route path="/opportunities" element={<OpportunitiesPage />} />
