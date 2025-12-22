@@ -48,7 +48,7 @@ import { supabase } from '../lib/supabase';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
-  const { profile, loading: profileLoading, updateProfile, uploadProfilePicture, uploadCV } = useProfile();
+  const { profile, loading: profileLoading, updateProfile, uploadProfilePicture, uploadCV, uploadCompanyLogo, uploadRegistrationCertificate } = useProfile();
   const { certificates, loading: certsLoading, uploadCertificate } = useCertificates();
   const { opportunities, myOpportunities, loading: oppsLoading, fetchMyOpportunities } = useOpportunities();
   const { analysis, insights, loading: aiLoading, analyzeProfile, generateMatches } = useAI();
@@ -64,6 +64,8 @@ const Dashboard: React.FC = () => {
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingRegCert, setUploadingRegCert] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showVideoUpload, setShowVideoUpload] = useState(false);
   const [videoTitle, setVideoTitle] = useState('');
@@ -237,6 +239,59 @@ const Dashboard: React.FC = () => {
   const handlePhoneUpdate = async () => {
     if (phoneNumber && user?.id) {
       await updateProfile({ phone: phoneNumber });
+    }
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    setUploadingLogo(true);
+    try {
+      await uploadCompanyLogo(file);
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      alert('Failed to upload logo. Please try again.');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRegCertUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a PDF or image file');
+      return;
+    }
+
+    setUploadingRegCert(true);
+    try {
+      await uploadRegistrationCertificate(file);
+    } catch (error) {
+      console.error('Error uploading certificate:', error);
+      alert('Failed to upload certificate. Please try again.');
+    } finally {
+      setUploadingRegCert(false);
     }
   };
 
@@ -670,58 +725,221 @@ const Dashboard: React.FC = () => {
             )}
 
             {activeTab === 'profile' && (
-              <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
-                <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
-                  <Building className="h-6 w-6 mr-2 text-blue-400 animate-float" />
-                  Organization Profile
-                </h3>
-                <div className="grid lg:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Organization Name</label>
-                    <input
-                      type="text"
-                      defaultValue={user?.name || ''}
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
+              <div className="space-y-6">
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                    <Building className="h-6 w-6 mr-2 text-blue-400 animate-float" />
+                    Organization Profile
+                  </h3>
+                  <div className="grid lg:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Organization Name</label>
+                      <input
+                        type="text"
+                        defaultValue={user?.name || ''}
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                      <input
+                        type="email"
+                        defaultValue={user?.email || ''}
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="+254 712 345 678"
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
+                      <input
+                        type="url"
+                        placeholder="https://example.com"
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="lg:col-span-2">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">About Organization</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Tell us about your organization..."
+                        className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="lg:col-span-2">
+                      <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-medium">
+                        Save Changes
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                    <input
-                      type="email"
-                      defaultValue={user?.email || ''}
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
+                </div>
+
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                    <Camera className="h-6 w-6 mr-2 text-green-400 animate-float" />
+                    Company Logo
+                  </h3>
+
+                  {profile?.companyLogo && (
+                    <div className="mb-6 flex justify-center">
+                      <div className="relative">
+                        <img
+                          src={profile.companyLogo}
+                          alt="Company Logo"
+                          className="w-40 h-40 object-contain rounded-lg border-2 border-green-400 bg-white p-4"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-white font-medium mb-1">Upload Company Logo</p>
+                          <p className="text-gray-400 text-sm">
+                            PNG, JPG or SVG. Max size 5MB. Recommended: 400x400px
+                          </p>
+                        </div>
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleLogoUpload}
+                            disabled={uploadingLogo}
+                          />
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover-lift">
+                            {uploadingLogo ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span className="text-sm">Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                <span className="text-sm">Upload Logo</span>
+                              </>
+                            )}
+                          </div>
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="+254 712 345 678"
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Website</label>
-                    <input
-                      type="url"
-                      placeholder="https://example.com"
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">About Organization</label>
-                    <textarea
-                      rows={4}
-                      placeholder="Tell us about your organization..."
-                      className="w-full px-4 py-3 glass bg-white/5 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    />
-                  </div>
-                  <div className="lg:col-span-2">
-                    <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover-lift font-medium">
-                      Save Changes
-                    </button>
+                </div>
+
+                <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-lg border border-white/20 animate-fadeInUp">
+                  <h3 className="text-xl font-semibold text-white mb-6 flex items-center">
+                    <Award className="h-6 w-6 mr-2 text-yellow-400 animate-float" />
+                    Registration Certificate
+                  </h3>
+
+                  {profile?.registrationCertificate && (
+                    <div className="mb-6 glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center">
+                            <FileText className="h-6 w-6 text-black" />
+                          </div>
+                          <div>
+                            <p className="text-white font-medium">Registration Certificate</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                profile.certificateVerificationStatus === 'verified'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : profile.certificateVerificationStatus === 'rejected'
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                {profile.certificateVerificationStatus === 'verified' && <CheckCircle className="h-3 w-3 inline mr-1" />}
+                                {profile.certificateVerificationStatus === 'rejected' && <X className="h-3 w-3 inline mr-1" />}
+                                {profile.certificateVerificationStatus === 'pending' && <Clock className="h-3 w-3 inline mr-1" />}
+                                {profile.certificateVerificationStatus || 'Pending'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <a
+                          href={profile.registrationCertificate}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-white font-medium mb-1">Upload Registration Certificate</p>
+                          <p className="text-gray-400 text-sm">
+                            Official business registration document. PDF or image. Max size 10MB
+                          </p>
+                        </div>
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept=".pdf,image/*"
+                            className="hidden"
+                            onChange={handleRegCertUpload}
+                            disabled={uploadingRegCert}
+                          />
+                          <div className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all hover-lift">
+                            {uploadingRegCert ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span className="text-sm">Uploading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4" />
+                                <span className="text-sm">Upload Certificate</span>
+                              </>
+                            )}
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {profile?.certificateVerificationStatus === 'pending' && (
+                      <div className="glass bg-blue-500/10 backdrop-blur-lg p-4 rounded-lg border border-blue-500/20">
+                        <div className="flex items-start space-x-3">
+                          <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-blue-300 font-medium">Verification in Progress</p>
+                            <p className="text-blue-200 text-sm mt-1">
+                              Your registration certificate is being verified. This process usually takes 1-2 business days.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {profile?.certificateVerificationStatus === 'verified' && (
+                      <div className="glass bg-green-500/10 backdrop-blur-lg p-4 rounded-lg border border-green-500/20">
+                        <div className="flex items-start space-x-3">
+                          <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-green-300 font-medium">Certificate Verified</p>
+                            <p className="text-green-200 text-sm mt-1">
+                              Your organization has been verified and can now post opportunities.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

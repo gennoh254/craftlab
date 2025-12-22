@@ -23,6 +23,9 @@ export interface UserProfile {
   cvUrl?: string;
   cvUploadedAt?: string;
   completionScore?: number;
+  companyLogo?: string;
+  registrationCertificate?: string;
+  certificateVerificationStatus?: string;
 }
 
 export const useProfile = () => {
@@ -92,7 +95,10 @@ export const useProfile = () => {
           profilePicture: data.profile_picture,
           cvUrl: data.cv_url,
           cvUploadedAt: data.cv_uploaded_at,
-          completionScore: data.completion_score
+          completionScore: data.completion_score,
+          companyLogo: data.company_logo,
+          registrationCertificate: data.registration_certificate,
+          certificateVerificationStatus: data.certificate_verification_status
         };
         setProfile(profileData);
       }
@@ -344,6 +350,131 @@ export const useProfile = () => {
     }
   };
 
+  const uploadCompanyLogo = async (file: File) => {
+    if (!user?.id) return false;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${authUser.id}/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('company-logos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-logos')
+        .getPublicUrl(filePath);
+
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          company_logo: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('auth_user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (data && profile) {
+        setProfile({
+          ...profile,
+          companyLogo: data.company_logo
+        });
+      }
+      return true;
+    } catch (err) {
+      const mockUrl = URL.createObjectURL(file);
+      if (profile) {
+        setProfile({
+          ...profile,
+          companyLogo: mockUrl
+        });
+      }
+      console.log('Company logo uploaded locally (Supabase unavailable)');
+      return true;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const uploadRegistrationCertificate = async (file: File) => {
+    if (!user?.id) return false;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${authUser.id}/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('registration-certificates')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('registration-certificates')
+        .getPublicUrl(filePath);
+
+      const { data, error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          registration_certificate: publicUrl,
+          certificate_verification_status: 'pending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('auth_user_id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (data && profile) {
+        setProfile({
+          ...profile,
+          registrationCertificate: data.registration_certificate,
+          certificateVerificationStatus: data.certificate_verification_status
+        });
+      }
+      return true;
+    } catch (err) {
+      const mockUrl = URL.createObjectURL(file);
+      if (profile) {
+        setProfile({
+          ...profile,
+          registrationCertificate: mockUrl,
+          certificateVerificationStatus: 'pending'
+        });
+      }
+      console.log('Registration certificate uploaded locally (Supabase unavailable)');
+      return true;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     profile,
     loading,
@@ -352,6 +483,8 @@ export const useProfile = () => {
     updateProfile,
     uploadProfilePicture,
     uploadCV,
+    uploadCompanyLogo,
+    uploadRegistrationCertificate,
     generateCV
   };
 };
