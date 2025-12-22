@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Briefcase, MapPin, DollarSign, Clock, X, Edit2, Trash2, Building, AlertCircle } from 'lucide-react';
+import { Search, Filter, Briefcase, MapPin, DollarSign, Clock, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 
 interface Opportunity {
   id: string;
@@ -40,23 +39,11 @@ const storeOpportunities = (opportunities: Opportunity[]) => {
 };
 
 const OpportunitiesPage: React.FC = () => {
-  const { user } = useAuth();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [usingLocalStorage, setUsingLocalStorage] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    company: '',
-    location: '',
-    type: 'internship',
-    salary: '',
-    description: '',
-    deadline: ''
-  });
 
   useEffect(() => {
     fetchOpportunities();
@@ -104,244 +91,6 @@ const OpportunitiesPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user?.id) {
-      alert('You must be logged in to post opportunities');
-      return;
-    }
-
-    if (!formData.title || !formData.company || !formData.location) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      // Get user's profile ID from auth session
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user.id) {
-        alert('Authentication session not found. Please login again.');
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('auth_user_id', session.user.id)
-        .maybeSingle();
-
-      if (!profileData) {
-        alert('Profile not found. Please complete your profile first.');
-        return;
-      }
-
-      if (editingId) {
-        const { error } = await supabase
-          .from('opportunities')
-          .update({
-            title: formData.title,
-            company: formData.company,
-            location: formData.location,
-            type: formData.type,
-            salary: formData.salary,
-            description: formData.description,
-            deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingId)
-          .eq('created_by', profileData.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('opportunities')
-          .insert({
-            title: formData.title,
-            company: formData.company,
-            location: formData.location,
-            type: formData.type,
-            salary: formData.salary,
-            description: formData.description,
-            deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-            created_by: profileData.id,
-            is_active: true,
-            requirements: { skills: [], experience: '', education: '' },
-            work_type: 'hybrid'
-          });
-
-        if (error) throw error;
-      }
-
-      setFormData({
-        title: '',
-        company: '',
-        location: '',
-        type: 'internship',
-        salary: '',
-        description: '',
-        deadline: ''
-      });
-      setEditingId(null);
-      setShowCreateForm(false);
-      fetchOpportunities();
-    } catch (error) {
-      console.log('Supabase unavailable, saving to local storage');
-
-      // Fallback to local storage
-      const localOpportunities = getStoredOpportunities();
-
-      if (editingId) {
-        // Update existing opportunity
-        const updatedOpportunities = localOpportunities.map(opp =>
-          opp.id === editingId
-            ? {
-                ...opp,
-                title: formData.title,
-                company: formData.company,
-                location: formData.location,
-                type: formData.type,
-                salary: formData.salary,
-                description: formData.description,
-                deadline: formData.deadline || '',
-                createdBy: user.id,
-                createdAt: opp.createdAt,
-                isActive: true
-              }
-            : opp
-        );
-        storeOpportunities(updatedOpportunities);
-        setOpportunities(updatedOpportunities);
-      } else {
-        // Create new opportunity
-        const newOpportunity: Opportunity = {
-          id: `local-${Date.now()}`,
-          title: formData.title,
-          company: formData.company,
-          location: formData.location,
-          type: formData.type,
-          salary: formData.salary,
-          description: formData.description,
-          deadline: formData.deadline || '',
-          createdBy: user.id,
-          createdAt: new Date().toISOString(),
-          isActive: true,
-          requirements: { skills: [], experience: '', education: '' }
-        };
-
-        const updatedOpportunities = [newOpportunity, ...localOpportunities];
-        storeOpportunities(updatedOpportunities);
-        setOpportunities(updatedOpportunities);
-      }
-
-      setFormData({
-        title: '',
-        company: '',
-        location: '',
-        type: 'internship',
-        salary: '',
-        description: '',
-        deadline: ''
-      });
-      setEditingId(null);
-      setShowCreateForm(false);
-      setUsingLocalStorage(true);
-    }
-  };
-
-  const handleDelete = async (oppId: string) => {
-    if (!window.confirm('Are you sure you want to delete this opportunity?')) {
-      return;
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user.id) {
-        alert('Authentication session not found. Please login again.');
-        return;
-      }
-
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('auth_user_id', session.user.id)
-        .maybeSingle();
-
-      if (!profileData) return;
-
-      const { error } = await supabase
-        .from('opportunities')
-        .delete()
-        .eq('id', oppId)
-        .eq('created_by', profileData.id);
-
-      if (error) throw error;
-      fetchOpportunities();
-    } catch (error) {
-      console.log('Supabase unavailable, deleting from local storage');
-
-      // Fallback to local storage
-      const localOpportunities = getStoredOpportunities();
-      const updatedOpportunities = localOpportunities.filter(opp => opp.id !== oppId);
-      storeOpportunities(updatedOpportunities);
-      setOpportunities(updatedOpportunities);
-      setUsingLocalStorage(true);
-    }
-  };
-
-  const handleEdit = async (opp: Opportunity) => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user.id) {
-        // For local storage mode, just check if user owns the opportunity
-        if (!user?.id || opp.createdBy !== user.id) {
-          alert('You can only edit your own opportunities');
-          return;
-        }
-      } else {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('auth_user_id', session.user.id)
-          .maybeSingle();
-
-        if (!profileData || opp.createdBy !== profileData.id) {
-          alert('You can only edit your own opportunities');
-          return;
-        }
-      }
-
-      setFormData({
-        title: opp.title,
-        company: opp.company,
-        location: opp.location,
-        type: opp.type,
-        salary: opp.salary,
-        description: opp.description,
-        deadline: opp.deadline ? new Date(opp.deadline).toISOString().split('T')[0] : ''
-      });
-      setEditingId(opp.id);
-      setShowCreateForm(true);
-    } catch (error) {
-      // Fallback for local storage mode
-      if (!user?.id || opp.createdBy !== user.id) {
-        alert('You can only edit your own opportunities');
-        return;
-      }
-
-      setFormData({
-        title: opp.title,
-        company: opp.company,
-        location: opp.location,
-        type: opp.type,
-        salary: opp.salary,
-        description: opp.description,
-        deadline: opp.deadline ? new Date(opp.deadline).toISOString().split('T')[0] : ''
-      });
-      setEditingId(opp.id);
-      setShowCreateForm(true);
-    }
-  };
 
   const filteredOpportunities = opportunities.filter(opp => {
     const matchesSearch = opp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -388,32 +137,9 @@ const OpportunitiesPage: React.FC = () => {
 
         {/* Header */}
         <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">Opportunities</h1>
-              <p className="text-gray-300">Browse and post career opportunities</p>
-            </div>
-            {user && (
-              <button
-                onClick={() => {
-                  setFormData({
-                    title: '',
-                    company: '',
-                    location: '',
-                    type: 'internship',
-                    salary: '',
-                    description: '',
-                    deadline: ''
-                  });
-                  setEditingId(null);
-                  setShowCreateForm(!showCreateForm);
-                }}
-                className="flex items-center space-x-2 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift font-medium"
-              >
-                <Plus className="h-5 w-5" />
-                <span>Post Opportunity</span>
-              </button>
-            )}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Career Opportunities</h1>
+            <p className="text-gray-300">Browse opportunities posted by registered organizations</p>
           </div>
 
           {/* Search and Filters */}
@@ -445,130 +171,6 @@ const OpportunitiesPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Create Form */}
-        {showCreateForm && (
-          <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-semibold text-white flex items-center">
-                <Building className="h-6 w-6 mr-2 text-yellow-400" />
-                {editingId ? 'Edit Opportunity' : 'Post New Opportunity'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowCreateForm(false);
-                  setEditingId(null);
-                }}
-                className="p-2 hover:bg-white/10 rounded-lg transition-all"
-              >
-                <X className="h-6 w-6 text-white" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    placeholder="e.g., Software Development Internship"
-                    className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Company *</label>
-                  <input
-                    type="text"
-                    value={formData.company}
-                    onChange={(e) => setFormData({...formData, company: e.target.value})}
-                    placeholder="e.g., TechCorp Kenya"
-                    className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Location *</label>
-                  <input
-                    type="text"
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                    placeholder="e.g., Nairobi, Kenya"
-                    className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
-                    className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                  >
-                    <option value="internship">Internship</option>
-                    <option value="attachment">Attachment</option>
-                    <option value="apprentice">Apprentice</option>
-                    <option value="volunteer">Volunteer</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Salary</label>
-                  <input
-                    type="text"
-                    value={formData.salary}
-                    onChange={(e) => setFormData({...formData, salary: e.target.value})}
-                    placeholder="e.g., KSh 25,000/month"
-                    className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  placeholder="Describe the opportunity, responsibilities, and expectations..."
-                  rows={4}
-                  className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Application Deadline</label>
-                <input
-                  type="date"
-                  value={formData.deadline}
-                  onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                  className="w-full px-4 py-3 glass bg-white/10 backdrop-blur-lg border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 transition-all hover-lift font-semibold"
-                >
-                  {editingId ? 'Update Opportunity' : 'Post Opportunity'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateForm(false);
-                    setEditingId(null);
-                  }}
-                  className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all hover-lift font-semibold"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
 
         {/* Opportunities List */}
         <div className="space-y-4">
@@ -579,36 +181,16 @@ const OpportunitiesPage: React.FC = () => {
                 className="glass bg-white/10 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-yellow-400/50 transition-all hover-lift animate-fadeInUp"
                 style={{animationDelay: `${index * 0.1}s`}}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-xl font-semibold text-white">{opportunity.title}</h3>
-                      <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full capitalize font-medium">
-                        {opportunity.type}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-4">{opportunity.company}</p>
-                    {opportunity.description && (
-                      <p className="text-gray-400 text-sm mb-4">{opportunity.description}</p>
-                    )}
+                <div className="mb-4">
+                  <div className="flex items-center space-x-3 mb-2">
+                    <h3 className="text-xl font-semibold text-white">{opportunity.title}</h3>
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full capitalize font-medium">
+                      {opportunity.type}
+                    </span>
                   </div>
-                  {user?.id === opportunity.createdBy && (
-                    <div className="flex gap-2 ml-4">
-                      <button
-                        onClick={() => handleEdit(opportunity)}
-                        className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all"
-                        title="Edit"
-                      >
-                        <Edit2 className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(opportunity.id)}
-                        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
+                  <p className="text-gray-300 text-sm mb-4">{opportunity.company}</p>
+                  {opportunity.description && (
+                    <p className="text-gray-400 text-sm mb-4">{opportunity.description}</p>
                   )}
                 </div>
 
@@ -634,7 +216,7 @@ const OpportunitiesPage: React.FC = () => {
             <div className="text-center py-12 glass bg-white/5 backdrop-blur-lg rounded-lg border border-white/10">
               <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No opportunities found</h3>
-              <p className="text-gray-400">Try adjusting your search or be the first to post an opportunity</p>
+              <p className="text-gray-400">Try adjusting your search or filters to find more opportunities</p>
             </div>
           )}
         </div>
