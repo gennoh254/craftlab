@@ -21,10 +21,35 @@ interface Opportunity {
   location: string;
   type: string;
   salary: string;
+  description?: string;
+  requirements?: any;
+  benefits?: string[];
+  workType?: string;
+  industry?: string;
+  deadline?: string;
   applicationsCount: number;
   isActive: boolean;
   createdAt: string;
 }
+
+const LOCAL_OPPORTUNITIES_KEY = 'craftlab_opportunities';
+
+const getStoredOpportunities = (): Opportunity[] => {
+  try {
+    const stored = localStorage.getItem(LOCAL_OPPORTUNITIES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const storeOpportunities = (opportunities: Opportunity[]) => {
+  try {
+    localStorage.setItem(LOCAL_OPPORTUNITIES_KEY, JSON.stringify(opportunities));
+  } catch (error) {
+    console.error('Error storing opportunities in local storage:', error);
+  }
+};
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -33,6 +58,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateJob, setShowCreateJob] = useState(false);
+  const [usingLocalStorage, setUsingLocalStorage] = useState(false);
   const [newJob, setNewJob] = useState({
     title: '',
     company: '',
@@ -53,7 +79,6 @@ const AdminDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch users
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('*')
@@ -74,93 +99,70 @@ const AdminDashboard: React.FC = () => {
       })) || [];
 
       setUsers(formattedUsers);
-
-      // Fetch opportunities
-      const { data: oppsData, error: oppsError } = await supabase
-        .from('opportunities')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (oppsError) throw oppsError;
-
-      const formattedOpps = oppsData?.map(opp => ({
-        id: opp.id,
-        title: opp.title,
-        company: opp.company,
-        location: opp.location,
-        type: opp.type,
-        salary: opp.salary || '',
-        applicationsCount: opp.applications_count || 0,
-        isActive: opp.is_active,
-        createdAt: opp.created_at
-      })) || [];
-
-      setOpportunities(formattedOpps);
     } catch (error) {
-      console.error('Error fetching admin data:', error);
+      console.error('Error fetching users data:', error);
       setUsers([]);
-      setOpportunities([]);
-    } finally {
-      setLoading(false);
     }
+
+    const localOpportunities = getStoredOpportunities();
+    setOpportunities(localOpportunities);
+    setUsingLocalStorage(true);
+    setLoading(false);
   };
 
-  const handleCreateJob = async (e: React.FormEvent) => {
+  const handleCreateJob = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert({
-          title: newJob.title,
-          company: newJob.company,
-          location: newJob.location,
-          type: newJob.type,
-          salary: newJob.salary,
-          description: newJob.description,
-          requirements: JSON.parse(newJob.requirements || '{"skills": [], "experience": "", "education": ""}'),
-          benefits: newJob.benefits.split(',').map(b => b.trim()),
-          work_type: newJob.workType,
-          industry: newJob.industry,
-          deadline: newJob.deadline ? new Date(newJob.deadline).toISOString() : null,
-          is_active: true
-        });
 
-      if (error) throw error;
+    const newOpportunity: Opportunity = {
+      id: `local-${Date.now()}`,
+      title: newJob.title,
+      company: newJob.company,
+      location: newJob.location,
+      type: newJob.type,
+      salary: newJob.salary,
+      description: newJob.description,
+      requirements: newJob.requirements
+        ? JSON.parse(newJob.requirements)
+        : { skills: [], experience: '', education: '' },
+      benefits: newJob.benefits ? newJob.benefits.split(',').map(b => b.trim()) : [],
+      workType: newJob.workType,
+      industry: newJob.industry,
+      deadline: newJob.deadline || undefined,
+      applicationsCount: 0,
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
 
-      // Reset form and refresh data
-      setNewJob({
-        title: '',
-        company: '',
-        location: '',
-        type: 'internship',
-        salary: '',
-        description: '',
-        requirements: '',
-        benefits: '',
-        workType: 'hybrid',
-        industry: '',
-        deadline: ''
-      });
-      setShowCreateJob(false);
-      fetchData();
-    } catch (error) {
-      console.error('Error creating job:', error);
-    }
+    const existingOpportunities = getStoredOpportunities();
+    const updatedOpportunities = [newOpportunity, ...existingOpportunities];
+    storeOpportunities(updatedOpportunities);
+    setOpportunities(updatedOpportunities);
+
+    setNewJob({
+      title: '',
+      company: '',
+      location: '',
+      type: 'internship',
+      salary: '',
+      description: '',
+      requirements: '',
+      benefits: '',
+      workType: 'hybrid',
+      industry: '',
+      deadline: ''
+    });
+    setShowCreateJob(false);
   };
 
-  const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('opportunities')
-        .update({ is_active: !currentStatus })
-        .eq('id', jobId);
-
-      if (error) throw error;
-      fetchData();
-    } catch (error) {
-      console.error('Error updating job status:', error);
-    }
+  const toggleJobStatus = (jobId: string, currentStatus: boolean) => {
+    const existingOpportunities = getStoredOpportunities();
+    const updatedOpportunities = existingOpportunities.map(opp =>
+      opp.id === jobId
+        ? { ...opp, isActive: !currentStatus }
+        : opp
+    );
+    storeOpportunities(updatedOpportunities);
+    setOpportunities(updatedOpportunities);
   };
 
   const exportUsers = () => {
@@ -229,6 +231,21 @@ const AdminDashboard: React.FC = () => {
       <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
       
       <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Local Storage Indicator */}
+        {usingLocalStorage && (
+          <div className="glass bg-blue-500/20 backdrop-blur-lg p-4 rounded-xl border border-blue-500/30 mb-6 animate-fadeInUp">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-blue-300 font-medium">Opportunities Stored Locally</p>
+                <p className="text-blue-200 text-sm">
+                  All posted opportunities are being saved to your browser's local storage. Data will persist across sessions.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
           <div className="flex items-center justify-between">
