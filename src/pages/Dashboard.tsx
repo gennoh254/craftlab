@@ -81,6 +81,7 @@ const Dashboard: React.FC = () => {
   const [opportunityDeadline, setOpportunityDeadline] = useState('');
   const [opportunityCompany, setOpportunityCompany] = useState('');
   const [postingOpportunity, setPostingOpportunity] = useState(false);
+  const [localOpportunities, setLocalOpportunities] = useState<Array<any>>([]);
   const [applicants] = useState<Array<{id: string, name: string, email: string, status: 'pending'|'shortlisted'|'hired'}>>([
     { id: '1', name: 'John Doe', email: 'john@example.com', status: 'pending' },
     { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'shortlisted' },
@@ -95,6 +96,21 @@ const Dashboard: React.FC = () => {
       setPhoneNumber(profile.phone);
     }
   }, [profile]);
+
+  // Load opportunities from local storage
+  useEffect(() => {
+    if (user?.userType === 'organization') {
+      const storedOpportunities = localStorage.getItem(`org_opportunities_${user.id}`);
+      if (storedOpportunities) {
+        try {
+          setLocalOpportunities(JSON.parse(storedOpportunities));
+        } catch (error) {
+          console.error('Error loading opportunities from local storage:', error);
+          setLocalOpportunities([]);
+        }
+      }
+    }
+  }, [user?.id, user?.userType]);
 
   // Generate AI analysis on component mount
   useEffect(() => {
@@ -296,8 +312,8 @@ const Dashboard: React.FC = () => {
   };
 
   const handlePostOpportunity = async () => {
-    if (!profile?.id) {
-      alert('Profile not found. Please complete your profile first.');
+    if (!user?.id) {
+      alert('Please login to post opportunities.');
       return;
     }
 
@@ -308,24 +324,35 @@ const Dashboard: React.FC = () => {
 
     setPostingOpportunity(true);
     try {
-      const { error } = await supabase
-        .from('opportunities')
-        .insert({
-          title: opportunityTitle,
-          company: opportunityCompany,
-          location: opportunityLocation,
-          type: opportunityType,
-          salary: opportunitySalary,
-          description: opportunityDescription,
-          deadline: opportunityDeadline ? new Date(opportunityDeadline).toISOString() : null,
-          created_by: profile.id,
-          is_active: true,
-          requirements: { skills: [], experience: '', education: '' },
-          work_type: 'hybrid'
-        });
+      // Create new opportunity object
+      const newOpportunity = {
+        id: `opp_${Date.now()}`,
+        title: opportunityTitle,
+        company: opportunityCompany,
+        location: opportunityLocation,
+        type: opportunityType,
+        salary: opportunitySalary,
+        description: opportunityDescription,
+        deadline: opportunityDeadline || '',
+        createdBy: user.id,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        applicationsCount: 0,
+        requirements: { skills: [], experience: '', education: '' },
+        workType: 'hybrid'
+      };
 
-      if (error) throw error;
+      // Add to local opportunities array
+      const updatedOpportunities = [newOpportunity, ...localOpportunities];
+      setLocalOpportunities(updatedOpportunities);
 
+      // Save to local storage
+      localStorage.setItem(
+        `org_opportunities_${user.id}`,
+        JSON.stringify(updatedOpportunities)
+      );
+
+      // Reset form
       setOpportunityTitle('');
       setOpportunityCompany('');
       setOpportunityDescription('');
@@ -336,13 +363,42 @@ const Dashboard: React.FC = () => {
       setShowNewOpportunity(false);
 
       alert('Opportunity posted successfully!');
-      await fetchMyOpportunities();
     } catch (error) {
       console.error('Error posting opportunity:', error);
       alert('Error posting opportunity. Please try again.');
     } finally {
       setPostingOpportunity(false);
     }
+  };
+
+  const handleDeleteOpportunity = (opportunityId: string) => {
+    if (!user?.id) return;
+
+    if (confirm('Are you sure you want to delete this opportunity?')) {
+      const updatedOpportunities = localOpportunities.filter(opp => opp.id !== opportunityId);
+      setLocalOpportunities(updatedOpportunities);
+
+      // Update local storage
+      localStorage.setItem(
+        `org_opportunities_${user.id}`,
+        JSON.stringify(updatedOpportunities)
+      );
+    }
+  };
+
+  const handleToggleOpportunityStatus = (opportunityId: string) => {
+    if (!user?.id) return;
+
+    const updatedOpportunities = localOpportunities.map(opp =>
+      opp.id === opportunityId ? { ...opp, isActive: !opp.isActive } : opp
+    );
+    setLocalOpportunities(updatedOpportunities);
+
+    // Update local storage
+    localStorage.setItem(
+      `org_opportunities_${user.id}`,
+      JSON.stringify(updatedOpportunities)
+    );
   };
 
   const tabs = [
@@ -378,6 +434,19 @@ const Dashboard: React.FC = () => {
         <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
 
         <div className="relative z-10 container mx-auto px-4 py-8">
+          {/* Local Storage Notification */}
+          <div className="glass bg-green-500/20 backdrop-blur-lg p-4 rounded-xl border border-green-500/30 mb-6 animate-fadeInUp">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
+              <div>
+                <p className="text-green-300 font-medium">Local Storage Mode Active</p>
+                <p className="text-green-200 text-sm">
+                  All opportunities are stored securely in your browser's local storage. Your data persists across sessions.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Header */}
           <div className="glass bg-white/10 backdrop-blur-lg p-6 rounded-xl shadow-2xl border border-white/20 mb-8 animate-fadeInUp">
             <div className="flex items-center justify-between">
@@ -426,7 +495,7 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-300 text-sm">Open Opportunities</p>
-                  <p className="text-3xl font-bold text-white">{myOpportunities.length}</p>
+                  <p className="text-3xl font-bold text-white">{localOpportunities.filter(opp => opp.isActive).length}</p>
                   <p className="text-green-400 text-sm flex items-center">
                     <Briefcase className="h-4 w-4 mr-1" />
                     Posted positions
@@ -560,9 +629,9 @@ const Dashboard: React.FC = () => {
                       <span>Post New</span>
                     </button>
                   </div>
-                  {myOpportunities.length > 0 ? (
+                  {localOpportunities.length > 0 ? (
                     <div className="grid gap-4">
-                      {myOpportunities.slice(0, 5).map((opp) => (
+                      {localOpportunities.slice(0, 5).map((opp) => (
                         <div key={opp.id} className="glass bg-white/5 backdrop-blur-lg p-4 rounded-lg border border-white/10 hover:border-green-400/50 transition-all hover-lift">
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
@@ -675,25 +744,50 @@ const Dashboard: React.FC = () => {
                     <span>New Opportunity</span>
                   </button>
                 </div>
-                {myOpportunities.length > 0 ? (
+                {localOpportunities.length > 0 ? (
                   <div className="grid gap-6">
-                    {myOpportunities.map((opp, index) => (
+                    {localOpportunities.map((opp, index) => (
                     <div key={opp.id} className="glass bg-white/5 backdrop-blur-lg p-6 rounded-lg border border-white/10 hover:border-blue-400/50 transition-all hover-lift">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
-                          <h4 className="text-lg font-semibold text-white mb-1">{opp.title}</h4>
+                          <div className="flex items-center gap-3 mb-2">
+                            <h4 className="text-lg font-semibold text-white">{opp.title}</h4>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              opp.isActive
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-red-500/20 text-red-400'
+                            }`}>
+                              {opp.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
                           <p className="text-gray-300 text-sm mb-3">{opp.company}</p>
+                          {opp.description && (
+                            <p className="text-gray-400 text-sm mb-3">{opp.description}</p>
+                          )}
                           <div className="flex flex-wrap gap-2">
                             <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs capitalize">{opp.type}</span>
                             <span className="px-2 py-1 bg-gray-500/20 text-gray-400 rounded text-xs flex items-center">
                               <Users className="h-3 w-3 mr-1" />
-                              8 applicants
+                              {opp.applicationsCount || 0} applicants
                             </span>
                           </div>
                         </div>
-                        <button className="text-gray-400 hover:text-white transition-colors">
-                          <X className="h-5 w-5" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleOpportunityStatus(opp.id)}
+                            className="text-blue-400 hover:text-blue-300 transition-colors p-2"
+                            title={opp.isActive ? 'Deactivate' : 'Activate'}
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOpportunity(opp.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors p-2"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
                       </div>
                       <div className="flex items-center space-x-4 text-sm text-gray-400 pt-4 border-t border-white/10">
                         <span className="flex items-center">
@@ -702,7 +796,7 @@ const Dashboard: React.FC = () => {
                         </span>
                         <span className="flex items-center">
                           <DollarSign className="h-4 w-4 mr-1" />
-                          {opp.salary}
+                          {opp.salary || 'Not specified'}
                         </span>
                         {opp.deadline && (
                           <span className="flex items-center">
