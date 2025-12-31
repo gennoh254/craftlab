@@ -204,6 +204,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             name,
             email,
             user_type: userType,
+            terms_accepted: true,
+            terms_accepted_at: new Date().toISOString(),
           })
           .select()
           .single();
