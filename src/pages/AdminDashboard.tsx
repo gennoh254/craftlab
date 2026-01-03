@@ -109,12 +109,22 @@ const AdminDashboard: React.FC = () => {
     setUsingLocalStorage(true);
     setLoading(false);
   };
+  const handleCreateJob = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleCreateJob = (e: React.FormEvent) => {
-    e.preventDefault();
+  // 1️⃣ Get authenticated user
+  const { data: { user } } = await supabase.auth.getUser();
+  console.log("AUTH USER 👉", user);
 
-    const newOpportunity: Opportunity = {
-      id: `local-${Date.now()}`,
+  if (!user) {
+    alert("You must be logged in to post a job");
+    return;
+  }
+
+  // 2️⃣ Attempt Supabase INSERT (DEBUG MODE)
+  const { data, error } = await supabase
+    .from('opportunities')
+    .insert({
       title: newJob.title,
       company: newJob.company,
       location: newJob.location,
@@ -124,20 +134,67 @@ const AdminDashboard: React.FC = () => {
       requirements: newJob.requirements
         ? JSON.parse(newJob.requirements)
         : { skills: [], experience: '', education: '' },
-      benefits: newJob.benefits ? newJob.benefits.split(',').map(b => b.trim()) : [],
-      workType: newJob.workType,
+      benefits: newJob.benefits
+        ? newJob.benefits.split(',').map(b => b.trim())
+        : [],
+      work_type: newJob.workType,
       industry: newJob.industry,
-      deadline: newJob.deadline || undefined,
+      deadline: newJob.deadline || null,
+      is_active: true,
+      created_by: user.id,   // 🔥 REQUIRED
+    })
+    .select()
+    .single();
+
+  // 3️⃣ DEBUG OUTPUT (THIS IS THE TEMP FIX)
+  if (error) {
+    console.error("SUPABASE INSERT ERROR 👉", error);
+    alert(error.message);
+
+    // ⛑️ fallback to localStorage ONLY if DB fails
+    const localOpportunity = {
+      id: `local-${Date.now()}`,
+      title: newJob.title,
+      company: newJob.company,
+      location: newJob.location,
+      type: newJob.type,
+      salary: newJob.salary,
+      description: newJob.description,
       applicationsCount: 0,
       isActive: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
-    const existingOpportunities = getStoredOpportunities();
-    const updatedOpportunities = [newOpportunity, ...existingOpportunities];
-    storeOpportunities(updatedOpportunities);
-    setOpportunities(updatedOpportunities);
+    const existing = getStoredOpportunities();
+    const updated = [localOpportunity, ...existing];
+    storeOpportunities(updated);
+    setOpportunities(updated);
+    setUsingLocalStorage(true);
+    return;
+  }
 
+  // 4️⃣ SUCCESS PATH
+  console.log("INSERT SUCCESS 👉", data);
+  setOpportunities(prev => [data, ...prev]);
+  setUsingLocalStorage(false);
+
+  // reset form
+  setNewJob({
+    title: '',
+    company: '',
+    location: '',
+    type: 'internship',
+    salary: '',
+    description: '',
+    requirements: '',
+    benefits: '',
+    workType: 'hybrid',
+    industry: '',
+    deadline: ''
+  });
+
+  setShowCreateJob(false);
+};
     setNewJob({
       title: '',
       company: '',
@@ -163,6 +220,7 @@ const AdminDashboard: React.FC = () => {
     );
     storeOpportunities(updatedOpportunities);
     setOpportunities(updatedOpportunities);
+    
   };
 
   const exportUsers = () => {
