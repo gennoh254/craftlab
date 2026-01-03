@@ -144,7 +144,7 @@ const Login: React.FC = () => {
             </form>
 
             {/* Links */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-4">
               <p className="text-gray-400">
                 Don't have an account?{' '}
                 <Link
@@ -154,6 +154,15 @@ const Login: React.FC = () => {
                   Sign up here
                 </Link>
               </p>
+              
+              <div className="pt-4 border-t border-white/10">
+                <Link
+                  to="/demo-dashboard"
+                  className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                >
+                  View Demo Dashboard
+                </Link>
+              </div>
             </div>
           </div>
 

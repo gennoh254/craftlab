@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, UserPlus, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import TermsModal from '../components/TermsModal';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +14,6 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(true);
-  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -30,24 +27,9 @@ const Register: React.FC = () => {
     if (error) setError('');
   };
 
-  const handleTermsAccept = () => {
-    setTermsAccepted(true);
-    setShowTermsModal(false);
-  };
-
-  const handleTermsReject = () => {
-    setShowTermsModal(true);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (!termsAccepted) {
-      setShowTermsModal(true);
-      setError('You must accept the Terms & Conditions to proceed');
-      return;
-    }
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
@@ -100,14 +82,7 @@ const Register: React.FC = () => {
            backgroundPosition: 'center',
            backgroundAttachment: 'fixed'
          }}>
-
-      {/* Terms Modal */}
-      <TermsModal
-        isOpen={showTermsModal}
-        onAccept={handleTermsAccept}
-        onReject={handleTermsReject}
-      />
-
+      
       <div className="container mx-auto px-4">
         <div className="max-w-md mx-auto">
           {/* Header */}
@@ -122,13 +97,6 @@ const Register: React.FC = () => {
 
           {/* Registration Form */}
           <div className="glass bg-white/10 backdrop-blur-lg p-8 rounded-xl shadow-2xl border border-white/20 animate-fadeInUp" style={{animationDelay: '0.2s'}}>
-            {termsAccepted && (
-              <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg flex items-center space-x-3 animate-fadeInUp">
-                <CheckCircle className="h-5 w-5 text-green-400" />
-                <span className="text-green-400">Terms & Conditions accepted. Complete your registration below.</span>
-              </div>
-            )}
-
             {showSuccess && (
               <div className="mb-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg flex items-center space-x-3 animate-fadeInUp">
                 <CheckCircle className="h-5 w-5 text-green-400" />
@@ -262,7 +230,7 @@ const Register: React.FC = () => {
             </form>
 
             {/* Links */}
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-4">
               <p className="text-gray-400">
                 Already have an account?{' '}
                 <Link
@@ -272,6 +240,15 @@ const Register: React.FC = () => {
                   Sign in here
                 </Link>
               </p>
+              
+              <div className="pt-4 border-t border-white/10">
+                <Link
+                  to="/demo-dashboard"
+                  className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                >
+                  View Demo Dashboard
+                </Link>
+              </div>
             </div>
           </div>
 
