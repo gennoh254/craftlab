@@ -1,21 +1,22 @@
 
-import React, { useState } from 'react';
-import { UserRole } from '../types';
+import React, { useState, useEffect } from 'react';
+import { UserRole, DbOpportunity } from '../types';
 import { ViewState } from '../App';
-import { 
-  ArrowLeft, 
-  Search, 
-  Briefcase, 
-  Target, 
-  MapPin, 
-  Clock, 
+import {
+  ArrowLeft,
+  Search,
+  Briefcase,
+  Target,
+  MapPin,
+  Clock,
   ExternalLink,
   Filter,
   CheckCircle,
   Building,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
-import { MOCK_OPPORTUNITIES } from '../constants';
+import { supabase } from '../lib/supabase';
 
 interface OpportunitiesPageProps {
   userRole: UserRole;
@@ -24,6 +25,37 @@ interface OpportunitiesPageProps {
 
 const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavigate }) => {
   const [filter, setFilter] = useState('All');
+  const [opportunities, setOpportunities] = useState<DbOpportunity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchOpportunities();
+  }, []);
+
+  const fetchOpportunities = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('opportunities')
+      .select(`
+        *,
+        profiles:org_id (
+          name,
+          avatar_url
+        )
+      `)
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setOpportunities(data);
+    }
+    setLoading(false);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'TBD';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
@@ -99,52 +131,91 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
 
         {/* Main List */}
         <div className="lg:col-span-3 space-y-6">
-          {MOCK_OPPORTUNITIES.map((opp, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-xl transition-all group">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl shrink-0 overflow-hidden shadow-sm flex items-center justify-center">
-                   <Building className="w-8 h-8 text-gray-300" />
-                </div>
-                <div className="flex-1 space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-xl font-black text-black tracking-tight group-hover:text-[#facc15] transition-colors">{opp.role}</h3>
-                        <CheckCircle className="w-4 h-4 text-[#facc15]" fill="currentColor" />
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-gray-500 uppercase tracking-tighter">
-                        <span className="flex items-center gap-1.5"><Building className="w-3.5 h-3.5" /> {opp.orgName}</span>
-                        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Remote / Hybrid</span>
-                        <span className="flex items-center gap-1.5 text-black font-black"><Clock className="w-3.5 h-3.5" /> {opp.hoursPerWeek}h/Week</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                       <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-green-100">{opp.matchScore}% Match Sync</span>
-                    </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+            </div>
+          ) : opportunities.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+              <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-black text-black mb-2">No Opportunities Yet</h3>
+              <p className="text-sm text-gray-500 font-medium">Check back soon for new opportunities from organizations.</p>
+            </div>
+          ) : (
+            opportunities.map((opp) => (
+              <div key={opp.id} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-xl transition-all group">
+                <div className="flex flex-col md:flex-row gap-6">
+                  <div className="w-16 h-16 bg-gray-100 rounded-2xl shrink-0 overflow-hidden shadow-sm flex items-center justify-center">
+                    {opp.profiles?.avatar_url ? (
+                      <img src={opp.profiles.avatar_url} alt={opp.profiles.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Building className="w-8 h-8 text-gray-300" />
+                    )}
                   </div>
-
-                  <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2">
-                    Join our award-winning team to help define the next generation of spatial user interfaces. You'll work closely with senior mentors to build production-ready prototypes.
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
-                    <div className="flex gap-2">
-                      <span className="px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-200">{opp.type}</span>
-                      <span className="px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-200">Timeline: {opp.timeline}</span>
+                  <div className="flex-1 space-y-4">
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-black text-black tracking-tight group-hover:text-[#facc15] transition-colors">{opp.role}</h3>
+                          <CheckCircle className="w-4 h-4 text-[#facc15]" fill="currentColor" />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold text-gray-500 uppercase tracking-tighter">
+                          <span className="flex items-center gap-1.5">
+                            <Building className="w-3.5 h-3.5" /> {opp.profiles?.name || 'Organization'}
+                          </span>
+                          {opp.work_mode && (
+                            <span className="flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5" /> {opp.work_mode}
+                            </span>
+                          )}
+                          {opp.hours_per_week && (
+                            <span className="flex items-center gap-1.5 text-black font-black">
+                              <Clock className="w-3.5 h-3.5" /> {opp.hours_per_week}h/Week
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex gap-3">
-                      <button className="px-6 py-2 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md active:scale-95">Apply Now</button>
-                      <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"><ExternalLink className="w-4 h-4 text-gray-400" /></button>
+
+                    <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2">
+                      {opp.description}
+                    </p>
+
+                    {opp.skills_required && (
+                      <div className="flex flex-wrap gap-2">
+                        {opp.skills_required.split(',').map((skill, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-[#facc15]/10 text-[#facc15] text-[9px] font-black uppercase rounded-lg">
+                            {skill.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                      <div className="flex gap-2">
+                        <span className="px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-200">
+                          {opp.type}
+                        </span>
+                        {opp.start_date && (
+                          <span className="px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-gray-200">
+                            Starts: {formatDate(opp.start_date)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-3">
+                        <button className="px-6 py-2 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md active:scale-95">
+                          Apply Now
+                        </button>
+                        <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                          <ExternalLink className="w-4 h-4 text-gray-400" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-          
-          <div className="text-center py-10">
-             <button className="text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-[0.2em] transition-colors">Load More Opportunities</button>
-          </div>
+            ))
+          )}
         </div>
       </div>
     </div>

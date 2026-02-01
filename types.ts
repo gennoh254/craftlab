@@ -59,3 +59,21 @@ export interface Certificate {
   category: 'Bachelors' | 'Diploma' | 'Masters' | 'PhD' | 'Certification' | 'Certificate';
   proofImageUrl?: string;
 }
+
+export interface DbOpportunity {
+  id: string;
+  org_id: string;
+  role: string;
+  type: 'Internship' | 'Attachment' | 'Apprenticeship' | 'Volunteer';
+  description: string;
+  skills_required: string;
+  start_date: string | null;
+  work_mode: 'Remote' | 'On-site' | 'Hybrid' | null;
+  hours_per_week: number | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: {
+    name: string;
+    avatar_url: string | null;
+  };
+}
