@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Search,
   Briefcase,
-  Target,
   MapPin,
   Clock,
   ExternalLink,
@@ -73,11 +72,6 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
           <p className="text-gray-500 font-medium text-sm mt-2">Connecting talent with high-impact organizations across the Craftlab network.</p>
         </div>
 
-        <div className="flex items-center gap-2">
-           <button className="px-6 py-2.5 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-xl active:scale-95 flex items-center gap-2">
-             <Target className="w-4 h-4" /> My Top Matches
-           </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

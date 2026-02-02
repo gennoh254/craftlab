@@ -215,12 +215,19 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             </div>
           </div>
 
-          <button 
-            onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-            className="w-full py-4 bg-[#facc15] text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
-          >
-            Match Secure Roles
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => onNavigate('ALL_OPPORTUNITIES')}
+              className="w-full py-4 bg-[#facc15] text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
+            >
+              Match Secure Roles
+            </button>
+            <button
+              className="w-full py-4 bg-white/10 text-[#facc15] font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/20 flex items-center justify-center gap-2"
+            >
+              <Target className="w-4 h-4" /> My Top Matches
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-[2rem] shadow-xl border border-gray-200 p-8 space-y-6">
