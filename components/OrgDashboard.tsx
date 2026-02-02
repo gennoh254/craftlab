@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Target, 
-  Users, 
-  Calendar, 
+import {
+  Plus,
+  Target,
+  Users,
+  Calendar,
   CheckCircle,
   BarChart2,
   Mail,
@@ -16,12 +16,14 @@ import { PostCard } from './PostCard';
 import { MOCK_POSTS, MOCK_CANDIDATES } from '../constants';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
+import { useAuth } from '../lib/auth';
 
 interface OrgDashboardProps {
   onNavigate: (view: ViewState) => void;
 }
 
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
+  const { profile } = useAuth();
   const [activeMatchTab, setActiveMatchTab] = useState('All');
   
   // Logic: Limit to max 10 candidates
@@ -41,7 +43,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           <div className="pt-8 px-4 pb-4 space-y-4">
             <div>
               <div className="flex items-center gap-1">
-                <h2 className="text-lg font-black text-black tracking-tight">Innovate Labs</h2>
+                <h2 className="text-lg font-black text-black tracking-tight">{profile?.name}</h2>
                 <CheckCircle className="w-3.5 h-3.5 text-[#facc15]" fill="currentColor" />
               </div>
               <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Technology & Research • SF</p>

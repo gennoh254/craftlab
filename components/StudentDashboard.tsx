@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  RefreshCw, 
-  Edit3, 
+import {
+  Plus,
+  RefreshCw,
+  Edit3,
   Briefcase,
   Zap,
   Calendar,
@@ -21,6 +21,7 @@ import { PostComposer } from './PostComposer';
 import { MOCK_POSTS, MOCK_CERTIFICATES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
+import { useAuth } from '../lib/auth';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -28,6 +29,7 @@ interface StudentDashboardProps {
 }
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
+  const { profile } = useAuth();
   const [activeFeedTab, setActiveFeedTab] = useState('Your Posts');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -52,7 +54,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
           </div>
           <div className="pt-14 px-6 pb-8 space-y-6 text-center">
             <div>
-              <h2 className="text-3xl font-black text-black tracking-tighter leading-none">Alex Rivers</h2>
+              <h2 className="text-3xl font-black text-black tracking-tighter leading-none">{profile?.name}</h2>
               <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">Senior UX/UI Specialist</p>
             </div>
             
