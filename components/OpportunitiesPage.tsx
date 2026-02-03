@@ -197,9 +197,11 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
                         )}
                       </div>
                       <div className="flex gap-3">
-                        <button className="px-6 py-2 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md active:scale-95">
-                          Apply Now
-                        </button>
+                        {userRole === UserRole.STUDENT && (
+                          <button className="px-6 py-2 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md active:scale-95">
+                            Apply Now
+                          </button>
+                        )}
                         <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
                           <ExternalLink className="w-4 h-4 text-gray-400" />
                         </button>
