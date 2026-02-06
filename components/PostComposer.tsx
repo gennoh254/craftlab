@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Image,
   Paperclip,
@@ -9,7 +9,8 @@ import {
   Lock,
   ChevronDown,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  X
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
@@ -30,6 +31,10 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const studentPostTypes = [
     'Showcase', 'Skill Demo', 'Learning Update', 'Opportunity Request'
@@ -40,6 +45,62 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
   ];
 
   const currentTypes = userRole === UserRole.STUDENT ? studentPostTypes : orgPostTypes;
+
+  const getMediaType = (file: File): 'image' | 'video' | 'file' => {
+    if (file.type.startsWith('image/')) return 'image';
+    if (file.type.startsWith('video/')) return 'video';
+    return 'file';
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('File size must be less than 50MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    setError('');
+
+    if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMediaPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setMediaPreview('');
+    }
+  };
+
+  const uploadMedia = async (file: File): Promise<string | null> => {
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `posts/${user!.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('posts-media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+        .from('posts-media')
+        .getPublicUrl(filePath);
+
+      return publicUrl.publicUrl;
+    } catch (err: any) {
+      setError(`Upload failed: ${err.message}`);
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handlePublish = async () => {
     if (!user || !profile) return;
@@ -53,6 +114,18 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
     setError('');
 
     try {
+      let mediaUrl = null;
+      let mediaType = null;
+
+      if (selectedFile) {
+        mediaUrl = await uploadMedia(selectedFile);
+        if (!mediaUrl) {
+          setLoading(false);
+          return;
+        }
+        mediaType = getMediaType(selectedFile);
+      }
+
       const tagsArray = tags
         .split(',')
         .map(tag => tag.trim())
@@ -67,6 +140,8 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
           content: content.trim(),
           tags: tagsArray,
           visibility: visibility,
+          media_url: mediaUrl,
+          media_type: mediaType,
         });
 
       if (insertError) {
@@ -77,6 +152,8 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
         setContent('');
         setTags('');
         setPostType('');
+        setSelectedFile(null);
+        setMediaPreview('');
 
         setTimeout(() => setSuccess(false), 3000);
 
@@ -130,6 +207,45 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
           placeholder={userRole === UserRole.STUDENT ? "What project are you working on today?" : "Share a milestone or open role..."}
           className="w-full min-h-[100px] text-sm font-medium focus:outline-none resize-none placeholder:text-gray-400"
         />
+
+        {mediaPreview && (
+          <div className="relative rounded-lg overflow-hidden border-2 border-[#facc15] bg-gray-50">
+            {selectedFile?.type.startsWith('image/') ? (
+              <img src={mediaPreview} alt="Preview" className="w-full max-h-64 object-cover" />
+            ) : (
+              <video src={mediaPreview} controls className="w-full max-h-64 object-cover" />
+            )}
+            <button
+              onClick={() => {
+                setSelectedFile(null);
+                setMediaPreview('');
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              className="absolute top-2 right-2 bg-black rounded-full p-1 hover:bg-gray-800"
+            >
+              <X className="w-4 h-4 text-white" />
+            </button>
+          </div>
+        )}
+
+        {selectedFile && !mediaPreview && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Paperclip className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold text-blue-600">{selectedFile.name}</span>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedFile(null);
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }}
+              className="text-blue-600 hover:text-blue-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <input
           type="text"
           value={tags}
@@ -158,11 +274,40 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
 
       <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-5">
-          <button className="text-gray-400 hover:text-black transition-colors"><Image className="w-5 h-5" /></button>
-          <button className="text-gray-400 hover:text-black transition-colors"><Paperclip className="w-5 h-5" /></button>
+          <button
+            onClick={() => {
+              if (fileInputRef.current) {
+                fileInputRef.current.accept = 'image/*';
+                fileInputRef.current.click();
+              }
+            }}
+            disabled={uploading}
+            className="text-gray-400 hover:text-black transition-colors disabled:opacity-50"
+          >
+            <Image className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              if (fileInputRef.current) {
+                fileInputRef.current.accept = 'video/*';
+                fileInputRef.current.click();
+              }
+            }}
+            disabled={uploading}
+            className="text-gray-400 hover:text-black transition-colors disabled:opacity-50"
+          >
+            <Paperclip className="w-5 h-5" />
+          </button>
           <button className="text-gray-400 hover:text-black transition-colors"><Github className="w-5 h-5" /></button>
           <button className="text-gray-400 hover:text-black transition-colors"><Globe className="w-5 h-5" /></button>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          onChange={handleFileSelect}
+          className="hidden"
+          accept="image/*,video/*,.pdf,.doc,.docx"
+        />
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <button

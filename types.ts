@@ -19,6 +19,8 @@ export interface Post {
   comments: Comment[];
   timestamp: string;
   isPublic: boolean;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'file';
 }
 
 export interface Comment {

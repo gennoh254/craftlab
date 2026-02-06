@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
-import { 
-  ThumbsUp, 
-  MessageSquare, 
-  Bookmark, 
-  Share2, 
+import {
+  ThumbsUp,
+  MessageSquare,
+  Bookmark,
+  Share2,
   MoreHorizontal,
   CheckCircle,
   Link,
-  Send
+  Send,
+  Paperclip
 } from 'lucide-react';
 import { Post, UserRole } from '../types';
 
@@ -56,15 +57,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
           {post.content}
         </p>
         
-        <div 
-          onClick={() => onViewPost?.(post)}
-          className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[16/9] flex flex-col items-center justify-center gap-3 group cursor-pointer relative shadow-inner"
-        >
-          <img src={`https://picsum.photos/seed/${post.id}/800/450`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" alt="Post content" />
-          <div className="z-10 bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 scale-95 group-hover:scale-100 transition-all">
-            <Link className="w-4 h-4 text-[#facc15]" /> View Showcase Detail
+        {post.mediaUrl ? (
+          <div className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 group relative shadow-inner">
+            {post.mediaType === 'image' ? (
+              <img src={post.mediaUrl} alt="Post media" className="w-full max-h-96 object-cover group-hover:opacity-90 transition-opacity duration-300" />
+            ) : post.mediaType === 'video' ? (
+              <video src={post.mediaUrl} controls className="w-full max-h-96 object-cover" />
+            ) : (
+              <div className="p-6 bg-gray-50 flex items-center justify-center min-h-[200px]">
+                <a href={post.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-black text-[#facc15] rounded-lg font-bold text-sm hover:bg-gray-800">
+                  <Paperclip className="w-4 h-4" /> Download File
+                </a>
+              </div>
+            )}
+            <button
+              onClick={() => onViewPost?.(post)}
+              className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/0 hover:bg-black/40 transition-all duration-300 group/btn"
+            >
+              <div className="bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 opacity-0 group-hover/btn:opacity-100 transition-opacity">
+                <Link className="w-4 h-4 text-[#facc15]" /> View Detail
+              </div>
+            </button>
           </div>
-        </div>
+        ) : (
+          <div
+            onClick={() => onViewPost?.(post)}
+            className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[16/9] flex flex-col items-center justify-center gap-3 group cursor-pointer relative shadow-inner"
+          >
+            <img src={`https://picsum.photos/seed/${post.id}/800/450`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" alt="Post content" />
+            <div className="z-10 bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 scale-95 group-hover:scale-100 transition-all">
+              <Link className="w-4 h-4 text-[#facc15]" /> View Showcase Detail
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2 pt-2">
           {post.tags.map(tag => (
