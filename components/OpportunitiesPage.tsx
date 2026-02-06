@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/auth';
 
 interface OpportunitiesPageProps {
   userRole: UserRole;
@@ -23,13 +24,19 @@ interface OpportunitiesPageProps {
 }
 
 const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavigate }) => {
+  const { user } = useAuth();
   const [filter, setFilter] = useState('All');
   const [opportunities, setOpportunities] = useState<DbOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState<string | null>(null);
+  const [appliedOpportunities, setAppliedOpportunities] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchOpportunities();
-  }, []);
+    if (user && userRole === UserRole.STUDENT) {
+      fetchUserApplications();
+    }
+  }, [user, userRole]);
 
   const fetchOpportunities = async () => {
     setLoading(true);
@@ -48,6 +55,39 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
       setOpportunities(data);
     }
     setLoading(false);
+  };
+
+  const fetchUserApplications = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('applications')
+      .select('opportunity_id')
+      .eq('student_id', user.id);
+
+    if (data) {
+      setAppliedOpportunities(new Set(data.map(app => app.opportunity_id)));
+    }
+  };
+
+  const handleApply = async (opportunityId: string, orgId: string) => {
+    if (!user) return;
+
+    setApplying(opportunityId);
+    const { error } = await supabase
+      .from('applications')
+      .insert([
+        {
+          student_id: user.id,
+          opportunity_id: opportunityId,
+          org_id: orgId,
+          status: 'pending'
+        }
+      ]);
+
+    if (!error) {
+      setAppliedOpportunities(prev => new Set([...prev, opportunityId]));
+    }
+    setApplying(null);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -198,8 +238,16 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
                       </div>
                       <div className="flex gap-3">
                         {userRole === UserRole.STUDENT && (
-                          <button className="px-6 py-2 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-md active:scale-95">
-                            Apply Now
+                          <button
+                            onClick={() => handleApply(opp.id, opp.org_id)}
+                            disabled={appliedOpportunities.has(opp.id) || applying === opp.id}
+                            className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md ${
+                              appliedOpportunities.has(opp.id)
+                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                : 'bg-black text-[#facc15] hover:scale-105 active:scale-95'
+                            }`}
+                          >
+                            {applying === opp.id ? 'Applying...' : appliedOpportunities.has(opp.id) ? 'Applied' : 'Apply Now'}
                           </button>
                         )}
                         <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
