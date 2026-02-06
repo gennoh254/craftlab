@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   Target,
@@ -10,22 +10,99 @@ import {
   Mail,
   XCircle,
   Clock,
-  Briefcase
+  Briefcase,
+  Loader2
 } from 'lucide-react';
 import { PostCard } from './PostCard';
-import { MOCK_POSTS, MOCK_CANDIDATES } from '../constants';
-import { UserRole } from '../types';
+import { MOCK_CANDIDATES } from '../constants';
+import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 interface OrgDashboardProps {
   onNavigate: (view: ViewState) => void;
 }
 
+interface DbPost {
+  id: string;
+  author_id: string;
+  type: string;
+  title: string;
+  content: string;
+  tags: string[];
+  visibility: string;
+  likes_count: number;
+  created_at: string;
+  profiles: {
+    name: string;
+    user_type: string;
+    avatar_url: string | null;
+  };
+}
+
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
   const [activeMatchTab, setActiveMatchTab] = useState('All');
-  
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          name,
+          user_type,
+          avatar_url
+        )
+      `)
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (data) {
+      const formattedPosts: Post[] = data.map((post: DbPost) => ({
+        id: post.id,
+        authorId: post.author_id,
+        authorName: post.profiles.name,
+        authorAvatar: post.profiles.avatar_url || `https://picsum.photos/seed/${post.author_id}/100`,
+        authorRole: post.profiles.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION,
+        authorVerified: true,
+        type: post.type,
+        title: post.title,
+        content: post.content,
+        tags: post.tags,
+        likes: post.likes_count,
+        comments: [],
+        timestamp: formatTimestamp(post.created_at),
+        isPublic: post.visibility === 'public'
+      }));
+      setPosts(formattedPosts);
+    }
+    setLoading(false);
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
+
   // Logic: Limit to max 10 candidates
   const candidates = MOCK_CANDIDATES.slice(0, 10);
 
@@ -131,11 +208,21 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           <div className="h-px flex-1 bg-gray-200"></div>
         </div>
 
-        <div className="space-y-6">
-          {MOCK_POSTS.map(post => (
-            <PostCard key={post.id} post={post} isOrgView />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <p className="text-sm font-bold text-gray-500">No posts in the community feed yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {posts.map(post => (
+              <PostCard key={post.id} post={post} isOrgView />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* RIGHT COLUMN: Candidate Matches (Limit 10) */}

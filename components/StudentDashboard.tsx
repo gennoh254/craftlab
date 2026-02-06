@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   RefreshCw,
@@ -14,27 +14,112 @@ import {
   FileText,
   Award,
   Check,
-  Cpu
+  Cpu,
+  Loader2
 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
-import { MOCK_POSTS, MOCK_CERTIFICATES } from '../constants';
+import { MOCK_CERTIFICATES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
+import { supabase } from '../lib/supabase';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
   onViewPost?: (post: Post) => void;
 }
 
+interface DbPost {
+  id: string;
+  author_id: string;
+  type: string;
+  title: string;
+  content: string;
+  tags: string[];
+  visibility: string;
+  likes_count: number;
+  created_at: string;
+  profiles: {
+    name: string;
+    user_type: string;
+    avatar_url: string | null;
+  };
+}
+
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [activeFeedTab, setActiveFeedTab] = useState('Your Posts');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [activeFeedTab, user]);
+
+  const fetchPosts = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    let query = supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          name,
+          user_type,
+          avatar_url
+        )
+      `);
+
+    if (activeFeedTab === 'Your Posts') {
+      query = query.eq('author_id', user.id);
+    } else {
+      query = query.eq('visibility', 'public');
+    }
+
+    const { data } = await query.order('created_at', { ascending: false });
+
+    if (data) {
+      const formattedPosts: Post[] = data.map((post: DbPost) => ({
+        id: post.id,
+        authorId: post.author_id,
+        authorName: post.profiles.name,
+        authorAvatar: post.profiles.avatar_url || `https://picsum.photos/seed/${post.author_id}/100`,
+        authorRole: post.profiles.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION,
+        authorVerified: true,
+        type: post.type,
+        title: post.title,
+        content: post.content,
+        tags: post.tags,
+        likes: post.likes_count,
+        comments: [],
+        timestamp: formatTimestamp(post.created_at),
+        isPublic: post.visibility === 'public'
+      }));
+      setPosts(formattedPosts);
+    }
+    setLoading(false);
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
+    fetchPosts();
     setTimeout(() => setIsRefreshing(false), 1000);
   };
 
@@ -170,11 +255,25 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             ))}
           </div>
 
-          <div className="space-y-8">
-            {MOCK_POSTS.filter(p => activeFeedTab === 'Your Posts' ? p.authorRole === UserRole.STUDENT : true).map(post => (
-              <PostCard key={post.id} post={post} onViewPost={onViewPost} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+            </div>
+          ) : posts.length === 0 ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+              <p className="text-sm font-bold text-gray-500">
+                {activeFeedTab === 'Your Posts'
+                  ? 'No posts yet. Share your first update!'
+                  : 'No community posts available.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {posts.map(post => (
+                <PostCard key={post.id} post={post} onViewPost={onViewPost} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

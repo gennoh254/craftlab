@@ -1,11 +1,13 @@
 
-import React from 'react';
-import { TrendingUp, Users, Briefcase, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { TrendingUp, Users, Briefcase, ChevronRight, Loader2 } from 'lucide-react';
 import { PostComposer } from './PostComposer';
 import { PostCard } from './PostCard';
-import { MOCK_POSTS, MOCK_OPPORTUNITIES } from '../constants';
+import { MOCK_OPPORTUNITIES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/auth';
 
 interface HomeFeedProps {
   userRole: UserRole;
@@ -13,7 +15,83 @@ interface HomeFeedProps {
   onViewPost?: (post: Post) => void;
 }
 
+interface DbPost {
+  id: string;
+  author_id: string;
+  type: string;
+  title: string;
+  content: string;
+  tags: string[];
+  visibility: string;
+  likes_count: number;
+  created_at: string;
+  profiles: {
+    name: string;
+    user_type: string;
+    avatar_url: string | null;
+  };
+}
+
 const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost }) => {
+  const { profile } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('posts')
+      .select(`
+        *,
+        profiles:author_id (
+          name,
+          user_type,
+          avatar_url
+        )
+      `)
+      .eq('visibility', 'public')
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      const formattedPosts: Post[] = data.map((post: DbPost) => ({
+        id: post.id,
+        authorId: post.author_id,
+        authorName: post.profiles.name,
+        authorAvatar: post.profiles.avatar_url || `https://picsum.photos/seed/${post.author_id}/100`,
+        authorRole: post.profiles.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION,
+        authorVerified: true,
+        type: post.type,
+        title: post.title,
+        content: post.content,
+        tags: post.tags,
+        likes: post.likes_count,
+        comments: [],
+        timestamp: formatTimestamp(post.created_at),
+        isPublic: post.visibility === 'public'
+      }));
+      setPosts(formattedPosts);
+    }
+    setLoading(false);
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* LEFT COLUMN: Profile Summary */}
@@ -21,16 +99,16 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="h-14 bg-black"></div>
           <div className="px-4 pb-4 -mt-8 flex flex-col items-center text-center">
-            <img 
-              src={userRole === UserRole.STUDENT ? "https://picsum.photos/seed/alex/100" : "https://picsum.photos/seed/lab/100"} 
-              className="w-16 h-16 rounded-xl border-4 border-white object-cover bg-white mb-2" 
+            <img
+              src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/100`}
+              className="w-16 h-16 rounded-xl border-4 border-white object-cover bg-white mb-2"
               alt="Avatar"
             />
             <h3 className="font-black text-black text-sm tracking-tight">
-              {userRole === UserRole.STUDENT ? 'Alex Rivers' : 'Innovate Labs'}
+              {profile?.name}
             </h3>
             <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">
-              {userRole === UserRole.STUDENT ? 'UX Design Student' : 'Pioneering Future Tech'}
+              {userRole === UserRole.STUDENT ? 'Student' : 'Organization'}
             </p>
             
             <div className="w-full border-t border-gray-100 mt-4 pt-4 space-y-2 text-left">
@@ -69,19 +147,29 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
 
       {/* CENTER COLUMN: The Feed */}
       <div className="lg:col-span-6 space-y-6">
-        <PostComposer userRole={userRole} />
-        
+        <PostComposer userRole={userRole} onPostCreated={fetchPosts} />
+
         <div className="flex items-center gap-4">
            <div className="h-px flex-1 bg-gray-200"></div>
            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Global Community</span>
            <div className="h-px flex-1 bg-gray-200"></div>
         </div>
 
-        <div className="space-y-6">
-          {MOCK_POSTS.map(post => (
-            <PostCard key={post.id} post={post} onViewPost={onViewPost} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <p className="text-sm font-bold text-gray-500">No posts yet. Be the first to share!</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {posts.map(post => (
+              <PostCard key={post.id} post={post} onViewPost={onViewPost} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* RIGHT COLUMN: Opportunities */}
