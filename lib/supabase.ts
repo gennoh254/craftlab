@@ -15,6 +15,7 @@ export interface Profile {
   name: string;
   user_type: 'STUDENT' | 'ORGANIZATION';
   avatar_url?: string;
+  banner_url?: string;
   created_at: string;
   updated_at: string;
 }
