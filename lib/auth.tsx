@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', userId)
+      .eq('auth_user_id', userId)
       .maybeSingle();
 
     if (data) {
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (data.user) {
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,
+        auth_user_id: data.user.id,
         email,
         name,
         user_type: userType,
