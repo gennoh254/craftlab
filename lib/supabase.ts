@@ -11,10 +11,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface Profile {
   id: string;
-  auth_user_id: string;
   email: string;
   name: string;
   user_type: 'STUDENT' | 'ORGANIZATION';
+  avatar_url?: string | null;
+  banner_url?: string | null;
   bio?: string;
   location?: string;
   phone?: string;
@@ -23,7 +24,6 @@ export interface Profile {
   experience?: string;
   education?: string;
   preferences?: any;
-  profile_picture?: string;
   completion_score?: number;
   is_public?: boolean;
   followers_count?: number;
