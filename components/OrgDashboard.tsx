@@ -11,7 +11,8 @@ import {
   XCircle,
   Clock,
   Briefcase,
-  Loader2
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { MOCK_CANDIDATES } from '../constants';
@@ -43,6 +44,27 @@ interface DbPost {
 
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
+
+  if (!profile || profile.user_type !== 'ORGANIZATION') {
+    return (
+      <div className="max-w-4xl mx-auto pb-12">
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center space-y-4">
+          <div className="flex justify-center mb-4">
+            <AlertCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <h2 className="text-lg font-black text-red-600">Access Denied</h2>
+          <p className="text-sm font-semibold text-red-500">This dashboard is only available for organizations.</p>
+          <button
+            onClick={() => onNavigate('DASHBOARD')}
+            className="mt-6 px-8 py-3 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [activeMatchTab, setActiveMatchTab] = useState('All');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);

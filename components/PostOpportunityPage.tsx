@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
-import { ArrowLeft, Target, Briefcase, Calendar, Clock, MapPin, Zap, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Target, Briefcase, Calendar, Clock, MapPin, Zap, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 
@@ -12,7 +12,7 @@ interface PostOpportunityPageProps {
 }
 
 const PostOpportunityPage: React.FC<PostOpportunityPageProps> = ({ userRole, onNavigate }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
@@ -24,6 +24,34 @@ const PostOpportunityPage: React.FC<PostOpportunityPageProps> = ({ userRole, onN
     work_mode: 'Remote' as 'Remote' | 'On-site' | 'Hybrid',
     hours_per_week: ''
   });
+
+  if (!user || !profile || userRole !== UserRole.ORGANIZATION) {
+    return (
+      <div className="max-w-4xl mx-auto pb-12">
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => onNavigate('DASHBOARD')}
+            className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Dashboard
+          </button>
+        </div>
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center space-y-4">
+          <div className="flex justify-center mb-4">
+            <AlertCircle className="w-12 h-12 text-red-500" />
+          </div>
+          <h2 className="text-lg font-black text-red-600">Access Denied</h2>
+          <p className="text-sm font-semibold text-red-500">Only organizations can post opportunities.</p>
+          <button
+            onClick={() => onNavigate('DASHBOARD')}
+            className="mt-6 px-8 py-3 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition-all"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!user) return;
