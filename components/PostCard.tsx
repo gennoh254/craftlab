@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ThumbsUp,
   MessageSquare,
@@ -9,9 +9,12 @@ import {
   CheckCircle,
   Link,
   Send,
-  Paperclip
+  Paperclip,
+  Loader2
 } from 'lucide-react';
-import { Post, UserRole } from '../types';
+import { Post, UserRole, Comment } from '../types';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/auth';
 
 interface PostCardProps {
   post: Post;
@@ -20,9 +23,117 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
+  const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const [likesCount, setLikesCount] = useState(post.likes);
+  const [comments, setComments] = useState<Comment[]>(post.comments);
+  const [loadingComments, setLoadingComments] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkIfLiked();
+    }
+  }, [user, post.id]);
+
+  const checkIfLiked = async () => {
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('post_likes')
+      .select('id')
+      .eq('post_id', post.id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    setIsLiked(!!data);
+  };
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    const { data, error } = await supabase
+      .from('comments')
+      .select(`
+        id,
+        content,
+        created_at,
+        user_id,
+        profiles:user_id (
+          name
+        )
+      `)
+      .eq('post_id', post.id)
+      .order('created_at', { ascending: true });
+
+    if (data) {
+      const formattedComments: Comment[] = data.map((c: any) => ({
+        id: c.id,
+        userId: c.user_id,
+        userName: c.profiles.name,
+        content: c.content,
+        timestamp: formatTimestamp(c.created_at)
+      }));
+      setComments(formattedComments);
+    }
+    setLoadingComments(false);
+  };
+
+  const handleLike = async () => {
+    if (!user) return;
+
+    if (isLiked) {
+      await supabase
+        .from('post_likes')
+        .delete()
+        .eq('post_id', post.id)
+        .eq('user_id', user.id);
+
+      setIsLiked(false);
+      setLikesCount(likesCount - 1);
+    } else {
+      await supabase
+        .from('post_likes')
+        .insert({
+          post_id: post.id,
+          user_id: user.id
+        });
+
+      setIsLiked(true);
+      setLikesCount(likesCount + 1);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!user || !commentText.trim()) return;
+
+    const { error } = await supabase
+      .from('comments')
+      .insert({
+        post_id: post.id,
+        user_id: user.id,
+        content: commentText
+      });
+
+    if (!error) {
+      setCommentText('');
+      await fetchComments();
+    }
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  };
 
   return (
     <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
@@ -102,17 +213,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
 
       <div className="px-6 py-4 border-t border-gray-50 flex items-center justify-between bg-gray-50/20">
         <div className="flex items-center gap-8">
-          <button 
-            onClick={() => setIsLiked(!isLiked)}
+          <button
+            onClick={handleLike}
             className={`flex items-center gap-2 text-xs font-black transition-all ${isLiked ? 'text-[#facc15]' : 'text-gray-400 hover:text-black'}`}
           >
-            <ThumbsUp className={`w-4.5 h-4.5 ${isLiked ? 'fill-current' : ''}`} /> {post.likes + (isLiked ? 1 : 0)}
+            <ThumbsUp className={`w-4.5 h-4.5 ${isLiked ? 'fill-current' : ''}`} /> {likesCount}
           </button>
-          <button 
-            onClick={() => setShowComments(!showComments)}
+          <button
+            onClick={() => {
+              if (!showComments) {
+                fetchComments();
+              }
+              setShowComments(!showComments);
+            }}
             className="flex items-center gap-2 text-xs font-black text-gray-400 hover:text-black transition-all"
           >
-            <MessageSquare className="w-4.5 h-4.5" /> {post.comments.length}
+            <MessageSquare className="w-4.5 h-4.5" /> {comments.length}
           </button>
           <button className="flex items-center gap-2 text-xs font-black text-gray-400 hover:text-black transition-all">
             <Share2 className="w-4.5 h-4.5" />
@@ -126,29 +242,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
       {showComments && (
         <div className="bg-gray-50/50 border-t border-gray-100 p-6 space-y-6">
           <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2 scrollbar-hide">
-            {post.comments.map(comment => (
-              <div key={comment.id} className="flex gap-4">
-                <img src={`https://picsum.photos/seed/${comment.userName}/40`} className="w-8 h-8 rounded-xl shrink-0 border border-gray-100" alt="User" />
-                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-black text-black uppercase tracking-tight">{comment.userName}</span>
-                    <span className="text-[8px] font-bold text-gray-400">{comment.timestamp}</span>
-                  </div>
-                  <p className="text-xs text-gray-700 font-medium leading-relaxed">{comment.content}</p>
-                </div>
+            {loadingComments ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 text-[#facc15] animate-spin" />
               </div>
-            ))}
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-4">No comments yet</p>
+            ) : (
+              comments.map(comment => (
+                <div key={comment.id} className="flex gap-4">
+                  <img src={`https://picsum.photos/seed/${comment.userId}/40`} className="w-8 h-8 rounded-xl shrink-0 border border-gray-100" alt="User" />
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-black text-black uppercase tracking-tight">{comment.userName}</span>
+                      <span className="text-[8px] font-bold text-gray-400">{comment.timestamp}</span>
+                    </div>
+                    <p className="text-xs text-gray-700 font-medium leading-relaxed">{comment.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="flex items-center gap-3 bg-white rounded-2xl border-2 border-gray-100 p-2.5 focus-within:border-black transition-all shadow-sm">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Post a professional insight..." 
+              onKeyPress={(e) => e.key === 'Enter' && handleCommentSubmit()}
+              placeholder="Post a professional insight..."
               className="flex-1 bg-transparent text-xs font-bold px-3 focus:outline-none"
             />
-            <button 
+            <button
+              onClick={handleCommentSubmit}
               disabled={!commentText}
               className={`p-3 rounded-xl transition-all shadow-xl ${commentText ? 'bg-black text-[#facc15] hover:scale-105' : 'bg-gray-100 text-gray-300'}`}
             >

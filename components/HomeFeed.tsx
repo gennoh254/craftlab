@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Briefcase, ChevronRight, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, ChevronRight, Loader2, Check } from 'lucide-react';
 import { PostComposer } from './PostComposer';
 import { PostCard } from './PostCard';
 import { MOCK_OPPORTUNITIES } from '../constants';
@@ -32,13 +32,23 @@ interface DbPost {
   };
 }
 
+interface NetworkUser {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  isFollowing: boolean;
+}
+
 const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost }) => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [networkUsers, setNetworkUsers] = useState<NetworkUser[]>([]);
 
   useEffect(() => {
     fetchPosts();
+    fetchNetworkUsers();
   }, []);
 
   const fetchPosts = async () => {
@@ -76,6 +86,61 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
       setPosts(formattedPosts);
     }
     setLoading(false);
+  };
+
+  const fetchNetworkUsers = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, user_type, avatar_url')
+      .limit(6);
+
+    if (data && user) {
+      const usersWithFollowStatus = await Promise.all(
+        data.map(async (u: any) => {
+          if (u.id === user.id) return null;
+
+          const { data: isFollowing } = await supabase
+            .from('connections')
+            .select('id')
+            .eq('follower_id', user.id)
+            .eq('following_id', u.id)
+            .maybeSingle();
+
+          return {
+            id: u.id,
+            name: u.name,
+            role: u.user_type === 'STUDENT' ? 'Student' : 'Organization',
+            avatar: u.avatar_url || `https://picsum.photos/seed/${u.id}/40`,
+            isFollowing: !!isFollowing
+          };
+        })
+      );
+
+      setNetworkUsers(usersWithFollowStatus.filter((u): u is NetworkUser => u !== null));
+    }
+  };
+
+  const toggleFollow = async (userId: string, isCurrentlyFollowing: boolean) => {
+    if (!user) return;
+
+    if (isCurrentlyFollowing) {
+      await supabase
+        .from('connections')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', userId);
+    } else {
+      await supabase
+        .from('connections')
+        .insert({
+          follower_id: user.id,
+          following_id: userId
+        });
+    }
+
+    setNetworkUsers(networkUsers.map(u =>
+      u.id === userId ? { ...u, isFollowing: !isCurrentlyFollowing } : u
+    ));
   };
 
   const formatTimestamp = (timestamp: string): string => {
@@ -203,17 +268,27 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
              <Users className="w-3.5 h-3.5 text-[#facc15]" /> Networking
            </h4>
            <div className="space-y-4">
-              {[
-                { name: 'Sarah Chen', role: 'UI Lead @ Meta', avatar: 'Sarah' },
-                { name: 'Future Design', role: 'Agency', avatar: 'Future' }
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <img src={`https://picsum.photos/seed/${item.avatar}/40`} className="w-9 h-9 rounded-full" alt="User" />
+              {networkUsers.map((item) => (
+                <div key={item.id} className="flex items-center gap-3">
+                  <img src={item.avatar} className="w-9 h-9 rounded-full" alt="User" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-black text-black leading-tight truncate">{item.name}</p>
                     <p className="text-[9px] font-bold text-gray-500 leading-tight uppercase truncate">{item.role}</p>
                   </div>
-                  <button className="text-[9px] font-black text-black bg-[#facc15] px-2 py-1 rounded uppercase hover:scale-105 transition-all">Follow</button>
+                  <button
+                    onClick={() => toggleFollow(item.id, item.isFollowing)}
+                    className={`text-[9px] font-black px-2 py-1 rounded uppercase hover:scale-105 transition-all flex items-center gap-1 ${
+                      item.isFollowing ? 'text-[#facc15] bg-black' : 'text-black bg-[#facc15]'
+                    }`}
+                  >
+                    {item.isFollowing ? (
+                      <>
+                        <Check className="w-3 h-3" /> Following
+                      </>
+                    ) : (
+                      'Follow'
+                    )}
+                  </button>
                 </div>
               ))}
            </div>
