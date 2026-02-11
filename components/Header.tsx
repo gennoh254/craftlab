@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
   const navItems = [
     { id: 'HOME', label: 'Home', icon: Home },
     { id: 'ALL_OPPORTUNITIES', label: 'Opportunities', icon: Briefcase },
-    { id: 'MESSAGES', label: 'Messaging', icon: MessageSquare },
+    { id: 'INBOX', label: 'Inbox', icon: MessageSquare },
     { id: 'DASHBOARD', label: 'Me', icon: User },
   ];
 

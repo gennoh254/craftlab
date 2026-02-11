@@ -11,7 +11,9 @@ import {
   Phone,
   Video,
   MessageSquare,
-  Loader2
+  Loader2,
+  X,
+  Plus
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
@@ -40,6 +42,13 @@ interface Conversation {
   unreadCount: number;
 }
 
+interface UserProfile {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  user_type: string;
+}
+
 const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
   const { user, profile } = useAuth();
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -48,6 +57,10 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
+  const [searching, setSearching] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -248,6 +261,40 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   };
 
+  const searchUsers = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, name, avatar_url, user_type')
+      .ilike('name', `%${query}%`)
+      .neq('id', user?.id || '')
+      .limit(10);
+
+    if (data) {
+      setSearchResults(data);
+    }
+    setSearching(false);
+  };
+
+  const startConversation = async (userId: string) => {
+    if (!user) return;
+
+    setActiveChat(userId);
+    setShowNewMessageModal(false);
+    setSearchQuery('');
+    setSearchResults([]);
+
+    const conversationExists = conversations.some(c => c.userId === userId);
+    if (!conversationExists) {
+      await fetchConversations();
+    }
+  };
+
   const currentConversation = conversations.find(c => c.userId === activeChat);
 
   if (loading) {
@@ -269,11 +316,17 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
   }
 
   return (
+    <>
     <div className="h-[calc(100vh-120px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex">
       <div className="w-80 border-r border-gray-200 flex flex-col bg-gray-50/50">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-black text-white">
           <h2 className="font-black text-[10px] uppercase tracking-widest">Messages</h2>
-          <Edit className="w-4 h-4 text-[#facc15] cursor-pointer" />
+          <button
+            onClick={() => setShowNewMessageModal(true)}
+            className="text-[#facc15] hover:scale-110 transition-transform"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
         <div className="p-3">
           <div className="relative">
@@ -379,6 +432,81 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
         </div>
       )}
     </div>
+
+    {showNewMessageModal && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-black text-white">
+            <h2 className="font-black text-[13px] uppercase tracking-widest">Start New Message</h2>
+            <button
+              onClick={() => {
+                setShowNewMessageModal(false);
+                setSearchQuery('');
+                setSearchResults([]);
+              }}
+              className="text-gray-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  searchUsers(e.target.value);
+                }}
+                className="w-full bg-white border border-gray-200 pl-10 pr-4 py-2 rounded-lg text-sm focus:outline-none focus:border-[#facc15] font-medium"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {searching ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 text-[#facc15] animate-spin" />
+              </div>
+            ) : searchResults.length === 0 && searchQuery ? (
+              <div className="p-6 text-center">
+                <p className="text-sm text-gray-500 font-medium">No users found</p>
+              </div>
+            ) : searchResults.length === 0 ? (
+              <div className="p-6 text-center">
+                <p className="text-sm text-gray-500 font-medium">Search for users to message</p>
+              </div>
+            ) : (
+              <div className="space-y-1 p-2">
+                {searchResults.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => startConversation(user.id)}
+                    className="w-full p-3 flex items-center gap-3 hover:bg-gray-100 rounded-lg transition-colors text-left"
+                  >
+                    <img
+                      src={user.avatar_url || `https://picsum.photos/seed/${user.id}/40`}
+                      className="w-10 h-10 rounded-lg border border-gray-200"
+                      alt={user.name}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-black text-black truncate">{user.name}</p>
+                      <p className="text-xs text-gray-500 font-bold uppercase">
+                        {user.user_type === 'STUDENT' ? 'Student' : 'Organization'}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

@@ -20,7 +20,7 @@ export type ViewState =
   | 'DASHBOARD'
   | 'NETWORK'
   | 'JOBS'
-  | 'MESSAGES'
+  | 'INBOX'
   | 'EDIT_PROFILE'
   | 'CREATE_POST'
   | 'POST_OPPORTUNITY'
@@ -67,7 +67,7 @@ const App: React.FC = () => {
         ) : (
           <OrgDashboard onNavigate={setActiveView} />
         );
-      case 'MESSAGES':
+      case 'INBOX':
         return <Messaging userRole={currentUserRole} />;
       case 'EDIT_PROFILE':
         return <EditProfile userRole={currentUserRole} onNavigate={setActiveView} />;
