@@ -1,17 +1,18 @@
 
 import React from 'react';
-import { 
-  ArrowLeft, 
-  CheckCircle, 
-  Share2, 
-  Bookmark, 
-  ThumbsUp, 
-  MessageSquare, 
-  Zap, 
-  ShieldCheck, 
+import {
+  ArrowLeft,
+  CheckCircle,
+  Share2,
+  Bookmark,
+  ThumbsUp,
+  MessageSquare,
+  Zap,
+  ShieldCheck,
   Building,
   Mail,
-  MoreVertical
+  MoreVertical,
+  Paperclip
 } from 'lucide-react';
 import { Post, UserRole } from '../types';
 import { ViewState } from '../App';
@@ -47,16 +48,50 @@ const PostDetailPage: React.FC<PostDetailPageProps> = ({ post, userRole, onNavig
         <div className="lg:col-span-8 space-y-6">
           <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
             {/* Project Hero Image */}
-            <div className="relative aspect-video bg-gray-100 group">
-              <img 
-                src={`https://picsum.photos/seed/${post.id}/1200/800`} 
-                className="w-full h-full object-cover" 
-                alt="Showcase Content" 
-              />
-              <div className="absolute top-4 right-4 px-4 py-2 bg-black/80 backdrop-blur-md rounded-xl border border-white/20 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#facc15]" /> Authenticity Verified
+            {post.mediaUrl ? (
+              <div className="relative bg-gray-100 group">
+                {post.mediaType === 'image' ? (
+                  <div className="aspect-video">
+                    <img
+                      src={post.mediaUrl}
+                      className="w-full h-full object-cover"
+                      alt="Post content"
+                    />
+                  </div>
+                ) : post.mediaType === 'video' ? (
+                  <video
+                    src={post.mediaUrl}
+                    controls
+                    className="w-full max-h-96 bg-black"
+                  />
+                ) : (
+                  <div className="aspect-video flex items-center justify-center bg-gray-50">
+                    <a
+                      href={post.mediaUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-6 py-3 bg-black text-[#facc15] rounded-lg font-bold text-sm hover:bg-gray-800"
+                    >
+                      <Paperclip className="w-4 h-4" /> Download File
+                    </a>
+                  </div>
+                )}
+                <div className="absolute top-4 right-4 px-4 py-2 bg-black/80 backdrop-blur-md rounded-xl border border-white/20 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#facc15]" /> Authenticity Verified
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative aspect-video bg-gray-100 group">
+                <img
+                  src={`https://picsum.photos/seed/${post.id}/1200/800`}
+                  className="w-full h-full object-cover"
+                  alt="Showcase Content"
+                />
+                <div className="absolute top-4 right-4 px-4 py-2 bg-black/80 backdrop-blur-md rounded-xl border border-white/20 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#facc15]" /> Authenticity Verified
+                </div>
+              </div>
+            )}
 
             <div className="p-8 space-y-6">
               <div className="flex flex-wrap gap-2">

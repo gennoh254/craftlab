@@ -23,6 +23,8 @@ interface DbPost {
   content: string;
   tags: string[];
   visibility: string;
+  media_url: string | null;
+  media_type: string | null;
   likes_count: number;
   created_at: string;
   profiles: {
@@ -56,7 +58,17 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
     const { data, error } = await supabase
       .from('posts')
       .select(`
-        *,
+        id,
+        author_id,
+        type,
+        title,
+        content,
+        tags,
+        visibility,
+        media_url,
+        media_type,
+        likes_count,
+        created_at,
         profiles:author_id (
           name,
           user_type,
@@ -81,7 +93,9 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
         likes: post.likes_count,
         comments: [],
         timestamp: formatTimestamp(post.created_at),
-        isPublic: post.visibility === 'public'
+        isPublic: post.visibility === 'public',
+        mediaUrl: post.media_url || undefined,
+        mediaType: (post.media_type as 'image' | 'video' | 'file') || undefined
       }));
       setPosts(formattedPosts);
     }
