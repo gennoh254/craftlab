@@ -47,11 +47,31 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [networkUsers, setNetworkUsers] = useState<NetworkUser[]>([]);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
 
   useEffect(() => {
     fetchPosts();
     fetchNetworkUsers();
+    fetchFollowCounts();
   }, []);
+
+  const fetchFollowCounts = async () => {
+    if (!user) return;
+
+    const { count: followerCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', user.id);
+
+    const { count: followingCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', user.id);
+
+    setFollowers(followerCount || 0);
+    setFollowing(followingCount || 0);
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -192,12 +212,12 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
             
             <div className="w-full border-t border-gray-100 mt-4 pt-4 space-y-2 text-left">
               <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-                <span className="text-gray-400">Views</span>
-                <span className="text-[#facc15]">142</span>
+                <span className="text-gray-400">Followers</span>
+                <span className="text-[#facc15]">{followers}</span>
               </div>
               <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-tighter">
-                <span className="text-gray-400">Network</span>
-                <span className="text-[#facc15]">482</span>
+                <span className="text-gray-400">Following</span>
+                <span className="text-[#facc15]">{following}</span>
               </div>
             </div>
             

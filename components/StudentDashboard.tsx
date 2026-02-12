@@ -53,10 +53,30 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
 
   useEffect(() => {
     fetchPosts();
+    fetchFollowCounts();
   }, [activeFeedTab, user]);
+
+  const fetchFollowCounts = async () => {
+    if (!user) return;
+
+    const { count: followerCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', user.id);
+
+    const { count: followingCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', user.id);
+
+    setFollowers(followerCount || 0);
+    setFollowing(followingCount || 0);
+  };
 
   const fetchPosts = async () => {
     if (!user) return;
@@ -146,6 +166,17 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             <p className="text-sm text-gray-700 leading-relaxed font-medium italic">
               "Developing spatial user interfaces for next-generation platforms."
             </p>
+
+            <div className="flex justify-around items-center gap-4 pt-4 pb-4 border-b border-gray-100">
+              <div className="text-center">
+                <p className="text-2xl font-black text-black">{followers}</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Followers</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-black">{following}</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Following</p>
+              </div>
+            </div>
 
             <div className="space-y-6 pt-4 border-t border-gray-50 text-left">
               <div>

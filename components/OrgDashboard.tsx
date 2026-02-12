@@ -68,10 +68,31 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const [activeMatchTab, setActiveMatchTab] = useState('All');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchPosts();
+    fetchFollowCounts();
   }, []);
+
+  const fetchFollowCounts = async () => {
+    if (!user) return;
+
+    const { count: followerCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', user.id);
+
+    const { count: followingCount } = await supabase
+      .from('connections')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', user.id);
+
+    setFollowers(followerCount || 0);
+    setFollowing(followingCount || 0);
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -151,6 +172,17 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
             <p className="text-xs text-gray-700 leading-relaxed font-medium italic">
               "Developing next-gen spatial computing platforms."
             </p>
+
+            <div className="flex justify-around items-center gap-4 py-3 border-t border-b border-gray-100">
+              <div className="text-center">
+                <p className="text-xl font-black text-black">{followers}</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Followers</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xl font-black text-black">{following}</p>
+                <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Following</p>
+              </div>
+            </div>
 
             <div className="space-y-2 pt-2">
               <button 
