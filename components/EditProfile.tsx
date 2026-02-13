@@ -710,6 +710,7 @@ const CertificatesSection: React.FC<{
 }> = ({ userId, certificates, onRefresh }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState<'form' | 'upload'>('form');
   const [formData, setFormData] = useState({
     title: '',
     issuer: '',
@@ -718,6 +719,7 @@ const CertificatesSection: React.FC<{
     description: '',
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -728,6 +730,7 @@ const CertificatesSection: React.FC<{
         return;
       }
       setSelectedFile(file);
+      setUploadStep('upload');
     }
   };
 
@@ -754,6 +757,21 @@ const CertificatesSection: React.FC<{
     }
   };
 
+  const handleUploadFile = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadCertificate(selectedFile);
+      if (url) {
+        setUploadedFileUrl(url);
+        setUploadStep('form');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.issuer) {
       alert('Title and Issuer are required');
@@ -763,17 +781,6 @@ const CertificatesSection: React.FC<{
     setUploading(true);
 
     try {
-      let certificateUrl = '';
-
-      if (selectedFile) {
-        const url = await uploadCertificate(selectedFile);
-        if (!url) {
-          setUploading(false);
-          return;
-        }
-        certificateUrl = url;
-      }
-
       const { error } = await supabase.from('certificates').insert({
         user_id: userId,
         title: formData.title,
@@ -781,7 +788,7 @@ const CertificatesSection: React.FC<{
         issue_date: formData.issue_date || null,
         category: formData.category,
         description: formData.description,
-        certificate_url: certificateUrl,
+        certificate_url: uploadedFileUrl || '',
       });
 
       if (error) throw error;
@@ -795,6 +802,8 @@ const CertificatesSection: React.FC<{
         description: '',
       });
       setSelectedFile(null);
+      setUploadedFileUrl(null);
+      setUploadStep('form');
       onRefresh();
     } catch (err: any) {
       alert(`Error: ${err.message}`);
@@ -967,20 +976,51 @@ const CertificatesSection: React.FC<{
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   Upload Certificate File
                 </label>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-4 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 group hover:border-[#facc15] hover:bg-[#facc15]/5 transition-all cursor-pointer"
-                >
-                  <Upload className="w-12 h-12 text-gray-300 group-hover:text-[#facc15]" />
-                  <div className="text-center">
-                    <span className="text-[11px] font-black text-black uppercase tracking-widest block">
-                      {selectedFile ? selectedFile.name : 'Click to Upload'}
-                    </span>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase mt-1 block">
-                      PDF, JPG, PNG (Max 10MB)
-                    </span>
+                {uploadStep === 'upload' && !uploadedFileUrl ? (
+                  <div className="space-y-3">
+                    <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl">
+                      <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2">Selected File:</p>
+                      <p className="text-[11px] font-bold text-blue-800">{selectedFile?.name}</p>
+                    </div>
+                    <button
+                      onClick={handleUploadFile}
+                      disabled={uploading}
+                      className="w-full py-4 bg-[#facc15] text-black font-black text-xs uppercase tracking-widest rounded-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" /> Upload File
+                        </>
+                      )}
+                    </button>
                   </div>
-                </div>
+                ) : uploadedFileUrl ? (
+                  <div className="bg-green-50 border-2 border-green-200 p-4 rounded-xl">
+                    <p className="text-[10px] font-black text-green-900 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <Check className="w-4 h-4" /> File Uploaded Successfully
+                    </p>
+                    <p className="text-[10px] font-medium text-green-800 truncate">{selectedFile?.name}</p>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-4 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 group hover:border-[#facc15] hover:bg-[#facc15]/5 transition-all cursor-pointer"
+                  >
+                    <Upload className="w-12 h-12 text-gray-300 group-hover:text-[#facc15]" />
+                    <div className="text-center">
+                      <span className="text-[11px] font-black text-black uppercase tracking-widest block">
+                        Click to Upload
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-bold uppercase mt-1 block">
+                        PDF, JPG, PNG (Max 10MB)
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -993,25 +1033,42 @@ const CertificatesSection: React.FC<{
 
             <div className="flex gap-4 pt-4">
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setUploadStep('form');
+                  setSelectedFile(null);
+                  setUploadedFileUrl(null);
+                }}
                 disabled={uploading}
                 className="flex-1 py-5 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-black transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleSubmit}
-                disabled={uploading}
-                className="flex-1 py-5 bg-black text-[#facc15] text-xs font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
-                  </>
-                ) : (
-                  'Add Certificate'
-                )}
-              </button>
+              {uploadedFileUrl ? (
+                <button
+                  onClick={handleSubmit}
+                  disabled={uploading}
+                  className="flex-1 py-5 bg-black text-[#facc15] text-xs font-black uppercase tracking-widest rounded-2xl shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" /> OK
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={uploading || !uploadedFileUrl}
+                  className="flex-1 py-5 bg-gray-300 text-gray-500 text-xs font-black uppercase tracking-widest rounded-2xl shadow-2xl disabled:opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" /> Add Certificate
+                </button>
+              )}
             </div>
           </div>
         </div>

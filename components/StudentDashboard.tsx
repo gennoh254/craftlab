@@ -47,18 +47,42 @@ interface DbPost {
   };
 }
 
+interface MatchedOpportunity {
+  id: string;
+  opportunity_id: string;
+  student_id: string;
+  match_score: number;
+  matched_skills: string[];
+  analyzed_at: string;
+  opportunity?: {
+    id: string;
+    role: string;
+    type: string;
+    description: string;
+    work_mode: string;
+    profiles?: {
+      name: string;
+      avatar_url: string | null;
+    };
+  };
+}
+
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
   const { profile, user } = useAuth();
   const [activeFeedTab, setActiveFeedTab] = useState('Your Posts');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [matchedOpportunities, setMatchedOpportunities] = useState<MatchedOpportunity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [matchLoading, setMatchLoading] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
+  const [matchError, setMatchError] = useState('');
 
   useEffect(() => {
     fetchPosts();
     fetchFollowCounts();
+    fetchMatchedOpportunities();
   }, [activeFeedTab, user]);
 
   const fetchFollowCounts = async () => {
@@ -137,10 +161,81 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
     return date.toLocaleDateString();
   };
 
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    fetchPosts();
-    setTimeout(() => setIsRefreshing(false), 1000);
+  const fetchMatchedOpportunities = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('student_matches')
+        .select(`
+          id,
+          opportunity_id,
+          student_id,
+          match_score,
+          matched_skills,
+          analyzed_at,
+          opportunities:opportunity_id (
+            id,
+            role,
+            type,
+            description,
+            work_mode,
+            profiles:org_id (
+              name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('student_id', user.id)
+        .order('match_score', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Error fetching matches:', error);
+        return;
+      }
+
+      if (data) {
+        setMatchedOpportunities(data as any);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
+  const handleRunMatching = async () => {
+    if (!user) return;
+
+    setMatchLoading(true);
+    setMatchError('');
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/match_student_to_opportunities`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ studentId: user.id }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMatchError(result.message || result.error || 'Failed to run AI matching');
+        setMatchLoading(false);
+        return;
+      }
+
+      await fetchMatchedOpportunities();
+    } catch (err: any) {
+      setMatchError(err.message || 'Error running AI matching');
+    } finally {
+      setMatchLoading(false);
+    }
   };
 
   return (
@@ -334,30 +429,57 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             </div>
           </div>
 
-          <div className="pt-8 border-t border-white/10 space-y-4">
-            <h4 className="text-[11px] font-black text-[#facc15] uppercase tracking-widest flex items-center gap-2">
-               <Building className="w-4 h-4" /> Preferred Partners
-            </h4>
-            <div className="grid grid-cols-2 gap-3">
-              {['Meta Lab', 'Future Tech', 'Google', 'R/GA'].map(org => (
-                <div key={org} className="bg-white/5 border border-white/10 p-3 rounded-2xl text-[10px] font-black uppercase text-gray-400 hover:bg-white/10 hover:text-white cursor-pointer transition-all">
-                  {org}
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {matchError && (
+                <div className="bg-red-500/10 border border-red-500/30 p-3 rounded-xl">
+                  <p className="text-[9px] text-red-400 font-bold">{matchError}</p>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
 
-          <div className="space-y-3">
+              <button
+                onClick={handleRunMatching}
+                disabled={matchLoading}
+                className="w-full py-4 bg-[#facc15] text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {matchLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Cpu className="w-4 h-4" /> Run AI Analysis
+                  </>
+                )}
+              </button>
+            </div>
+
+            {matchedOpportunities.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-white/10">
+                <h4 className="text-[10px] font-black text-[#facc15] uppercase tracking-widest">
+                  Top Matches
+                </h4>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {matchedOpportunities.map(match => (
+                    <div key={match.id} className="bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-black text-white truncate">{match.opportunity?.role}</p>
+                          <p className="text-[8px] text-gray-400 uppercase tracking-widest">{match.opportunity?.type}</p>
+                        </div>
+                        <span className="ml-2 text-[10px] font-black text-[#facc15]">{match.match_score}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <button
               onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-              className="w-full py-4 bg-[#facc15] text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:scale-105 transition-transform shadow-2xl"
+              className="w-full py-3 bg-white/10 text-[#facc15] font-black rounded-2xl text-[9px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/20"
             >
-              Match Secure Roles
-            </button>
-            <button
-              className="w-full py-4 bg-white/10 text-[#facc15] font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all border border-white/20 flex items-center justify-center gap-2"
-            >
-              <Target className="w-4 h-4" /> My Top Matches
+              View All Opportunities
             </button>
           </div>
         </div>
