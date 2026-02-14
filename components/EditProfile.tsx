@@ -709,6 +709,7 @@ const CertificatesSection: React.FC<{
   certificates: Certificate[];
   onRefresh: () => void;
 }> = ({ userId, certificates, onRefresh }) => {
+  const { user } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadStep, setUploadStep] = useState<'form' | 'upload'>('form');
@@ -736,10 +737,15 @@ const CertificatesSection: React.FC<{
   };
 
   const uploadCertificate = async (file: File): Promise<string | null> => {
+    if (!user?.id) {
+      alert('User information not loaded. Please refresh the page.');
+      return null;
+    }
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${userId}/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('certificates')
@@ -779,11 +785,16 @@ const CertificatesSection: React.FC<{
       return;
     }
 
+    if (!user?.id) {
+      alert('User information not loaded. Please refresh the page.');
+      return;
+    }
+
     setUploading(true);
 
     try {
       const { error } = await supabase.from('certificates').insert({
-        user_id: userId,
+        user_id: user.id,
         title: formData.title,
         issuer: formData.issuer,
         issue_date: formData.issue_date || null,
