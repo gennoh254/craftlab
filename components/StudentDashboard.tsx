@@ -203,6 +203,12 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchMatchedOpportunities();
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
   const handleRunMatching = async () => {
     if (!user) return;
 
@@ -246,7 +252,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
         <div className="bg-white rounded-[2rem] shadow-xl border border-gray-200 overflow-hidden">
           <div className="h-24 bg-black relative">
             <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 p-1.5 bg-white rounded-[1.5rem] shadow-2xl">
-               <img src="https://picsum.photos/seed/alex/150" className="w-24 h-24 rounded-[1.2rem] object-cover" alt="Student" />
+               <img
+                 src={profile?.avatar_url || `https://picsum.photos/seed/${user?.id || 'student'}/150`}
+                 className="w-24 h-24 rounded-[1.2rem] object-cover"
+                 alt="Student"
+               />
             </div>
             <div className="absolute top-3 right-3 bg-[#facc15] text-black text-[9px] font-black uppercase tracking-tighter px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
               <Check className="w-3 h-3" /> CV Ready
@@ -254,13 +264,17 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
           </div>
           <div className="pt-14 px-6 pb-8 space-y-6 text-center">
             <div>
-              <h2 className="text-3xl font-black text-black tracking-tighter leading-none">{profile?.name}</h2>
-              <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">Senior UX/UI Specialist</p>
+              <h2 className="text-3xl font-black text-black tracking-tighter leading-none">{profile?.name || 'Student'}</h2>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mt-2">
+                {profile?.user_type === 'STUDENT' ? 'Student' : 'Organization'}
+              </p>
             </div>
-            
-            <p className="text-sm text-gray-700 leading-relaxed font-medium italic">
-              "Developing spatial user interfaces for next-generation platforms."
-            </p>
+
+            {profile?.professional_summary && (
+              <p className="text-sm text-gray-700 leading-relaxed font-medium italic">
+                "{profile.professional_summary.substring(0, 120)}{profile.professional_summary.length > 120 ? '...' : ''}"
+              </p>
+            )}
 
             <div className="flex justify-around items-center gap-4 pt-4 pb-4 border-b border-gray-100">
               <div className="text-center">
