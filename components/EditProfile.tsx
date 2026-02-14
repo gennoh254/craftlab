@@ -20,7 +20,8 @@ import {
   FileText,
   Linkedin,
   Github,
-  Globe
+  Globe,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase, EducationEntry, EmploymentEntry, Certificate } from '../lib/supabase';
