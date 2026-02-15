@@ -6,10 +6,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
 
+interface SkillEntry {
+  id: string;
+  name: string;
+  description: string;
+  proficiency: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+}
+
 interface StudentProfile {
   id: string;
   name: string;
   skills: string[];
+  skills_detailed?: SkillEntry[];
   professional_summary: string;
   education: any[];
   employment_history: any[];
@@ -97,8 +105,11 @@ Deno.serve(async (req: Request) => {
 
     const student: StudentProfile = students[0];
 
+    const hasSkills = (student.skills_detailed && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) ||
+                      (student.skills && Array.isArray(student.skills) && student.skills.length > 0);
+
     const checkProfile = [
-      !!student.skills && Array.isArray(student.skills) && student.skills.length > 0,
+      hasSkills,
       !!student.professional_summary && student.professional_summary.length > 0,
       !!student.education && (Array.isArray(student.education) ? student.education.length > 0 : false),
       !!student.contact_email,
@@ -141,18 +152,56 @@ Deno.serve(async (req: Request) => {
     const opportunities: Opportunity[] = await opportunitiesResponse.json();
 
     const matches: Match[] = [];
-    const studentSkills = (student.skills || []).map((s: string) => s.toLowerCase().trim());
+
+    let studentSkills: string[] = [];
+    const proficiencyWeights: Record<string, number> = {
+      'Expert': 1.3,
+      'Advanced': 1.2,
+      'Intermediate': 1.0,
+      'Beginner': 0.7
+    };
+
+    if (student.skills_detailed && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) {
+      studentSkills = student.skills_detailed.map((s: SkillEntry) => s.name.toLowerCase().trim());
+    } else if (student.skills && Array.isArray(student.skills)) {
+      studentSkills = student.skills.map((s: string) => s.toLowerCase().trim());
+    }
 
     for (const opp of opportunities) {
       const oppSkills = opp.skills_required
         ? opp.skills_required.split(",").map((s) => s.toLowerCase().trim())
         : [];
 
-      const matchedSkills = studentSkills.filter((skill) =>
-        oppSkills.some((oppSkill) => oppSkill.includes(skill) || skill.includes(oppSkill))
-      );
+      const matchedSkills: string[] = [];
+      let weightedSkillScore = 0;
 
-      const skillMatchRatio = oppSkills.length > 0 ? matchedSkills.length / oppSkills.length : 0;
+      for (const studentSkill of studentSkills) {
+        const matchedOppSkill = oppSkills.find((oppSkill) =>
+          oppSkill.includes(studentSkill) || studentSkill.includes(oppSkill)
+        );
+
+        if (matchedOppSkill) {
+          matchedSkills.push(studentSkill);
+
+          if (student.skills_detailed && Array.isArray(student.skills_detailed)) {
+            const skillDetail = student.skills_detailed.find((s: SkillEntry) =>
+              s.name.toLowerCase().trim() === studentSkill
+            );
+
+            if (skillDetail) {
+              const weight = proficiencyWeights[skillDetail.proficiency] || 1.0;
+              weightedSkillScore += weight;
+            } else {
+              weightedSkillScore += 1.0;
+            }
+          } else {
+            weightedSkillScore += 1.0;
+          }
+        }
+      }
+
+      const maxPossibleScore = oppSkills.length * 1.3;
+      const skillMatchRatio = maxPossibleScore > 0 ? Math.min(weightedSkillScore / maxPossibleScore, 1.0) : 0;
 
       const educationScore = student.education && student.education.length > 0 ? 20 : 0;
       const employmentScore = student.employment_history && student.employment_history.length > 0 ? 15 : 0;
@@ -161,12 +210,27 @@ Deno.serve(async (req: Request) => {
       const matchScore = Math.round((skillMatchRatio * 50 + educationScore + employmentScore + summaryScore));
 
       if (matchScore >= 40) {
+        let reasoning = `Matched ${matchedSkills.length} of ${oppSkills.length} required skills for ${opp.role}`;
+
+        if (student.skills_detailed && Array.isArray(student.skills_detailed) && matchedSkills.length > 0) {
+          const expertSkills = matchedSkills.filter(skill => {
+            const detail = student.skills_detailed!.find((s: SkillEntry) =>
+              s.name.toLowerCase().trim() === skill
+            );
+            return detail && (detail.proficiency === 'Expert' || detail.proficiency === 'Advanced');
+          });
+
+          if (expertSkills.length > 0) {
+            reasoning += ` (Including ${expertSkills.length} advanced/expert level skills)`;
+          }
+        }
+
         matches.push({
           opportunity_id: opp.id,
           student_id: studentId,
           match_score: matchScore,
           matched_skills: matchedSkills,
-          reasoning: `Matched ${matchedSkills.length} of ${oppSkills.length} required skills for ${opp.role}`,
+          reasoning: reasoning,
         });
       }
     }

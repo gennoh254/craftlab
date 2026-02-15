@@ -24,7 +24,7 @@ import {
   Check
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import { supabase, EducationEntry, EmploymentEntry, Certificate } from '../lib/supabase';
+import { supabase, EducationEntry, EmploymentEntry, Certificate, SkillEntry } from '../lib/supabase';
 
 interface EditProfileProps {
   userRole: UserRole;
@@ -52,6 +52,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
   const [education, setEducation] = useState<EducationEntry[]>([]);
   const [employment, setEmployment] = useState<EmploymentEntry[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [skillsDetailed, setSkillsDetailed] = useState<SkillEntry[]>([]);
 
   const [uploading, setUploading] = useState<'avatar' | 'banner' | null>(null);
   const [saving, setSaving] = useState(false);
@@ -77,6 +78,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
     if (profile?.employment_history && Array.isArray(profile.employment_history)) {
       setEmployment(profile.employment_history);
+    }
+
+    if (profile?.skills_detailed && Array.isArray(profile.skills_detailed)) {
+      setSkillsDetailed(profile.skills_detailed);
     }
 
     fetchCertificates();
@@ -197,6 +202,30 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     setEducation(education.filter((edu) => edu.id !== id));
   };
 
+  const addSkill = () => {
+    setSkillsDetailed([
+      ...skillsDetailed,
+      {
+        id: Date.now().toString(),
+        name: '',
+        description: '',
+        proficiency: 'Intermediate',
+      },
+    ]);
+  };
+
+  const updateSkill = (id: string, field: keyof SkillEntry, value: any) => {
+    setSkillsDetailed(
+      skillsDetailed.map((skill) =>
+        skill.id === id ? { ...skill, [field]: value } : skill
+      )
+    );
+  };
+
+  const removeSkill = (id: string) => {
+    setSkillsDetailed(skillsDetailed.filter((skill) => skill.id !== id));
+  };
+
   const addEmployment = () => {
     setEmployment([
       ...employment,
@@ -244,6 +273,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           address: address,
           professional_summary: professionalSummary,
           skills: skillsArray,
+          skills_detailed: skillsDetailed,
           media_links: mediaLinks,
           education: education,
           employment_history: employment,
@@ -465,19 +495,70 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           </div>
 
           <div className="space-y-8">
-            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <Award className="w-5 h-5 text-[#facc15]" /> Skills
-            </h2>
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                placeholder="React, TypeScript, UI/UX Design, Figma (comma separated)"
-              />
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
+                <Award className="w-5 h-5 text-[#facc15]" /> Skills & Expertise
+              </h2>
+              <button
+                onClick={addSkill}
+                className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+              >
+                <Plus className="w-3 h-3" /> Add Skill
+              </button>
+            </div>
+            <div className="space-y-6">
+              {skillsDetailed.map((skill) => (
+                <div key={skill.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
+                  <button
+                    onClick={() => removeSkill(skill.id)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Skill Name</label>
+                      <input
+                        type="text"
+                        value={skill.name}
+                        onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="e.g., React, UI/UX Design"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Proficiency Level</label>
+                      <select
+                        value={skill.proficiency}
+                        onChange={(e) => updateSkill(skill.id, 'proficiency', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Expert">Expert</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Description</label>
+                    <textarea
+                      rows={3}
+                      value={skill.description}
+                      onChange={(e) => updateSkill(skill.id, 'description', e.target.value)}
+                      className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                      placeholder="Describe your experience with this skill, projects you've used it on, etc..."
+                    />
+                  </div>
+                </div>
+              ))}
+              {skillsDetailed.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8 font-medium">No skills added yet. Click "Add Skill" to get started.</p>
+              )}
+            </div>
+            <div className="pt-4 border-t border-gray-100">
               <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
-                Separate skills with commas
+                Add your skills with detailed descriptions to help our AI matching tool find the best opportunities for you.
               </p>
             </div>
           </div>

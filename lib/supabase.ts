@@ -9,6 +9,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export interface SkillEntry {
+  id: string;
+  name: string;
+  description: string;
+  proficiency: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -21,6 +28,7 @@ export interface Profile {
   phone?: string;
   website?: string;
   skills?: any;
+  skills_detailed?: SkillEntry[];
   experience?: string;
   education?: string;
   preferences?: any;
