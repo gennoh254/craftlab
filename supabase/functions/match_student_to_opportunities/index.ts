@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
     const student: StudentProfile = students[0];
 
     const checkProfile = [
-      !!student.skills && student.skills.length > 0,
+      !!student.skills && Array.isArray(student.skills) && student.skills.length > 0,
       !!student.professional_summary && student.professional_summary.length > 0,
       !!student.education && (Array.isArray(student.education) ? student.education.length > 0 : false),
       !!student.contact_email,
