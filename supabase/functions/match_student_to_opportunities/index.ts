@@ -16,15 +16,15 @@ interface SkillEntry {
 interface StudentProfile {
   id: string;
   name: string;
-  skills: string[];
-  skills_detailed?: SkillEntry[];
-  professional_summary: string;
-  education: any[];
-  employment_history: any[];
-  contact_email: string;
-  contact_phone: string;
-  media_links: Record<string, string>;
-  address: string;
+  skills?: string[] | null;
+  skills_detailed?: SkillEntry[] | null;
+  professional_summary?: string | null;
+  education?: any[] | null;
+  employment_history?: any[] | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  media_links?: Record<string, string> | null;
+  address?: string | null;
 }
 
 interface Opportunity {
@@ -85,12 +85,27 @@ Deno.serve(async (req: Request) => {
     };
 
     const studentResponse = await fetch(
-      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}`,
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}&select=id,name,skills,skills_detailed,professional_summary,education,employment_history,contact_email,contact_phone,media_links,address`,
       {
         method: "GET",
         headers,
       }
     );
+
+    if (!studentResponse.ok) {
+      const errorText = await studentResponse.text();
+      console.error("Failed to fetch student:", errorText);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch student profile",
+          details: errorText
+        }),
+        {
+          status: studentResponse.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     const students = await studentResponse.json();
     if (!students || students.length === 0) {
@@ -105,8 +120,18 @@ Deno.serve(async (req: Request) => {
 
     const student: StudentProfile = students[0];
 
-    const hasSkills = (student.skills_detailed && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) ||
-                      (student.skills && Array.isArray(student.skills) && student.skills.length > 0);
+    if (!student || !student.id) {
+      return new Response(
+        JSON.stringify({ error: "Invalid student data received" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const hasSkills = (student.skills_detailed != null && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) ||
+                      (student.skills != null && Array.isArray(student.skills) && student.skills.length > 0);
 
     const checkProfile = [
       hasSkills,
@@ -161,10 +186,10 @@ Deno.serve(async (req: Request) => {
       'Beginner': 0.7
     };
 
-    if (student.skills_detailed && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) {
-      studentSkills = student.skills_detailed.map((s: SkillEntry) => s.name.toLowerCase().trim());
-    } else if (student.skills && Array.isArray(student.skills)) {
-      studentSkills = student.skills.map((s: string) => s.toLowerCase().trim());
+    if (student.skills_detailed != null && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) {
+      studentSkills = student.skills_detailed.map((s: SkillEntry) => s?.name?.toLowerCase().trim() || '').filter(Boolean);
+    } else if (student.skills != null && Array.isArray(student.skills)) {
+      studentSkills = student.skills.map((s: string) => s?.toLowerCase().trim() || '').filter(Boolean);
     }
 
     for (const opp of opportunities) {
@@ -183,12 +208,12 @@ Deno.serve(async (req: Request) => {
         if (matchedOppSkill) {
           matchedSkills.push(studentSkill);
 
-          if (student.skills_detailed && Array.isArray(student.skills_detailed)) {
+          if (student.skills_detailed != null && Array.isArray(student.skills_detailed)) {
             const skillDetail = student.skills_detailed.find((s: SkillEntry) =>
-              s.name.toLowerCase().trim() === studentSkill
+              s?.name?.toLowerCase().trim() === studentSkill
             );
 
-            if (skillDetail) {
+            if (skillDetail && skillDetail.proficiency) {
               const weight = proficiencyWeights[skillDetail.proficiency] || 1.0;
               weightedSkillScore += weight;
             } else {
@@ -212,12 +237,12 @@ Deno.serve(async (req: Request) => {
       if (matchScore >= 40) {
         let reasoning = `Matched ${matchedSkills.length} of ${oppSkills.length} required skills for ${opp.role}`;
 
-        if (student.skills_detailed && Array.isArray(student.skills_detailed) && matchedSkills.length > 0) {
+        if (student.skills_detailed != null && Array.isArray(student.skills_detailed) && matchedSkills.length > 0) {
           const expertSkills = matchedSkills.filter(skill => {
             const detail = student.skills_detailed!.find((s: SkillEntry) =>
-              s.name.toLowerCase().trim() === skill
+              s?.name?.toLowerCase().trim() === skill
             );
-            return detail && (detail.proficiency === 'Expert' || detail.proficiency === 'Advanced');
+            return detail && detail.proficiency && (detail.proficiency === 'Expert' || detail.proficiency === 'Advanced');
           });
 
           if (expertSkills.length > 0) {
