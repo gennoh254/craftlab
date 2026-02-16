@@ -54,6 +54,23 @@ interface Match {
   };
 }
 
+interface AIMatch {
+  id: string;
+  opportunity_id: string;
+  student_id: string;
+  match_score: number;
+  matched_skills: string[];
+  reasoning: string;
+  analyzed_at: string;
+  student?: {
+    name: string;
+    avatar_url: string | null;
+  };
+  opportunity?: {
+    role: string;
+  };
+}
+
 interface MatchError {
   error: string;
   message: string;
@@ -67,7 +84,9 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
   const [activeFilter, setActiveFilter] = useState('All');
   const [applications, setApplications] = useState<ApplicationWithDetails[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [aiMatches, setAiMatches] = useState<AIMatch[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingAiMatches, setLoadingAiMatches] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<MatchError | null>(null);
   const [analysisSuccess, setAnalysisSuccess] = useState(false);
@@ -75,6 +94,7 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
   useEffect(() => {
     if (userRole === UserRole.ORGANIZATION && user) {
       fetchApplications();
+      fetchAiMatches();
     } else if (userRole === UserRole.STUDENT && user) {
       fetchMatches();
     }
@@ -115,6 +135,60 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
       setApplications(formattedData);
     }
     setLoading(false);
+  };
+
+  const fetchAiMatches = async () => {
+    if (!user) return;
+    setLoadingAiMatches(true);
+
+    const { data: opportunities } = await supabase
+      .from('opportunities')
+      .select('id')
+      .eq('org_id', user.id);
+
+    if (!opportunities || opportunities.length === 0) {
+      setLoadingAiMatches(false);
+      return;
+    }
+
+    const opportunityIds = opportunities.map((opp: any) => opp.id);
+
+    const { data } = await supabase
+      .from('student_matches')
+      .select(`
+        id,
+        opportunity_id,
+        student_id,
+        match_score,
+        matched_skills,
+        reasoning,
+        analyzed_at,
+        profiles:student_id (
+          name,
+          avatar_url
+        ),
+        opportunities:opportunity_id (
+          role
+        )
+      `)
+      .in('opportunity_id', opportunityIds)
+      .order('match_score', { ascending: false });
+
+    if (data) {
+      const formattedData = data.map((match: any) => ({
+        id: match.id,
+        opportunity_id: match.opportunity_id,
+        student_id: match.student_id,
+        match_score: match.match_score,
+        matched_skills: match.matched_skills || [],
+        reasoning: match.reasoning,
+        analyzed_at: match.analyzed_at,
+        student: match.profiles,
+        opportunity: match.opportunities
+      }));
+      setAiMatches(formattedData);
+    }
+    setLoadingAiMatches(false);
   };
 
   const fetchMatches = async () => {
@@ -258,63 +332,68 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
           />
         )
       ) : (
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex gap-2">
-              {['All', 'pending', 'shortlisted', 'rejected'].map(f => (
-                <button
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    activeFilter === f ? 'bg-black text-[#facc15] border-black shadow-md' : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="text" placeholder="Filter pipeline..." className="w-full bg-white border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-xs font-bold focus:outline-none focus:border-black shadow-sm" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CURRENT APPLICANTS SECTION */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-black text-black uppercase tracking-tight flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-[#facc15]" /> Current Applicants
+                </h2>
+                <span className="text-sm font-black text-[#facc15] bg-black px-3 py-1 rounded-lg">
+                  {applications.length}
+                </span>
               </div>
-              <button onClick={() => fetchApplications()} className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                <RefreshCw className="w-4 h-4 text-gray-400" />
-              </button>
+              <div className="flex gap-2 flex-wrap">
+                {['All', 'pending', 'shortlisted', 'rejected'].map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setActiveFilter(f)}
+                    className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${
+                      activeFilter === f ? 'bg-black text-[#facc15] border-black' : 'bg-white text-gray-400 border-gray-200'
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
-            </div>
-          ) : applications.length === 0 ? (
-            <div className="p-12 text-center">
-              <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-black text-black mb-2">No Applications Yet</h3>
-              <p className="text-sm text-gray-500 font-medium">Applications from students will appear here.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {applications.map((app) => (
-                <div key={app.id} className="p-6 hover:bg-gray-50/20 transition-all group">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden shrink-0 shadow-sm">
-                        <img src={`https://picsum.photos/seed/${app.student_id}/100`} className="w-full h-full object-cover" alt="Applicant" />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-base font-black text-black group-hover:text-[#facc15] cursor-pointer transition-colors">
-                            {app.student?.name}
-                          </h3>
-                          <CheckCircle className="w-4 h-4 text-[#facc15]" fill="currentColor" />
+            <div className="flex-1 overflow-y-auto max-h-[600px]">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+                </div>
+              ) : applications.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Mail className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-sm font-black text-black mb-2">No Applications Yet</h3>
+                  <p className="text-xs text-gray-500 font-medium">Applications from students will appear here.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {applications.map((app) => (
+                    <div key={app.id} className="p-4 hover:bg-gray-50/50 transition-all group">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                            <img src={`https://picsum.photos/seed/${app.student_id}/100`} className="w-full h-full object-cover" alt="Applicant" />
+                          </div>
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-black text-black truncate">
+                                {app.student?.name}
+                              </h3>
+                              <CheckCircle className="w-3.5 h-3.5 text-[#facc15] shrink-0" fill="currentColor" />
+                            </div>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
+                              {app.opportunity?.role}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                          {app.opportunity?.role}
-                        </p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border tracking-tighter ${
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border tracking-tighter ${
                             app.status === 'pending' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
                             app.status === 'shortlisted' ? 'bg-green-50 text-green-600 border-green-100' :
                             'bg-red-50 text-red-600 border-red-100'
@@ -322,43 +401,127 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
                             {app.status}
                           </span>
                         </div>
+
+                        {app.status === 'pending' && (
+                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => handleStatusChange(app.id, 'shortlisted')}
+                              className="flex-1 px-3 py-1.5 bg-black text-[#facc15] text-[8px] font-black uppercase tracking-widest rounded hover:scale-105 transition-all shadow-sm"
+                            >
+                              Shortlist
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(app.id, 'rejected')}
+                              className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-[8px] font-black uppercase tracking-widest rounded hover:scale-105 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      {app.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleStatusChange(app.id, 'shortlisted')}
-                            className="flex-1 md:flex-none px-6 py-2.5 bg-black text-[#facc15] text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-800 transition-all shadow-xl active:scale-95"
-                          >
-                            Shortlist
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(app.id, 'rejected')}
-                            className="flex-1 md:flex-none px-6 py-2.5 bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-200 transition-all shadow-md active:scale-95"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-400 hover:text-black transition-all shadow-sm">
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
 
-          {applications.length > 0 && (
-            <div className="p-6 bg-gray-50/50 border-t border-gray-100 text-center">
-              <button className="text-[10px] font-black text-gray-400 hover:text-black transition-colors uppercase tracking-widest">
-                Load Historical Matches
-              </button>
+            <button
+              onClick={() => fetchApplications()}
+              className="w-full p-3 text-center text-[9px] font-black text-gray-400 hover:text-black border-t border-gray-100 uppercase tracking-widest bg-gray-50/30 transition-colors"
+            >
+              Refresh Applicants
+            </button>
+          </div>
+
+          {/* AI MATCHED STUDENTS SECTION */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-black text-black uppercase tracking-tight flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-[#facc15]" /> AI Matched Students
+                </h2>
+                <span className="text-sm font-black text-[#facc15] bg-black px-3 py-1 rounded-lg">
+                  {aiMatches.length}
+                </span>
+              </div>
             </div>
-          )}
+
+            <div className="flex-1 overflow-y-auto max-h-[600px]">
+              {loadingAiMatches ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+                </div>
+              ) : aiMatches.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-sm font-black text-black mb-2">No AI Matches Yet</h3>
+                  <p className="text-xs text-gray-500 font-medium">AI-generated matches will appear here when students run analysis.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {aiMatches.map((match) => (
+                    <div key={match.id} className="p-4 hover:bg-gray-50/50 transition-all group">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                            <img src={`https://picsum.photos/seed/${match.student_id}/100`} className="w-full h-full object-cover" alt="Match" />
+                          </div>
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 justify-between">
+                              <h3 className="text-sm font-black text-black truncate">
+                                {match.student?.name}
+                              </h3>
+                              <span className="text-xs font-black text-[#facc15] shrink-0">
+                                {match.match_score}%
+                              </span>
+                            </div>
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
+                              {match.opportunity?.role}
+                            </p>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-gray-600 font-medium leading-snug">
+                          {match.reasoning}
+                        </p>
+
+                        {match.matched_skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {match.matched_skills.slice(0, 3).map((skill, idx) => (
+                              <span key={idx} className="px-2 py-0.5 bg-[#facc15]/10 text-[#facc15] text-[8px] font-black uppercase rounded-md">
+                                {skill}
+                              </span>
+                            ))}
+                            {match.matched_skills.length > 3 && (
+                              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[8px] font-black uppercase rounded-md">
+                                +{match.matched_skills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button className="flex-1 px-3 py-1.5 bg-black text-[#facc15] text-[8px] font-black uppercase tracking-widest rounded hover:scale-105 transition-all shadow-sm">
+                            Invite
+                          </button>
+                          <button className="px-3 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => fetchAiMatches()}
+              className="w-full p-3 text-center text-[9px] font-black text-gray-400 hover:text-black border-t border-gray-100 uppercase tracking-widest bg-gray-50/30 transition-colors"
+            >
+              Refresh Matches
+            </button>
+          </div>
         </div>
       )}
     </div>
