@@ -82,10 +82,11 @@ Deno.serve(async (req: Request) => {
     const headers = {
       Authorization: `Bearer ${serviceRoleKey}`,
       "Content-Type": "application/json",
+      apikey: serviceRoleKey,
     };
 
     const studentResponse = await fetch(
-      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}`,
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}&select=*`,
       {
         method: "GET",
         headers,
@@ -173,6 +174,21 @@ Deno.serve(async (req: Request) => {
         headers,
       }
     );
+
+    if (!opportunitiesResponse.ok) {
+      const errorText = await opportunitiesResponse.text();
+      console.error("Failed to fetch opportunities:", errorText);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch opportunities",
+          details: errorText
+        }),
+        {
+          status: opportunitiesResponse.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     const opportunities: Opportunity[] = await opportunitiesResponse.json();
 
