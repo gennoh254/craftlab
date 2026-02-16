@@ -85,7 +85,7 @@ Deno.serve(async (req: Request) => {
     };
 
     const studentResponse = await fetch(
-      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}&select=id,name,skills,skills_detailed,professional_summary,education,employment_history,contact_email,contact_phone,media_links,address`,
+      `${supabaseUrl}/rest/v1/profiles?id=eq.${studentId}`,
       {
         method: "GET",
         headers,
