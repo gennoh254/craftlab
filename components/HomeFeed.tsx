@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, Users, Briefcase, ChevronRight, Loader2, Check } from 'lucide-react';
 import { PostComposer } from './PostComposer';
 import { PostCard } from './PostCard';
-import { MOCK_OPPORTUNITIES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { supabase } from '../lib/supabase';
@@ -271,32 +270,8 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
         )}
       </div>
 
-      {/* RIGHT COLUMN: Opportunities */}
+      {/* RIGHT COLUMN: Networking */}
       <div className="lg:col-span-3 space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-           <h4 className="text-[10px] font-black text-black flex items-center gap-2 mb-4 uppercase tracking-widest">
-             <Briefcase className="w-3.5 h-3.5 text-[#facc15]" /> Hot Opportunities
-           </h4>
-           <div className="space-y-4">
-              {MOCK_OPPORTUNITIES.slice(0, 3).map((opp, i) => (
-                <div key={i} className="group border-b border-gray-100 last:border-0 pb-3 last:pb-0">
-                  <h5 className="text-[11px] font-black text-black group-hover:text-[#facc15] transition-colors cursor-pointer">{opp.role}</h5>
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{opp.orgName} • {opp.type}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[8px] font-black text-green-500 bg-green-50 px-1.5 rounded uppercase">{opp.matchScore}% Match</span>
-                    <ChevronRight className="w-3 h-3 text-gray-300 ml-auto group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-              ))}
-           </div>
-           <button 
-             onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-             className="w-full mt-3 py-2 text-[10px] font-black text-gray-400 hover:text-black border border-gray-200 rounded-lg uppercase tracking-widest transition-colors"
-           >
-             See all roles
-           </button>
-        </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
            <h4 className="text-[10px] font-black text-black flex items-center gap-2 mb-4 uppercase tracking-widest">
              <Users className="w-3.5 h-3.5 text-[#facc15]" /> Networking

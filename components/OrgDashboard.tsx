@@ -15,7 +15,6 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { PostCard } from './PostCard';
-import { MOCK_CANDIDATES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
@@ -147,7 +146,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   };
 
   // Logic: Limit to max 10 candidates
-  const candidates = MOCK_CANDIDATES.slice(0, 10);
+  const candidates = [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

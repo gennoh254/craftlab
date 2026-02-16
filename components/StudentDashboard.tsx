@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
-import { MOCK_CERTIFICATES } from '../constants';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
@@ -290,20 +289,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             <div className="space-y-6 pt-4 border-t border-gray-50 text-left">
               <div>
                 <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3 flex items-center gap-2">
-                   <Award className="w-4 h-4 text-[#facc15]" /> Top Qualifications
-                </h4>
-                <div className="space-y-2">
-                  {MOCK_CERTIFICATES.slice(0, 2).map(cert => (
-                    <div key={cert.id} className="text-[10px] font-black text-black flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#facc15]" />
-                      <span className="truncate">{cert.title}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div>
-                <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-3 flex items-center gap-2">
                    <Heart className="w-4 h-4 text-red-400" /> Interests
                 </h4>
                 <div className="flex flex-wrap gap-1">
@@ -332,25 +317,6 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
         </div>
 
         {/* Certificate Proofs Gallery */}
-        <div className="bg-white rounded-[2rem] shadow-xl border border-gray-200 p-6 space-y-6">
-          <h3 className="font-black text-black flex items-center gap-2 text-xs uppercase tracking-widest">
-            <Award className="w-5 h-5 text-[#facc15]" /> Verified Credentials
-          </h3>
-          <div className="space-y-4">
-            {MOCK_CERTIFICATES.map(cert => (
-              <div key={cert.id} className="relative group rounded-2xl overflow-hidden border-2 border-gray-50 bg-gray-50 aspect-[4/3] cursor-pointer shadow-sm">
-                <img src={cert.proofImageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute bottom-3 left-3 right-3">
-                  <p className="text-[10px] text-white font-black truncate uppercase">{cert.title}</p>
-                  <p className="text-[8px] text-[#facc15] font-black uppercase tracking-widest flex items-center gap-1 mt-1">
-                    <Check className="w-2.5 h-2.5" /> SECURE PROOF
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* CENTER COLUMN: Feed */}

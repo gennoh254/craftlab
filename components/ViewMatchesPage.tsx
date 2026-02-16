@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Target
 } from 'lucide-react';
-import { MOCK_CANDIDATES } from '../constants';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 
@@ -290,47 +289,21 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
       </div>
 
       {userRole === UserRole.STUDENT && (
-        <div className="flex gap-3 mb-8">
-          <button
-            onClick={() => setActiveTab('ANALYSIS')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'ANALYSIS'
-                ? 'bg-black text-[#facc15] shadow-xl'
-                : 'bg-white text-gray-400 border-2 border-gray-100 hover:border-gray-300'
-            }`}
-          >
-            <Zap className="w-4 h-4 inline mr-2" /> Run Analysis
-          </button>
-          <button
-            onClick={() => setActiveTab('RESULTS')}
-            className={`px-6 py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${
-              activeTab === 'RESULTS'
-                ? 'bg-black text-[#facc15] shadow-xl'
-                : 'bg-white text-gray-400 border-2 border-gray-100 hover:border-gray-300'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4 inline mr-2" /> Matched Opportunities ({matches.length})
-          </button>
-        </div>
+        <AnalysisSection
+          analyzing={analyzing}
+          analysisError={analysisError}
+          analysisSuccess={analysisSuccess}
+          profile={profile}
+          onRunAnalysis={runMatchingAnalysis}
+          onEditProfile={() => onNavigate('EDIT_PROFILE')}
+          matches={matches}
+          loading={loading}
+          onApply={() => onNavigate('OPPORTUNITIES')}
+        />
       )}
 
       {userRole === UserRole.STUDENT ? (
-        activeTab === 'ANALYSIS' ? (
-          <AnalysisSection
-            analyzing={analyzing}
-            analysisError={analysisError}
-            analysisSuccess={analysisSuccess}
-            profile={profile}
-            onRunAnalysis={runMatchingAnalysis}
-            onEditProfile={() => onNavigate('EDIT_PROFILE')}
-          />
-        ) : (
-          <ResultsSection
-            matches={matches}
-            loading={loading}
-            onApply={() => onNavigate('OPPORTUNITIES')}
-          />
-        )
+        <div></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CURRENT APPLICANTS SECTION */}
@@ -535,7 +508,10 @@ const AnalysisSection: React.FC<{
   profile: any;
   onRunAnalysis: () => void;
   onEditProfile: () => void;
-}> = ({ analyzing, analysisError, analysisSuccess, profile, onRunAnalysis, onEditProfile }) => {
+  matches: Match[];
+  loading: boolean;
+  onApply: () => void;
+}> = ({ analyzing, analysisError, analysisSuccess, profile, onRunAnalysis, onEditProfile, matches, loading, onApply }) => {
   const completionFields = [
     { name: 'Skills', complete: !!profile?.skills && Array.isArray(profile.skills) && profile.skills.length > 0 },
     { name: 'Professional Summary', complete: !!profile?.professional_summary && profile.professional_summary.length > 50 },
@@ -657,6 +633,71 @@ const AnalysisSection: React.FC<{
           </div>
         )}
       </div>
+
+      {matches.length > 0 && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-[#facc15]" />
+            <h2 className="text-2xl font-black text-black uppercase tracking-tight">Top Matches ({matches.length})</h2>
+          </div>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {matches.map((match) => (
+                <div key={match.id} className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover:shadow-2xl transition-all">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-black text-black uppercase tracking-tight mb-1 truncate">
+                          {match.opportunity?.role}
+                        </h3>
+                        <p className="text-sm text-gray-600 font-medium">
+                          {match.opportunity?.profiles?.name}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-3xl font-black text-[#facc15]">{match.match_score}%</div>
+                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Match</p>
+                      </div>
+                    </div>
+
+                    {match.matched_skills.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Matched Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                          {match.matched_skills.slice(0, 3).map((skill) => (
+                            <span key={skill} className="text-[9px] font-black bg-[#facc15]/10 text-[#facc15] px-3 py-1 rounded-lg border border-[#facc15]/30 uppercase">
+                              {skill}
+                            </span>
+                          ))}
+                          {match.matched_skills.length > 3 && (
+                            <span className="text-[9px] font-black bg-gray-100 text-gray-600 px-3 py-1 rounded-lg border border-gray-200 uppercase">
+                              +{match.matched_skills.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-sm text-gray-700 font-medium">{match.reasoning}</p>
+
+                    <button
+                      onClick={onApply}
+                      className="w-full py-3 bg-black text-[#facc15] font-black rounded-lg text-sm uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
+                    >
+                      View Opportunities
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
