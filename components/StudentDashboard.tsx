@@ -470,19 +470,37 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
 
             {matchedOpportunities.length > 0 && (
               <div className="space-y-3 pt-4 border-t border-white/10">
-                <h4 className="text-[10px] font-black text-[#facc15] uppercase tracking-widest">
-                  Top Matches
+                <h4 className="text-[10px] font-black text-[#facc15] uppercase tracking-widest flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" /> Top Matches
                 </h4>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
+                <div className="space-y-2 max-h-56 overflow-y-auto">
                   {matchedOpportunities.map(match => (
-                    <div key={match.id} className="bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer">
-                      <div className="flex items-start justify-between">
+                    <div key={match.id} className="bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-black text-white truncate">{match.opportunity?.role}</p>
+                          <p className="text-[9px] font-black text-white truncate group-hover:text-[#facc15] transition-colors">{match.opportunity?.role}</p>
                           <p className="text-[8px] text-gray-400 uppercase tracking-widest">{match.opportunity?.type}</p>
                         </div>
-                        <span className="ml-2 text-[10px] font-black text-[#facc15]">{match.match_score}%</span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-[10px] font-black text-[#facc15]">{Math.round(match.match_score)}%</span>
+                          <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#facc15] rounded-full"
+                              style={{ width: `${match.match_score}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
+                      {match.matched_skills && match.matched_skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {match.matched_skills.slice(0, 3).map((skill, idx) => (
+                            <span key={idx} className="text-[7px] px-1.5 py-0.5 bg-[#facc15]/20 text-[#facc15] rounded font-bold">{skill}</span>
+                          ))}
+                          {match.matched_skills.length > 3 && (
+                            <span className="text-[7px] px-1.5 py-0.5 text-gray-400">+{match.matched_skills.length - 3}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
