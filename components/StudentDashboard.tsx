@@ -434,11 +434,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
               </button>
             </div>
 
-            {matchedOpportunities.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-white/10">
-                <h4 className="text-[10px] font-black text-[#facc15] uppercase tracking-widest flex items-center gap-2">
-                  <Sparkles className="w-3 h-3" /> Top Matches
-                </h4>
+            <div className="space-y-3 pt-4 border-t border-white/10">
+              <h4 className="text-[10px] font-black text-[#facc15] uppercase tracking-widest flex items-center gap-2">
+                <Sparkles className="w-3 h-3" /> Top Matches
+              </h4>
+              {matchedOpportunities.length > 0 ? (
                 <div className="space-y-2 max-h-56 overflow-y-auto">
                   {matchedOpportunities.map(match => (
                     <div key={match.id} className="bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 transition-colors cursor-pointer group">
@@ -470,8 +470,12 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="bg-white/5 border border-white/10 p-4 rounded-xl text-center">
+                  <p className="text-[8px] text-gray-400 font-bold">Run AI Analysis above to find opportunities that match your skills</p>
+                </div>
+              )}
+            </div>
 
             <button
               onClick={() => onNavigate('ALL_OPPORTUNITIES')}
