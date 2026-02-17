@@ -102,7 +102,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
         id: post.id,
         authorId: post.author_id,
         authorName: post.profiles.name,
-        authorAvatar: post.profiles.avatar_url || `https://picsum.photos/seed/${post.author_id}/100`,
+        authorAvatar: post.profiles.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="50" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
         authorRole: post.profiles.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION,
         authorVerified: true,
         type: post.type,
@@ -143,7 +143,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
             id: u.id,
             name: u.name,
             role: u.user_type === 'STUDENT' ? 'Student' : 'Organization',
-            avatar: u.avatar_url || `https://picsum.photos/seed/${u.id}/40`,
+            avatar: u.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
             isFollowing: !!isFollowing
           };
         })
@@ -198,7 +198,7 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
           <div className="h-14 bg-black"></div>
           <div className="px-4 pb-4 -mt-8 flex flex-col items-center text-center">
             <img
-              src={profile?.avatar_url || `https://picsum.photos/seed/${profile?.id}/100`}
+              src={profile?.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="50" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E'}
               className="w-16 h-16 rounded-xl border-4 border-white object-cover bg-white mb-2"
               alt="Avatar"
             />

@@ -60,7 +60,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
         created_at,
         user_id,
         profiles:user_id (
-          name
+          name,
+          avatar_url
         )
       `)
       .eq('post_id', post.id)
@@ -71,6 +72,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
         id: c.id,
         userId: c.user_id,
         userName: c.profiles.name,
+        userAvatar: c.profiles.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
         content: c.content,
         timestamp: formatTimestamp(c.created_at)
       }));
@@ -193,9 +195,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
         ) : (
           <div
             onClick={() => onViewPost?.(post)}
-            className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 aspect-[16/9] flex flex-col items-center justify-center gap-3 group cursor-pointer relative shadow-inner"
+            className="rounded-3xl overflow-hidden border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 aspect-[16/9] flex flex-col items-center justify-center gap-3 group cursor-pointer relative shadow-inner"
           >
-            <img src={`https://picsum.photos/seed/${post.id}/800/450`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700" alt="Post content" />
+            <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-[#facc15] to-transparent"></div>
             <div className="z-10 bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 scale-95 group-hover:scale-100 transition-all">
               <Link className="w-4 h-4 text-[#facc15]" /> View Showcase Detail
             </div>
@@ -251,7 +253,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
             ) : (
               comments.map(comment => (
                 <div key={comment.id} className="flex gap-4">
-                  <img src={`https://picsum.photos/seed/${comment.userId}/40`} className="w-8 h-8 rounded-xl shrink-0 border border-gray-100" alt="User" />
+                  <img src={comment.userAvatar || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E'} className="w-8 h-8 rounded-xl shrink-0 border border-gray-100 object-cover" alt="User" />
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-1">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[10px] font-black text-black uppercase tracking-tight">{comment.userName}</span>
