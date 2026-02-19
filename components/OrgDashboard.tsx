@@ -41,6 +41,15 @@ interface DbPost {
   };
 }
 
+interface Candidate {
+  id: string;
+  name: string;
+  avatar: string;
+  institution: string;
+  score: number;
+  seeking: string[];
+}
+
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
 
@@ -69,11 +78,14 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchPosts();
     fetchFollowCounts();
+    fetchMatchedStudents();
   }, []);
 
   const fetchFollowCounts = async () => {
@@ -91,6 +103,52 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
 
     setFollowers(followerCount || 0);
     setFollowing(followingCount || 0);
+  };
+
+  const fetchMatchedStudents = async () => {
+    if (!user || !profile) return;
+
+    setLoadingMatches(true);
+    try {
+      const { data: matches } = await supabase
+        .from('student_matches')
+        .select(`
+          id,
+          match_score,
+          matched_skills,
+          student_id,
+          opportunity_id,
+          opportunities (
+            org_id
+          ),
+          profiles:student_id (
+            id,
+            name,
+            avatar_url,
+            professional_summary,
+            skills_detailed
+          )
+        `)
+        .eq('opportunities.org_id', user.id)
+        .order('match_score', { ascending: false })
+        .limit(10);
+
+      if (matches) {
+        const formattedCandidates: Candidate[] = matches.map((match: any) => ({
+          id: match.student_id,
+          name: match.profiles?.name || 'Unknown',
+          avatar: match.student_id,
+          institution: match.profiles?.professional_summary?.substring(0, 30) || 'No summary',
+          score: match.match_score,
+          seeking: match.matched_skills || []
+        }));
+        setCandidates(formattedCandidates);
+      }
+    } catch (error) {
+      console.error('Error fetching matched students:', error);
+    } finally {
+      setLoadingMatches(false);
+    }
   };
 
   const fetchPosts = async () => {
@@ -144,9 +202,6 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
     if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString();
   };
-
-  // Logic: Limit to max 10 candidates
-  const candidates = [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -299,45 +354,58 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           </div>
 
           <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto scrollbar-hide">
-             {candidates.map((candidate) => (
-               <div key={candidate.id} className="group relative border border-gray-100 rounded-xl p-3 hover:shadow-md transition-all bg-white">
-                 <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <img src={`https://picsum.photos/seed/${candidate.avatar}/50`} className="w-10 h-10 rounded-lg object-cover" alt="Profile" />
-                      <div>
-                        <p className="text-xs font-black text-black leading-tight">{candidate.name}</p>
-                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{candidate.institution}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                       <p className="text-xs font-black text-[#facc15]">{candidate.score}%</p>
-                    </div>
-                 </div>
-
-                 {/* Seeking Tags */}
-                 <div className="flex flex-wrap gap-1 mb-3">
-                    {candidate.seeking.map(s => (
-                      <span key={s} className="text-[8px] font-black uppercase tracking-tighter bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">{s}</span>
-                    ))}
-                 </div>
-
-                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => onNavigate('MESSAGES')}
-                      className="flex-1 py-1.5 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded shadow-sm hover:scale-105 transition-all"
-                    >
-                      Invite
-                    </button>
-                    {/* New Buttons: Shortlist & Reject */}
-                    <button className="px-2 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100" title="Shortlist">
-                      <CheckCircle className="w-3.5 h-3.5" />
-                    </button>
-                    <button className="px-2 py-1.5 bg-red-50 text-red-400 rounded hover:bg-red-100 transition-colors border border-red-100" title="Reject">
-                      <XCircle className="w-3.5 h-3.5" />
-                    </button>
-                 </div>
+             {loadingMatches ? (
+               <div className="flex items-center justify-center py-8">
+                 <Loader2 className="w-6 h-6 text-[#facc15] animate-spin" />
                </div>
-             ))}
+             ) : candidates.length === 0 ? (
+               <div className="text-center py-8">
+                 <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">No AI matches found yet</p>
+               </div>
+             ) : (
+               candidates.map((candidate) => (
+                 <div key={candidate.id} className="group relative border border-gray-100 rounded-xl p-3 hover:shadow-md transition-all bg-white">
+                   <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <img src={`https://picsum.photos/seed/${candidate.avatar}/50`} className="w-10 h-10 rounded-lg object-cover" alt="Profile" />
+                        <div>
+                          <p className="text-xs font-black text-black leading-tight">{candidate.name}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter truncate max-w-[120px]">{candidate.institution}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                         <p className="text-xs font-black text-[#facc15]">{candidate.score}%</p>
+                      </div>
+                   </div>
+
+                   {/* Matched Skills Tags */}
+                   <div className="flex flex-wrap gap-1 mb-3">
+                      {candidate.seeking.slice(0, 3).map(s => (
+                        <span key={s} className="text-[8px] font-black uppercase tracking-tighter bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">{s}</span>
+                      ))}
+                      {candidate.seeking.length > 3 && (
+                        <span className="text-[8px] font-black uppercase tracking-tighter bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">+{candidate.seeking.length - 3}</span>
+                      )}
+                   </div>
+
+                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => onNavigate('MESSAGES')}
+                        className="flex-1 py-1.5 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded shadow-sm hover:scale-105 transition-all"
+                      >
+                        Invite
+                      </button>
+                      {/* New Buttons: Shortlist & Reject */}
+                      <button className="px-2 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100" title="Shortlist">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                      </button>
+                      <button className="px-2 py-1.5 bg-red-50 text-red-400 rounded hover:bg-red-100 transition-colors border border-red-100" title="Reject">
+                        <XCircle className="w-3.5 h-3.5" />
+                      </button>
+                   </div>
+                 </div>
+               ))
+             )}
           </div>
           
           <button 
