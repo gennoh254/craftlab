@@ -195,6 +195,7 @@ Deno.serve(async (req: Request) => {
     const matches: Match[] = [];
 
     let studentSkills: string[] = [];
+    let studentSkillsWithDescriptions: SkillEntry[] = [];
     const proficiencyWeights: Record<string, number> = {
       'Expert': 1.3,
       'Advanced': 1.2,
@@ -204,24 +205,49 @@ Deno.serve(async (req: Request) => {
 
     if (student.skills_detailed != null && Array.isArray(student.skills_detailed) && student.skills_detailed.length > 0) {
       studentSkills = student.skills_detailed.map((s: SkillEntry) => s?.name?.toLowerCase().trim() || '').filter(Boolean);
+      studentSkillsWithDescriptions = student.skills_detailed;
     } else if (student.skills != null && Array.isArray(student.skills)) {
       studentSkills = student.skills.map((s: string) => s?.toLowerCase().trim() || '').filter(Boolean);
     }
 
+    const studentSummary = (student.professional_summary || '').toLowerCase();
+
     for (const opp of opportunities) {
       const oppSkills = opp.skills_required
-        ? opp.skills_required.split(",").map((s) => s.toLowerCase().trim())
+        ? opp.skills_required.split(",").map((s) => s.toLowerCase().trim()).filter(Boolean)
         : [];
+
+      const oppDescription = (opp.description || '').toLowerCase();
+      const oppRole = (opp.role || '').toLowerCase();
 
       const matchedSkills: string[] = [];
       let weightedSkillScore = 0;
+      let summaryMatchBonus = 0;
+      const matchReasons: string[] = [];
 
       for (const studentSkill of studentSkills) {
-        const matchedOppSkill = oppSkills.find((oppSkill) =>
-          oppSkill.includes(studentSkill) || studentSkill.includes(oppSkill)
-        );
+        let isMatched = false;
+        let matchType = '';
 
-        if (matchedOppSkill) {
+        const oppCombined = `${oppSkills.join(' ')} ${oppDescription} ${oppRole}`;
+
+        if (oppSkills.length > 0) {
+          const exactSkillMatch = oppSkills.find((oppSkill) =>
+            oppSkill.includes(studentSkill) || studentSkill.includes(oppSkill)
+          );
+
+          if (exactSkillMatch) {
+            isMatched = true;
+            matchType = 'required';
+          }
+        }
+
+        if (!isMatched && oppCombined.includes(studentSkill)) {
+          isMatched = true;
+          matchType = 'description';
+        }
+
+        if (isMatched) {
           matchedSkills.push(studentSkill);
 
           if (student.skills_detailed != null && Array.isArray(student.skills_detailed)) {
@@ -241,35 +267,58 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      const maxPossibleScore = oppSkills.length * 1.3;
-      const skillMatchRatio = maxPossibleScore > 0 ? Math.min(weightedSkillScore / maxPossibleScore, 1.0) : 0;
+      if (matchedSkills.length > 0) {
+        const maxPossibleScore = oppSkills.length > 0 ? oppSkills.length * 1.3 : matchedSkills.length * 1.0;
+        summaryMatchBonus = matchedSkills.length > 0 ? 10 : 0;
+      }
+
+      const skillMatchRatio = weightedSkillScore > 0 ? Math.min(weightedSkillScore / (oppSkills.length * 1.3 > 0 ? oppSkills.length * 1.3 : 1.0), 1.0) : 0;
+
+      let summaryContentScore = 0;
+      if (studentSummary.length > 0 && oppDescription.length > 0) {
+        const summaryWords = studentSummary.split(/\s+/).filter(w => w.length > 3);
+        const matchedSummaryWords = summaryWords.filter(word => oppCombined.includes(word));
+        if (matchedSummaryWords.length > 0) {
+          summaryContentScore = Math.min((matchedSummaryWords.length / summaryWords.length) * 20, 20);
+        }
+      }
 
       const educationScore = student.education && student.education.length > 0 ? 20 : 0;
       const employmentScore = student.employment_history && student.employment_history.length > 0 ? 15 : 0;
-      const summaryScore = student.professional_summary && student.professional_summary.length > 50 ? 15 : 0;
+      const basicSummaryScore = student.professional_summary && student.professional_summary.length > 50 ? 5 : 0;
 
-      const matchScore = Math.round((skillMatchRatio * 50 + educationScore + employmentScore + summaryScore));
+      const matchScore = Math.round((skillMatchRatio * 40 + educationScore + employmentScore + basicSummaryScore + summaryContentScore + summaryMatchBonus));
 
-      if (matchScore >= 40) {
-        let reasoning = `Matched ${matchedSkills.length} of ${oppSkills.length} required skills for ${opp.role}`;
+      if (matchScore >= 30) {
+        let reasoning = '';
 
-        if (student.skills_detailed != null && Array.isArray(student.skills_detailed) && matchedSkills.length > 0) {
-          const expertSkills = matchedSkills.filter(skill => {
-            const detail = student.skills_detailed!.find((s: SkillEntry) =>
-              s?.name?.toLowerCase().trim() === skill
-            );
-            return detail && detail.proficiency && (detail.proficiency === 'Expert' || detail.proficiency === 'Advanced');
-          });
+        if (matchedSkills.length > 0) {
+          reasoning = `Matched ${matchedSkills.length} skill${matchedSkills.length !== 1 ? 's' : ''}: ${matchedSkills.slice(0, 3).join(', ')}${matchedSkills.length > 3 ? `, +${matchedSkills.length - 3} more` : ''}`;
 
-          if (expertSkills.length > 0) {
-            reasoning += ` (Including ${expertSkills.length} advanced/expert level skills)`;
+          if (student.skills_detailed != null && Array.isArray(student.skills_detailed) && matchedSkills.length > 0) {
+            const expertSkills = matchedSkills.filter(skill => {
+              const detail = student.skills_detailed!.find((s: SkillEntry) =>
+                s?.name?.toLowerCase().trim() === skill
+              );
+              return detail && detail.proficiency && (detail.proficiency === 'Expert' || detail.proficiency === 'Advanced');
+            });
+
+            if (expertSkills.length > 0) {
+              reasoning += `. ${expertSkills.length} advanced/expert level skill${expertSkills.length !== 1 ? 's' : ''}`;
+            }
           }
+        } else {
+          reasoning = `Profile aligns with ${opp.role} opportunity`;
+        }
+
+        if (summaryContentScore > 5) {
+          reasoning += `. Your experience matches the opportunity description`;
         }
 
         matches.push({
           opportunity_id: opp.id,
           student_id: studentId,
-          match_score: matchScore,
+          match_score: Math.max(matchScore, 30),
           matched_skills: matchedSkills,
           reasoning: reasoning,
         });
