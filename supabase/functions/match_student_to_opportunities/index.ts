@@ -219,17 +219,14 @@ Deno.serve(async (req: Request) => {
 
       const oppDescription = (opp.description || '').toLowerCase();
       const oppRole = (opp.role || '').toLowerCase();
+      const oppCombined = `${oppSkills.join(' ')} ${oppDescription} ${oppRole}`;
 
       const matchedSkills: string[] = [];
       let weightedSkillScore = 0;
       let summaryMatchBonus = 0;
-      const matchReasons: string[] = [];
 
       for (const studentSkill of studentSkills) {
         let isMatched = false;
-        let matchType = '';
-
-        const oppCombined = `${oppSkills.join(' ')} ${oppDescription} ${oppRole}`;
 
         if (oppSkills.length > 0) {
           const exactSkillMatch = oppSkills.find((oppSkill) =>
@@ -238,13 +235,11 @@ Deno.serve(async (req: Request) => {
 
           if (exactSkillMatch) {
             isMatched = true;
-            matchType = 'required';
           }
         }
 
         if (!isMatched && oppCombined.includes(studentSkill)) {
           isMatched = true;
-          matchType = 'description';
         }
 
         if (isMatched) {
@@ -268,8 +263,7 @@ Deno.serve(async (req: Request) => {
       }
 
       if (matchedSkills.length > 0) {
-        const maxPossibleScore = oppSkills.length > 0 ? oppSkills.length * 1.3 : matchedSkills.length * 1.0;
-        summaryMatchBonus = matchedSkills.length > 0 ? 10 : 0;
+        summaryMatchBonus = 10;
       }
 
       const skillMatchRatio = weightedSkillScore > 0 ? Math.min(weightedSkillScore / (oppSkills.length * 1.3 > 0 ? oppSkills.length * 1.3 : 1.0), 1.0) : 0;
