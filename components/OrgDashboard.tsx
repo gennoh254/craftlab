@@ -110,7 +110,29 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
 
     setLoadingMatches(true);
     try {
-      const { data: matches } = await supabase
+      // First, fetch all opportunities posted by this organization
+      const { data: opportunities, error: oppError } = await supabase
+        .from('opportunities')
+        .select('id')
+        .eq('org_id', user.id);
+
+      if (oppError) {
+        console.error('Error fetching opportunities:', oppError);
+        setLoadingMatches(false);
+        return;
+      }
+
+      if (!opportunities || opportunities.length === 0) {
+        setCandidates([]);
+        setLoadingMatches(false);
+        return;
+      }
+
+      // Extract opportunity IDs
+      const opportunityIds = opportunities.map((opp: any) => opp.id);
+
+      // Fetch matches for these opportunities
+      const { data: matches, error: matchError } = await supabase
         .from('student_matches')
         .select(`
           id,
@@ -118,8 +140,11 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           matched_skills,
           student_id,
           opportunity_id,
+          reasoning,
           opportunities (
-            org_id
+            id,
+            role,
+            type
           ),
           profiles:student_id (
             id,
@@ -129,9 +154,15 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
             skills_detailed
           )
         `)
-        .eq('opportunities.org_id', user.id)
+        .in('opportunity_id', opportunityIds)
         .order('match_score', { ascending: false })
         .limit(10);
+
+      if (matchError) {
+        console.error('Error fetching matches:', matchError);
+        setLoadingMatches(false);
+        return;
+      }
 
       if (matches) {
         const formattedCandidates: Candidate[] = matches.map((match: any) => ({
