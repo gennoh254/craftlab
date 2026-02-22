@@ -10,7 +10,8 @@ import {
   Link,
   Send,
   Paperclip,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { Post, UserRole, Comment } from '../types';
 import { supabase } from '../lib/supabase';
@@ -20,9 +21,11 @@ interface PostCardProps {
   post: Post;
   isOrgView?: boolean;
   onViewPost?: (post: Post) => void;
+  onDelete?: (postId: string) => void;
+  isOwnPost?: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, isOwnPost }) => {
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -30,6 +33,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
   const [likesCount, setLikesCount] = useState(post.likes);
   const [comments, setComments] = useState<Comment[]>(post.comments);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -137,6 +142,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
     return date.toLocaleDateString();
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    setIsDeleting(true);
+    try {
+      onDelete?.(post.id);
+    } finally {
+      setIsDeleting(false);
+      setShowMoreMenu(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
       <div className="p-6 flex items-center justify-between">
@@ -161,7 +177,33 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost }) => {
             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{post.timestamp}</p>
           </div>
         </div>
-        <button className="text-gray-300 hover:text-black transition-colors p-2"><MoreHorizontal className="w-6 h-6" /></button>
+        <div className="relative">
+          <button
+            onClick={() => setShowMoreMenu(!showMoreMenu)}
+            className="text-gray-300 hover:text-black transition-colors p-2"
+          >
+            <MoreHorizontal className="w-6 h-6" />
+          </button>
+          {showMoreMenu && isOwnPost && (
+            <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full px-4 py-2 text-left text-red-500 hover:bg-red-50 flex items-center gap-2 font-bold text-sm rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" /> Delete Post
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="px-6 pb-6 space-y-4">

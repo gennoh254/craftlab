@@ -11,12 +11,14 @@ import PostOpportunityPage from './components/PostOpportunityPage';
 import ViewMatchesPage from './components/ViewMatchesPage';
 import OpportunitiesPage from './components/OpportunitiesPage';
 import PostDetailPage from './components/PostDetailPage';
+import MyFeed from './components/MyFeed';
 import AuthPage from './components/AuthPage';
 import { UserRole, Post } from './types';
 import { useAuth } from './lib/auth';
 
 export type ViewState =
   | 'HOME'
+  | 'MY_FEED'
   | 'DASHBOARD'
   | 'NETWORK'
   | 'JOBS'
@@ -61,6 +63,8 @@ const App: React.FC = () => {
     switch (activeView) {
       case 'HOME':
         return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
+      case 'MY_FEED':
+        return <MyFeed userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
       case 'DASHBOARD':
         return currentUserRole === UserRole.STUDENT ? (
           <StudentDashboard onNavigate={setActiveView} />
