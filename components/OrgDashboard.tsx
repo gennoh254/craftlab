@@ -20,6 +20,7 @@ import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import FollowersModal from './FollowersModal';
 
 interface OrgDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -82,6 +83,8 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState<'followers' | 'following'>('followers');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -255,6 +258,27 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
     }
   };
 
+  const sendInviteMessage = async (studentId: string, studentName: string) => {
+    if (!user || !profile) return;
+
+    try {
+      await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: studentId,
+          content: `Hello ${studentName}, you have been selected for an opportunity at ${profile.name}. We would love to discuss this opportunity with you further.`
+        });
+    } catch (error) {
+      console.error('Error sending invite message:', error);
+    }
+  };
+
+  const handleInviteCandidate = async (candidate: Candidate) => {
+    await sendInviteMessage(candidate.id, candidate.name);
+    onNavigate('INBOX');
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       
@@ -280,14 +304,26 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
             </p>
 
             <div className="flex justify-around items-center gap-4 py-3 border-t border-b border-gray-100">
-              <div className="text-center">
+              <button
+                onClick={() => {
+                  setFollowModalType('followers');
+                  setShowFollowersModal(true);
+                }}
+                className="text-center hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
+              >
                 <p className="text-xl font-black text-black">{followers}</p>
                 <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Followers</p>
-              </div>
-              <div className="text-center">
+              </button>
+              <button
+                onClick={() => {
+                  setFollowModalType('following');
+                  setShowFollowersModal(true);
+                }}
+                className="text-center hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
+              >
                 <p className="text-xl font-black text-black">{following}</p>
                 <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Following</p>
-              </div>
+              </button>
             </div>
 
             <div className="space-y-2 pt-2">
@@ -466,13 +502,16 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
 
                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => onNavigate('MESSAGES')}
+                        onClick={() => handleInviteCandidate(candidate)}
                         className="flex-1 py-1.5 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded shadow-sm hover:scale-105 transition-all"
                       >
                         Invite
                       </button>
-                      {/* New Buttons: Shortlist & Reject */}
-                      <button className="px-2 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100" title="Shortlist">
+                      <button
+                        onClick={() => handleInviteCandidate(candidate)}
+                        className="px-2 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100"
+                        title="Shortlist"
+                      >
                         <CheckCircle className="w-3.5 h-3.5" />
                       </button>
                       <button className="px-2 py-1.5 bg-red-50 text-red-400 rounded hover:bg-red-100 transition-colors border border-red-100" title="Reject">
@@ -512,6 +551,11 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        type={followModalType}
+      />
     </div>
   );
 };

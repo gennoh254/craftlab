@@ -24,6 +24,7 @@ import { Trash2 } from 'lucide-react';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
+import FollowersModal from './FollowersModal';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -78,6 +79,8 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
   const [following, setFollowing] = useState(0);
   const [matchError, setMatchError] = useState('');
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [followModalType, setFollowModalType] = useState<'followers' | 'following'>('followers');
 
   useEffect(() => {
     fetchPosts();
@@ -289,14 +292,26 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             )}
 
             <div className="flex justify-around items-center gap-4 pt-4 pb-4 border-b border-gray-100">
-              <div className="text-center">
+              <button
+                onClick={() => {
+                  setFollowModalType('followers');
+                  setShowFollowersModal(true);
+                }}
+                className="text-center hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
+              >
                 <p className="text-2xl font-black text-black">{followers}</p>
                 <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Followers</p>
-              </div>
-              <div className="text-center">
+              </button>
+              <button
+                onClick={() => {
+                  setFollowModalType('following');
+                  setShowFollowersModal(true);
+                }}
+                className="text-center hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors"
+              >
                 <p className="text-2xl font-black text-black">{following}</p>
                 <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Following</p>
-              </div>
+              </button>
             </div>
 
             <div className="space-y-6 pt-4 border-t border-gray-50 text-left">
@@ -335,29 +350,14 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
       {/* CENTER COLUMN: Feed */}
       <div className="lg:col-span-6 space-y-8">
         <div className="bg-white p-8 rounded-[2rem] shadow-xl border border-gray-200">
-           <div className="flex items-center justify-between mb-8">
+           <div className="flex items-center justify-between">
              <h2 className="text-xl font-black text-black uppercase tracking-tight">Recruiter Insights</h2>
-             <button 
+             <button
                onClick={() => onNavigate('CREATE_POST')}
                className="flex items-center gap-2 px-6 py-3 bg-black text-[#facc15] font-black rounded-2xl text-xs shadow-2xl hover:scale-105 active:scale-95 transition-all"
               >
                 <Plus className="w-4 h-4" /> Post Update
              </button>
-           </div>
-           
-           <div className="grid grid-cols-3 gap-6 text-center">
-              <div className="p-5 bg-gray-50 rounded-2xl border-2 border-gray-100">
-                <p className="text-[10px] text-gray-400 font-black uppercase mb-1 tracking-widest">Impact</p>
-                <p className="text-3xl font-black text-black">2.4k</p>
-              </div>
-              <div className="p-5 bg-gray-50 rounded-2xl border-2 border-gray-100">
-                <p className="text-[10px] text-gray-400 font-black uppercase mb-1 tracking-widest">Syncs</p>
-                <p className="text-3xl font-black text-black">14</p>
-              </div>
-              <div className="p-5 bg-gray-50 rounded-2xl border-2 border-gray-100">
-                <p className="text-[10px] text-gray-400 font-black uppercase mb-1 tracking-widest">CV Pulls</p>
-                <p className="text-3xl font-black text-black">32</p>
-              </div>
            </div>
         </div>
 
@@ -522,6 +522,12 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
           </div>
         </div>
       </div>
+
+      <FollowersModal
+        isOpen={showFollowersModal}
+        onClose={() => setShowFollowersModal(false)}
+        type={followModalType}
+      />
     </div>
   );
 };

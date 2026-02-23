@@ -274,6 +274,26 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
     }
   };
 
+  const sendInviteMessage = async (studentId: string, studentName: string) => {
+    if (!user || !profile) return;
+
+    try {
+      await supabase
+        .from('messages')
+        .insert({
+          sender_id: user.id,
+          recipient_id: studentId,
+          content: `Hello ${studentName}, you have been selected for an opportunity at ${profile.name}. We would love to discuss this opportunity with you further.`
+        });
+    } catch (error) {
+      console.error('Error sending invite message:', error);
+    }
+  };
+
+  const handleInviteStudent = async (studentId: string, studentName: string) => {
+    await sendInviteMessage(studentId, studentName);
+  };
+
   return (
     <div className="max-w-6xl mx-auto pb-20">
       <div className="flex items-center justify-between mb-8">
@@ -474,10 +494,17 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
                         )}
 
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="flex-1 px-3 py-1.5 bg-black text-[#facc15] text-[8px] font-black uppercase tracking-widest rounded hover:scale-105 transition-all shadow-sm">
+                          <button
+                            onClick={() => handleInviteStudent(match.student_id, match.student?.name || 'Student')}
+                            className="flex-1 px-3 py-1.5 bg-black text-[#facc15] text-[8px] font-black uppercase tracking-widest rounded hover:scale-105 transition-all shadow-sm"
+                          >
                             Invite
                           </button>
-                          <button className="px-3 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100">
+                          <button
+                            onClick={() => handleInviteStudent(match.student_id, match.student?.name || 'Student')}
+                            className="px-3 py-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors border border-green-100"
+                            title="Shortlist"
+                          >
                             <CheckCircle className="w-3.5 h-3.5" />
                           </button>
                         </div>
