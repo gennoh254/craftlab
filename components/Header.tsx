@@ -8,8 +8,7 @@ import {
   CheckCircle,
   ChevronDown,
   LogOut,
-  Briefcase,
-  FileText
+  Briefcase
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
@@ -31,7 +30,6 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
   };
   const navItems = [
     { id: 'HOME', label: 'Home', icon: Home },
-    { id: 'MY_FEED', label: 'My Feed', icon: FileText },
     { id: 'ALL_OPPORTUNITIES', label: 'Opportunities', icon: Briefcase },
     { id: 'INBOX', label: 'Inbox', icon: MessageSquare },
     { id: 'DASHBOARD', label: 'Me', icon: User },

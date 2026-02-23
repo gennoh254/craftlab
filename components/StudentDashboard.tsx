@@ -20,6 +20,7 @@ import {
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
 import { UserRole, Post } from '../types';
+import { Trash2 } from 'lucide-react';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
@@ -68,7 +69,6 @@ interface MatchedOpportunity {
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
   const { profile, user } = useAuth();
-  const [activeFeedTab, setActiveFeedTab] = useState('Your Posts');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [matchedOpportunities, setMatchedOpportunities] = useState<MatchedOpportunity[]>([]);
@@ -77,12 +77,13 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
   const [matchError, setMatchError] = useState('');
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPosts();
     fetchFollowCounts();
     fetchMatchedOpportunities();
-  }, [activeFeedTab, user]);
+  }, [user]);
 
   const fetchFollowCounts = async () => {
     if (!user) return;
@@ -105,7 +106,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
     if (!user) return;
 
     setLoading(true);
-    let query = supabase
+    const { data } = await supabase
       .from('posts')
       .select(`
         *,
@@ -114,15 +115,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
           user_type,
           avatar_url
         )
-      `);
-
-    if (activeFeedTab === 'Your Posts') {
-      query = query.eq('author_id', user.id);
-    } else {
-      query = query.eq('visibility', 'public');
-    }
-
-    const { data } = await query.order('created_at', { ascending: false });
+      `)
+      .eq('author_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (data) {
       const formattedPosts: Post[] = data.map((post: DbPost) => ({
@@ -243,6 +238,24 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+
+    setDeletingPostId(postId);
+    try {
+      await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      setPosts(posts.filter(p => p.id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
@@ -349,16 +362,10 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
         </div>
 
         <div className="space-y-6">
-          <div className="flex gap-8 border-b-2 border-gray-100">
-            {['Your Posts', 'Community Feed'].map(tab => (
-              <button 
-                key={tab}
-                onClick={() => setActiveFeedTab(tab)}
-                className={`text-[11px] font-black uppercase tracking-widest pb-4 transition-all border-b-4 ${activeFeedTab === tab ? 'border-[#facc15] text-black' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gray-200"></div>
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">My Feed</span>
+            <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
           {loading ? (
@@ -367,16 +374,37 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             </div>
           ) : posts.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-              <p className="text-sm font-bold text-gray-500">
-                {activeFeedTab === 'Your Posts'
-                  ? 'No posts yet. Share your first update!'
-                  : 'No community posts available.'}
-              </p>
+              <p className="text-sm font-bold text-gray-500 mb-4">No posts yet. Share your first update!</p>
+              <button
+                onClick={() => onNavigate('CREATE_POST')}
+                className="px-6 py-2 bg-black text-[#facc15] rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors uppercase tracking-widest"
+              >
+                Create Your First Post
+              </button>
             </div>
           ) : (
             <div className="space-y-8">
               {posts.map(post => (
-                <PostCard key={post.id} post={post} onViewPost={onViewPost} />
+                <div key={post.id} className="relative">
+                  <PostCard
+                    post={post}
+                    onViewPost={onViewPost}
+                    onDelete={handleDeletePost}
+                    isOwnPost={true}
+                  />
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    disabled={deletingPostId === post.id}
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    title="Delete post"
+                  >
+                    {deletingPostId === post.id ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-6 h-6" />
+                    )}
+                  </button>
+                </div>
               ))}
             </div>
           )}

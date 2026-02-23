@@ -12,7 +12,8 @@ import {
   Clock,
   Briefcase,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { UserRole, Post } from '../types';
@@ -80,6 +81,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const [following, setFollowing] = useState(0);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -183,6 +185,8 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   };
 
   const fetchPosts = async () => {
+    if (!user) return;
+
     setLoading(true);
     const { data } = await supabase
       .from('posts')
@@ -194,9 +198,8 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           avatar_url
         )
       `)
-      .eq('visibility', 'public')
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .eq('author_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (data) {
       const formattedPosts: Post[] = data.map((post: DbPost) => ({
@@ -232,6 +235,24 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+
+    setDeletingPostId(postId);
+    try {
+      await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      setPosts(posts.filter(p => p.id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    } finally {
+      setDeletingPostId(null);
+    }
   };
 
   return (
@@ -343,7 +364,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
 
         <div className="flex items-center gap-4 py-2">
           <div className="h-px flex-1 bg-gray-200"></div>
-          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">Live Community Feed</span>
+          <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">My Feed</span>
           <div className="h-px flex-1 bg-gray-200"></div>
         </div>
 
@@ -353,12 +374,36 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           </div>
         ) : posts.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <p className="text-sm font-bold text-gray-500">No posts in the community feed yet.</p>
+            <p className="text-sm font-bold text-gray-500 mb-4">You haven't posted anything yet.</p>
+            <button
+              onClick={() => onNavigate('CREATE_POST')}
+              className="px-6 py-2 bg-black text-[#facc15] rounded-lg font-bold text-sm hover:bg-gray-800 transition-colors uppercase tracking-widest"
+            >
+              Create Your First Post
+            </button>
           </div>
         ) : (
           <div className="space-y-6">
             {posts.map(post => (
-              <PostCard key={post.id} post={post} isOrgView />
+              <div key={post.id} className="relative">
+                <PostCard
+                  post={post}
+                  onDelete={handleDeletePost}
+                  isOwnPost={true}
+                />
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  disabled={deletingPostId === post.id}
+                  className="absolute top-6 right-6 p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                  title="Delete post"
+                >
+                  {deletingPostId === post.id ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-6 h-6" />
+                  )}
+                </button>
+              </div>
             ))}
           </div>
         )}
