@@ -137,7 +137,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
         likes: post.likes_count,
         comments: [],
         timestamp: formatTimestamp(post.created_at),
-        isPublic: post.visibility === 'public'
+        isPublic: post.visibility === 'public',
+        mediaUrl: (post as any).media_url || undefined,
+        mediaType: (post as any).media_type as 'image' | 'video' | 'file' | undefined
       }));
       setPosts(formattedPosts);
     }

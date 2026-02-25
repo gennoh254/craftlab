@@ -212,7 +212,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
           {post.content}
         </p>
         
-        {post.mediaUrl ? (
+        {post.mediaUrl && (
           <div className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 group relative shadow-inner">
             {post.mediaType === 'image' ? (
               <img src={post.mediaUrl} alt="Post media" className="w-full max-h-96 object-cover group-hover:opacity-90 transition-opacity duration-300" />
@@ -233,16 +233,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
                 <Link className="w-4 h-4 text-[#facc15]" /> View Detail
               </div>
             </button>
-          </div>
-        ) : (
-          <div
-            onClick={() => onViewPost?.(post)}
-            className="rounded-3xl overflow-hidden border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 aspect-[16/9] flex flex-col items-center justify-center gap-3 group cursor-pointer relative shadow-inner"
-          >
-            <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-[#facc15] to-transparent"></div>
-            <div className="z-10 bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 scale-95 group-hover:scale-100 transition-all">
-              <Link className="w-4 h-4 text-[#facc15]" /> View Showcase Detail
-            </div>
           </div>
         )}
 
