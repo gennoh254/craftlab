@@ -25,6 +25,7 @@ import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import FollowersModal from './FollowersModal';
+import CVBuilder from './CVBuilder';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -81,6 +82,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [followModalType, setFollowModalType] = useState<'followers' | 'following'>('followers');
+  const [showCVBuilder, setShowCVBuilder] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -330,14 +332,14 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             </div>
 
             <div className="grid grid-cols-1 gap-3 pt-4">
-              <button 
+              <button
                 onClick={() => onNavigate('EDIT_PROFILE')}
                 className="w-full py-4 bg-black text-[#facc15] font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl active:scale-95"
               >
                 Refine Profile
               </button>
-              <button 
-                onClick={() => onNavigate('EDIT_PROFILE')}
+              <button
+                onClick={() => setShowCVBuilder(true)}
                 className="w-full py-4 bg-gray-50 text-gray-700 font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-100 transition-all flex items-center justify-center gap-2"
               >
                 <FileText className="w-4 h-4 text-[#facc15]" /> CV Builder
@@ -529,6 +531,11 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
         isOpen={showFollowersModal}
         onClose={() => setShowFollowersModal(false)}
         type={followModalType}
+      />
+
+      <CVBuilder
+        isOpen={showCVBuilder}
+        onClose={() => setShowCVBuilder(false)}
       />
     </div>
   );
