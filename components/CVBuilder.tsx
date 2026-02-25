@@ -22,10 +22,12 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [studentData, setStudentData] = useState<StudentProfile | null>(null);
   const [certifications, setCertifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const cvRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen && user) {
+      setLoading(true);
       fetchStudentData();
       fetchCertifications();
     }
@@ -34,28 +36,48 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
   const fetchStudentData = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (data) {
-      setStudentData(data);
+      if (error) {
+        console.error('Error fetching student data:', error);
+        return;
+      }
+
+      if (data) {
+        setStudentData(data);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchCertifications = async () => {
     if (!user) return;
 
-    const { data } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('year', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('year', { ascending: false });
 
-    if (data) {
-      setCertifications(data);
+      if (error) {
+        console.error('Error fetching certifications:', error);
+        return;
+      }
+
+      if (data) {
+        setCertifications(data);
+      }
+    } catch (err) {
+      console.error('Error:', err);
     }
   };
 
@@ -65,30 +87,49 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
     setIsDownloading(true);
     try {
       const element = cvRef.current;
-      const opt = {
-        margin: 10,
-        filename: `${studentData?.name || 'CV'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-      };
 
-      const html2pdf = (window as any).html2pdf;
-      if (html2pdf) {
-        html2pdf().set(opt).from(element).save();
-      }
+      // Dynamic import of html2pdf
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = () => {
+        const html2pdf = (window as any).html2pdf;
+        if (html2pdf) {
+          const opt = {
+            margin: 10,
+            filename: `${studentData?.name || 'CV'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+          };
+          html2pdf().set(opt).from(element).save();
+        }
+        setIsDownloading(false);
+      };
+      document.head.appendChild(script);
     } catch (error) {
       console.error('Error generating PDF:', error);
-    } finally {
       setIsDownloading(false);
     }
   };
 
   if (!isOpen) return null;
 
-  const skills = studentData?.skills_detailed
-    ? JSON.parse(studentData.skills_detailed).map((skill: any) => skill.skill || skill)
-    : [];
+  let skills: string[] = [];
+  if (studentData?.skills_detailed) {
+    try {
+      const parsed = JSON.parse(studentData.skills_detailed);
+      if (Array.isArray(parsed)) {
+        skills = parsed.map((skill: any) => {
+          if (typeof skill === 'string') return skill;
+          if (skill.skill) return skill.skill;
+          return '';
+        }).filter(Boolean);
+      }
+    } catch (err) {
+      console.error('Error parsing skills:', err);
+      skills = [];
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -104,10 +145,14 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {!isPreview ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-[#facc15] animate-spin" />
+            </div>
+          ) : !isPreview ? (
             <div className="space-y-6">
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-black text-black mb-4 uppercase tracking-tight">Preview</h3>
+                <h3 className="text-lg font-black text-black mb-4 uppercase tracking-tight">CV Preview</h3>
                 <button
                   onClick={() => setIsPreview(true)}
                   className="w-full py-3 bg-black text-[#facc15] font-black rounded-lg text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
@@ -116,12 +161,23 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
-              <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 space-y-3">
-                <h3 className="text-sm font-black text-blue-900 uppercase tracking-tight">CV Information</h3>
-                <p className="text-xs text-blue-800 font-medium leading-relaxed">
-                  Your CV is automatically generated from your profile information including your name, professional summary, skills, education, and certifications. Download your CV to use when applying for opportunities.
-                </p>
-              </div>
+              {studentData && (
+                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 space-y-3">
+                  <h3 className="text-sm font-black text-blue-900 uppercase tracking-tight">CV Information</h3>
+                  <div className="text-xs text-blue-800 font-medium space-y-2">
+                    <p><strong>Name:</strong> {studentData.name}</p>
+                    {studentData.professional_summary && (
+                      <p><strong>Summary:</strong> {studentData.professional_summary.substring(0, 100)}...</p>
+                    )}
+                    {skills.length > 0 && (
+                      <p><strong>Skills:</strong> {skills.length} skills included</p>
+                    )}
+                    {certifications.length > 0 && (
+                      <p><strong>Certifications:</strong> {certifications.length} certifications included</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div ref={cvRef} className="bg-white">
@@ -141,7 +197,7 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
           )}
           <button
             onClick={handleDownloadPDF}
-            disabled={isDownloading || !isPreview}
+            disabled={isDownloading || !isPreview || loading}
             className="flex-1 px-6 py-3 bg-black text-[#facc15] font-black rounded-lg text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDownloading ? (
@@ -167,7 +223,13 @@ interface CVPreviewProps {
 }
 
 const CVPreview: React.FC<CVPreviewProps> = ({ studentData, certifications, skills }) => {
-  if (!studentData) return null;
+  if (!studentData) {
+    return (
+      <div className="max-w-2xl mx-auto p-12 bg-white text-center">
+        <p className="text-gray-500 font-semibold">Loading CV...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-12 bg-white" style={{ fontFamily: 'Arial, sans-serif' }}>
