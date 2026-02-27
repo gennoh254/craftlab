@@ -176,6 +176,15 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
     ));
   };
 
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await supabase.from('posts').delete().eq('id', postId);
+      setPosts(posts.filter(p => p.id !== postId));
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+  };
+
   const formatTimestamp = (timestamp: string): string => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -264,7 +273,13 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
         ) : (
           <div className="space-y-6">
             {posts.map(post => (
-              <PostCard key={post.id} post={post} onViewPost={onViewPost} />
+              <PostCard
+                key={post.id}
+                post={post}
+                onViewPost={onViewPost}
+                isOwnPost={post.authorId === user?.id}
+                onDelete={handleDeletePost}
+              />
             ))}
           </div>
         )}

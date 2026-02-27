@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Search,
   MessageSquare,
@@ -8,7 +8,8 @@ import {
   CheckCircle,
   ChevronDown,
   LogOut,
-  Briefcase
+  Briefcase,
+  X
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
@@ -18,16 +19,38 @@ import { useAuth } from '../lib/auth';
 interface HeaderProps {
   userRole: UserRole;
   activeView: ViewState;
-  onViewChange: (view: ViewState) => void;
+  onViewChange: (view: ViewState, searchQuery?: string) => void;
   profile: Profile;
 }
 
 const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, profile }) => {
   const { signOut } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      onViewChange('SEARCH', query);
+      setSearchQuery('');
+      setShowSearchDropdown(false);
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setShowSearchDropdown(true);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch(searchQuery);
+    }
+  };
+
   const navItems = [
     { id: 'HOME', label: 'Home', icon: Home },
     { id: 'ALL_OPPORTUNITIES', label: 'Opportunities', icon: Briefcase },
@@ -51,11 +74,35 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
           </div>
           <div className="hidden sm:block max-w-xs w-full relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search talent or roles..." 
-              className="w-full bg-gray-900 border border-gray-700 text-white pl-10 pr-4 py-1.5 rounded text-sm focus:outline-none focus:border-[#facc15] transition-colors font-medium"
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={handleSearchInputChange}
+              onKeyPress={handleSearchKeyPress}
+              onFocus={() => setShowSearchDropdown(true)}
+              placeholder="Search posts & users..."
+              className="w-full bg-gray-900 border border-gray-700 text-white pl-10 pr-8 py-1.5 rounded text-sm focus:outline-none focus:border-[#facc15] transition-colors font-medium"
             />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setShowSearchDropdown(false);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            {showSearchDropdown && searchQuery && (
+              <button
+                onClick={() => handleSearch(searchQuery)}
+                className="absolute top-full left-0 right-0 mt-1 bg-gray-900 border border-gray-700 rounded text-white px-4 py-2 text-sm font-medium hover:bg-gray-800 transition-colors w-full text-left flex items-center gap-2"
+              >
+                <Search className="w-4 h-4" />
+                Search for "{searchQuery}"
+              </button>
+            )}
           </div>
         </div>
 

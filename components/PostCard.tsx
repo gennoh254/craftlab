@@ -89,25 +89,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
   const handleLike = async () => {
     if (!user) return;
 
-    if (isLiked) {
-      await supabase
-        .from('post_likes')
-        .delete()
-        .eq('post_id', post.id)
-        .eq('user_id', user.id);
+    try {
+      if (isLiked) {
+        await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_id', user.id);
 
-      setIsLiked(false);
-      setLikesCount(likesCount - 1);
-    } else {
-      await supabase
-        .from('post_likes')
-        .insert({
-          post_id: post.id,
-          user_id: user.id
-        });
+        setIsLiked(false);
+        setLikesCount(likesCount - 1);
 
-      setIsLiked(true);
-      setLikesCount(likesCount + 1);
+        await supabase
+          .from('posts')
+          .update({ likes_count: likesCount - 1 })
+          .eq('id', post.id);
+      } else {
+        await supabase
+          .from('post_likes')
+          .insert({
+            post_id: post.id,
+            user_id: user.id
+          });
+
+        setIsLiked(true);
+        setLikesCount(likesCount + 1);
+
+        await supabase
+          .from('posts')
+          .update({ likes_count: likesCount + 1 })
+          .eq('id', post.id);
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
     }
   };
 
