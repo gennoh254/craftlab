@@ -417,30 +417,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
 
       {/* RIGHT COLUMN: Seeking Opportunities & Preferred Orgs */}
       <div className="lg:col-span-3 space-y-6">
-        <div className="bg-black text-white rounded-[2rem] shadow-2xl p-8 space-y-8 border border-white/5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-black flex items-center gap-3 text-[11px] uppercase tracking-widest text-[#facc15]">
-              <Target className="w-4 h-4" /> Active Search
-            </h3>
-            <button 
-              onClick={handleRefresh}
-              className={`p-1 transition-all ${isRefreshing ? 'animate-spin text-[#facc15]' : 'text-gray-600 hover:text-[#facc15]'}`}
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Interested In:</p>
-            <div className="flex flex-wrap gap-2">
-              {['Internship', 'Apprenticeship', 'Volunteer'].map(role => (
-                <span key={role} className="px-3 py-1.5 bg-white/5 text-[10px] font-black uppercase rounded-xl flex items-center gap-2 border border-white/10 group cursor-default">
-                  {role} <Check className="w-3 h-3 text-green-500" />
-                </span>
-              ))}
-            </div>
-          </div>
-
+        <div className="bg-black text-white rounded-[2rem] shadow-2xl p-8 space-y-8 border border-white/5">        
           <div className="space-y-4">
             <div className="space-y-3">
               {matchError && (
