@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
                         <img 
                           src="/assets/logo.png" 
                           alt="Logo" 
-                          className="absolute inset-0 w-14 h-14 object-contain"
+                          className="w-16 h-16 object-contain absolute -top-3"
                         />
                       </div>
                       <span className="font-bold text-lg text-black select-none">
