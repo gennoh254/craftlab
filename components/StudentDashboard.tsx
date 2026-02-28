@@ -495,13 +495,13 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
           </div>
         </div>
 
-        <div className="bg-white rounded-[2rem] shadow-xl border border-gray-200 p-8 space-y-6">
+        {/* <div className="bg-white rounded-[2rem] shadow-xl border border-gray-200 p-8 space-y-6">
           <h3 className="font-black text-black text-[10px] uppercase tracking-[0.2em] text-center">AI Sync Status</h3>
           <div className="space-y-1 text-center bg-gray-50 p-6 rounded-3xl border-2 border-gray-100 shadow-inner">
              <div className="text-4xl font-black text-black">94%</div>
              <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-2 font-black">Live Profile Sync</p>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <FollowersModal
