@@ -21,10 +21,31 @@ import {
   Linkedin,
   Github,
   Globe,
-  Check
+  Check,
+  Heart,
+  Rocket,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase, EducationEntry, EmploymentEntry, Certificate, SkillEntry } from '../lib/supabase';
+
+// Define interfaces for new sections if not in your supabase lib
+interface VolunteerEntry {
+  id: string;
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  current: boolean;
+  description: string;
+}
+
+interface ProjectEntry {
+  id: string;
+  title: string;
+  link: string;
+  description: string;
+}
 
 interface EditProfileProps {
   userRole: UserRole;
@@ -33,15 +54,23 @@ interface EditProfileProps {
 
 const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
   const { user, profile } = useAuth();
+  
+  // 1. Personal Information
   const [name, setName] = useState(profile?.name || '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
   const [bannerUrl, setBannerUrl] = useState(profile?.banner_url || '');
   const [contactEmail, setContactEmail] = useState(profile?.contact_email || '');
   const [contactPhone, setContactPhone] = useState(profile?.contact_phone || '');
-  const [address, setAddress] = useState(profile?.address || '');
+  const [location, setLocation] = useState(profile?.address || ''); // Mapped to 'address' in DB
+  
+  // 2. Professional Summary
   const [professionalSummary, setProfessionalSummary] = useState(profile?.professional_summary || '');
+  
+  // 3. Key Skills
   const [skills, setSkills] = useState<string>((profile?.skills as string[])?.join(', ') || '');
+  const [skillsDetailed, setSkillsDetailed] = useState<SkillEntry[]>([]);
 
+  // Media Links
   const [mediaLinks, setMediaLinks] = useState({
     linkedin: profile?.media_links?.linkedin || '',
     github: profile?.media_links?.github || '',
@@ -49,10 +78,23 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     twitter: profile?.media_links?.twitter || '',
   });
 
+  // 5. Education
   const [education, setEducation] = useState<EducationEntry[]>([]);
+  
+  // 4. Work Experience
   const [employment, setEmployment] = useState<EmploymentEntry[]>([]);
+  
+  // 6. Certifications
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [skillsDetailed, setSkillsDetailed] = useState<SkillEntry[]>([]);
+
+  // 7. Leadership & Volunteering
+  const [volunteering, setVolunteering] = useState<VolunteerEntry[]>([]);
+
+  // 8. Projects
+  const [projects, setProjects] = useState<ProjectEntry[]>([]);
+
+  // 9. Referees
+  const [referees, setReferees] = useState(profile?.referees || '');
 
   const [uploading, setUploading] = useState<'avatar' | 'banner' | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,23 +105,32 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Parse Education
     if (profile?.education && typeof profile.education === 'string') {
       try {
         const parsed = JSON.parse(profile.education);
-        if (Array.isArray(parsed)) {
-          setEducation(parsed);
-        }
-      } catch (e) {
-        setEducation([]);
-      }
+        if (Array.isArray(parsed)) setEducation(parsed);
+      } catch (e) { setEducation([]); }
     } else if (Array.isArray(profile?.education)) {
       setEducation(profile.education as any);
     }
 
+    // Parse Employment
     if (profile?.employment_history && Array.isArray(profile.employment_history)) {
       setEmployment(profile.employment_history);
     }
 
+    // Parse Volunteering (Assuming specific column or JSON field)
+    if (profile?.volunteering_history && Array.isArray(profile.volunteering_history)) {
+      setVolunteering(profile.volunteering_history);
+    }
+
+    // Parse Projects
+    if (profile?.projects && Array.isArray(profile.projects)) {
+      setProjects(profile.projects);
+    }
+
+    // Skills
     if (profile?.skills_detailed && Array.isArray(profile.skills_detailed)) {
       setSkillsDetailed(profile.skills_detailed);
     }
@@ -175,6 +226,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     setUploading(null);
   };
 
+  // --- Handlers for Lists ---
+
+  // Education
   const addEducation = () => {
     setEducation([
       ...education,
@@ -186,11 +240,12 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
         startDate: '',
         endDate: '',
         current: false,
-      },
+        coursework: '', // New field
+      } as any,
     ]);
   };
 
-  const updateEducation = (id: string, field: keyof EducationEntry, value: any) => {
+  const updateEducation = (id: string, field: keyof EducationEntry | 'coursework', value: any) => {
     setEducation(
       education.map((edu) =>
         edu.id === id ? { ...edu, [field]: value } : edu
@@ -202,6 +257,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     setEducation(education.filter((edu) => edu.id !== id));
   };
 
+  // Skills
   const addSkill = () => {
     setSkillsDetailed([
       ...skillsDetailed,
@@ -226,6 +282,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     setSkillsDetailed(skillsDetailed.filter((skill) => skill.id !== id));
   };
 
+  // Employment
   const addEmployment = () => {
     setEmployment([
       ...employment,
@@ -233,15 +290,16 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
         id: Date.now().toString(),
         company: '',
         role: '',
+        location: '', // New field
         startDate: '',
         endDate: '',
         current: false,
         description: '',
-      },
+      } as any,
     ]);
   };
 
-  const updateEmployment = (id: string, field: keyof EmploymentEntry, value: any) => {
+  const updateEmployment = (id: string, field: keyof EmploymentEntry | 'location', value: any) => {
     setEmployment(
       employment.map((emp) =>
         emp.id === id ? { ...emp, [field]: value } : emp
@@ -251,6 +309,59 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
   const removeEmployment = (id: string) => {
     setEmployment(employment.filter((emp) => emp.id !== id));
+  };
+
+  // Volunteering (New)
+  const addVolunteering = () => {
+    setVolunteering([
+      ...volunteering,
+      {
+        id: Date.now().toString(),
+        organization: '',
+        role: '',
+        startDate: '',
+        endDate: '',
+        current: false,
+        description: '',
+      },
+    ]);
+  };
+
+  const updateVolunteering = (id: string, field: keyof VolunteerEntry, value: any) => {
+    setVolunteering(
+      volunteering.map((vol) =>
+        vol.id === id ? { ...vol, [field]: value } : vol
+      )
+    );
+  };
+
+  const removeVolunteering = (id: string) => {
+    setVolunteering(volunteering.filter((vol) => vol.id !== id));
+  };
+
+  // Projects (New)
+  const addProject = () => {
+    setProjects([
+      ...projects,
+      {
+        id: Date.now().toString(),
+        title: '',
+        link: '',
+        description: '',
+      },
+    ]);
+  };
+
+  const updateProject = (id: string, field: keyof ProjectEntry, value: any) => {
+    setProjects(
+      projects.map((proj) =>
+        proj.id === id ? { ...proj, [field]: value } : proj
+      )
+    );
+  };
+
+  const removeProject = (id: string) => {
+    setProjects(projects.filter((proj) => proj.id !== id));
   };
 
   const handleSaveChanges = async () => {
@@ -270,13 +381,16 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           banner_url: bannerUrl,
           contact_email: contactEmail,
           contact_phone: contactPhone,
-          address: address,
+          address: location, // Storing Location in address field
           professional_summary: professionalSummary,
           skills: skillsArray,
           skills_detailed: skillsDetailed,
           media_links: mediaLinks,
           education: education,
           employment_history: employment,
+          volunteering_history: volunteering, // Ensure DB has this column
+          projects: projects, // Ensure DB has this column
+          referees: referees, // Ensure DB has this column
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -377,9 +491,11 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
         </div>
 
         <div className="pt-20 p-10 space-y-12">
+          
+          {/* 1. PERSONAL INFORMATION */}
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <Mail className="w-5 h-5 text-[#facc15]" /> Contact Information
+              <Mail className="w-5 h-5 text-[#facc15]" /> 1. Personal Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -393,16 +509,6 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Email</label>
-                <input
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="contact@email.com"
-                />
-              </div>
-              <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
                 <input
                   type="tel"
@@ -413,91 +519,97 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Address</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Professional Email</label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                  placeholder="contact@email.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location (City & Country)</label>
                 <input
                   type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
                   className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="City, State, Country"
+                  placeholder="Nairobi, Kenya"
                 />
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">
+                   ❌ Do NOT include: ID, marital status, religion, DOB, or full address.
+                </p>
               </div>
+              <div className="space-y-2 md:col-span-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                   <Linkedin className="w-3 h-3" /> LinkedIn Profile
+                 </label>
+                 <input
+                   type="url"
+                   value={mediaLinks.linkedin}
+                   onChange={(e) => setMediaLinks({ ...mediaLinks, linkedin: e.target.value })}
+                   className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                   placeholder="https://linkedin.com/in/username"
+                 />
+               </div>
+            </div>
+            
+             {/* Collapsible/Extra Socials */}
+             <div className="pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <Github className="w-3 h-3" /> GitHub
+                        </label>
+                        <input
+                        type="url"
+                        value={mediaLinks.github}
+                        onChange={(e) => setMediaLinks({ ...mediaLinks, github: e.target.value })}
+                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="https://github.com/username"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <Globe className="w-3 h-3" /> Portfolio
+                        </label>
+                        <input
+                        type="url"
+                        value={mediaLinks.portfolio}
+                        onChange={(e) => setMediaLinks({ ...mediaLinks, portfolio: e.target.value })}
+                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="https://yourportfolio.com"
+                        />
+                    </div>
+                </div>
+             </div>
+          </div>
+
+          {/* 2. PROFESSIONAL SUMMARY */}
+          <div className="space-y-8">
+            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
+              <FileText className="w-5 h-5 text-[#facc15]" /> 2. Professional Summary
+            </h2>
+            <div className="space-y-2">
+                <textarea
+                rows={4}
+                value={professionalSummary}
+                onChange={(e) => setProfessionalSummary(e.target.value)}
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                placeholder="Example: Results-driven Business Administration graduate with experience in project coordination and innovation training. Skilled in stakeholder engagement, research, and facilitation..."
+                />
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                    Include: Profession/Field • Years of experience • Key strengths • Career goal/value offer.
+                </p>
             </div>
           </div>
 
-          <div className="space-y-8">
-            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <LinkIcon className="w-5 h-5 text-[#facc15]" /> Media Links
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Linkedin className="w-3 h-3" /> LinkedIn
-                </label>
-                <input
-                  type="url"
-                  value={mediaLinks.linkedin}
-                  onChange={(e) => setMediaLinks({ ...mediaLinks, linkedin: e.target.value })}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Github className="w-3 h-3" /> GitHub
-                </label>
-                <input
-                  type="url"
-                  value={mediaLinks.github}
-                  onChange={(e) => setMediaLinks({ ...mediaLinks, github: e.target.value })}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="https://github.com/username"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Globe className="w-3 h-3" /> Portfolio
-                </label>
-                <input
-                  type="url"
-                  value={mediaLinks.portfolio}
-                  onChange={(e) => setMediaLinks({ ...mediaLinks, portfolio: e.target.value })}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="https://yourportfolio.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Globe className="w-3 h-3" /> Twitter/X
-                </label>
-                <input
-                  type="url"
-                  value={mediaLinks.twitter}
-                  onChange={(e) => setMediaLinks({ ...mediaLinks, twitter: e.target.value })}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                  placeholder="https://twitter.com/username"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <FileText className="w-5 h-5 text-[#facc15]" /> Professional Summary
-            </h2>
-            <textarea
-              rows={5}
-              value={professionalSummary}
-              onChange={(e) => setProfessionalSummary(e.target.value)}
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
-              placeholder="Write a brief professional summary about yourself, your goals, and what makes you unique..."
-            />
-          </div>
-
+          {/* 3. KEY SKILLS */}
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                <Award className="w-5 h-5 text-[#facc15]" /> Skills & Expertise
+                <Award className="w-5 h-5 text-[#facc15]" /> 3. Key Skills
               </h2>
               <button
                 onClick={addSkill}
@@ -506,6 +618,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 <Plus className="w-3 h-3" /> Add Skill
               </button>
             </div>
+            
             <div className="space-y-6">
               {skillsDetailed.map((skill) => (
                 <div key={skill.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
@@ -523,7 +636,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                         value={skill.name}
                         onChange={(e) => updateSkill(skill.id, 'name', e.target.value)}
                         className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                        placeholder="e.g., React, UI/UX Design"
+                        placeholder="e.g., Data Analysis or Leadership"
                       />
                     </div>
                     <div className="space-y-2">
@@ -540,220 +653,338 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                       </select>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Description</label>
-                    <textarea
-                      rows={3}
-                      value={skill.description}
-                      onChange={(e) => updateSkill(skill.id, 'description', e.target.value)}
-                      className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
-                      placeholder="Describe your experience with this skill, projects you've used it on, etc..."
-                    />
-                  </div>
                 </div>
               ))}
               {skillsDetailed.length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-8 font-medium">No skills added yet. Click "Add Skill" to get started.</p>
+                <p className="text-sm text-gray-500 text-center py-8 font-medium">
+                    Add Technical Skills (Data Analysis, Financial Reporting) and Soft Skills (Communication, Leadership).
+                </p>
               )}
-            </div>
-            <div className="pt-4 border-t border-gray-100">
-              <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
-                Add your skills with detailed descriptions to help our AI matching tool find the best opportunities for you.
-              </p>
             </div>
           </div>
 
-          {userRole === UserRole.STUDENT && (
-            <>
-              <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                  <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                    <GraduationCap className="w-5 h-5 text-[#facc15]" /> Education
-                  </h2>
+          {/* 4. WORK EXPERIENCE (Most Important) */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
+                <Briefcase className="w-5 h-5 text-[#facc15]" /> 4. Work Experience
+              </h2>
+              <button
+                onClick={addEmployment}
+                className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+              >
+                <Plus className="w-3 h-3" /> Add Employment
+              </button>
+            </div>
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                List in reverse chronological order (Most recent first).
+            </p>
+            <div className="space-y-6">
+              {employment.map((emp) => (
+                <div key={emp.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
                   <button
-                    onClick={addEducation}
-                    className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+                    onClick={() => removeEmployment(emp.id)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    <Plus className="w-3 h-3" /> Add Education
+                    <Trash2 className="w-4 h-4" />
                   </button>
-                </div>
-                <div className="space-y-6">
-                  {education.map((edu) => (
-                    <div key={edu.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
-                      <button
-                        onClick={() => removeEducation(edu.id)}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Institution</label>
-                          <input
-                            type="text"
-                            value={edu.institution}
-                            onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                            placeholder="University name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Degree</label>
-                          <input
-                            type="text"
-                            value={edu.degree}
-                            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                            placeholder="Bachelor of Science"
-                          />
-                        </div>
-                        <div className="md:col-span-2 space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Course/Field</label>
-                          <input
-                            type="text"
-                            value={edu.course}
-                            onChange={(e) => updateEducation(edu.id, 'course', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                            placeholder="Computer Science"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Start Date</label>
-                          <input
-                            type="month"
-                            value={edu.startDate}
-                            onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">End Date</label>
-                          <input
-                            type="month"
-                            value={edu.endDate}
-                            onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-                            disabled={edu.current}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all disabled:opacity-50"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={edu.current}
-                              onChange={(e) => updateEducation(edu.id, 'current', e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300"
-                            />
-                            <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Currently Studying Here</span>
-                          </label>
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Job Title</label>
+                      <input
+                        type="text"
+                        value={emp.role}
+                        onChange={(e) => updateEmployment(emp.id, 'role', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="e.g. Project Coordinator"
+                      />
                     </div>
-                  ))}
-                  {education.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-8 font-medium">No education entries yet. Click "Add Education" to get started.</p>
-                  )}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Organization Name</label>
+                      <input
+                        type="text"
+                        value={emp.company}
+                        onChange={(e) => updateEmployment(emp.id, 'company', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="Company name"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Location</label>
+                      <input
+                        type="text"
+                        value={(emp as any).location || ''}
+                        onChange={(e) => updateEmployment(emp.id, 'location', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="City, Country"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Start Date</label>
+                      <input
+                        type="month"
+                        value={emp.startDate}
+                        onChange={(e) => updateEmployment(emp.id, 'startDate', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">End Date</label>
+                      <input
+                        type="month"
+                        value={emp.endDate}
+                        onChange={(e) => updateEmployment(emp.id, 'endDate', e.target.value)}
+                        disabled={emp.current}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={emp.current}
+                          onChange={(e) => updateEmployment(emp.id, 'current', e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300"
+                        />
+                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Currently Working Here</span>
+                      </label>
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Achievements (3-5 Bullet Points)</label>
+                      <textarea
+                        rows={4}
+                        value={emp.description}
+                        onChange={(e) => updateEmployment(emp.id, 'description', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                        placeholder={`• Coordinated a team of 10 to deliver... \n• Increased participant engagement by 30%...`}
+                      />
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                        ✅ Use action verbs: Led, Developed, Coordinated, Implemented. Focus on Results.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-                  <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                    <Briefcase className="w-5 h-5 text-[#facc15]" /> Employment History
-                  </h2>
+          {/* 5. EDUCATION */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
+                <GraduationCap className="w-5 h-5 text-[#facc15]" /> 5. Education
+              </h2>
+              <button
+                onClick={addEducation}
+                className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+              >
+                <Plus className="w-3 h-3" /> Add Education
+              </button>
+            </div>
+            <div className="space-y-6">
+              {education.map((edu) => (
+                <div key={edu.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
                   <button
-                    onClick={addEmployment}
-                    className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+                    onClick={() => removeEducation(edu.id)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
                   >
-                    <Plus className="w-3 h-3" /> Add Employment
+                    <Trash2 className="w-4 h-4" />
                   </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Institution</label>
+                      <input
+                        type="text"
+                        value={edu.institution}
+                        onChange={(e) => updateEducation(edu.id, 'institution', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="University name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Degree Name</label>
+                      <input
+                        type="text"
+                        value={edu.degree}
+                        onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="Bachelor of Science"
+                      />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Course/Field</label>
+                      <input
+                        type="text"
+                        value={edu.course}
+                        onChange={(e) => updateEducation(edu.id, 'course', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="Computer Science"
+                      />
+                    </div>
+                     <div className="md:col-span-2 space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Relevant Coursework (Optional)</label>
+                      <input
+                        type="text"
+                        value={(edu as any).coursework || ''}
+                        onChange={(e) => updateEducation(edu.id, 'coursework', e.target.value)}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="e.g. Data Structures, Marketing Strategy"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Graduation Year</label>
+                      <input
+                        type="month"
+                        value={edu.endDate}
+                        onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                         placeholder="Select Month/Year"
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-6">
-                  {employment.map((emp) => (
-                    <div key={emp.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
-                      <button
-                        onClick={() => removeEmployment(emp.id)}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Company</label>
-                          <input
-                            type="text"
-                            value={emp.company}
-                            onChange={(e) => updateEmployment(emp.id, 'company', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                            placeholder="Company name"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Role</label>
-                          <input
-                            type="text"
-                            value={emp.role}
-                            onChange={(e) => updateEmployment(emp.id, 'role', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                            placeholder="Job title"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Start Date</label>
-                          <input
-                            type="month"
-                            value={emp.startDate}
-                            onChange={(e) => updateEmployment(emp.id, 'startDate', e.target.value)}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">End Date</label>
-                          <input
-                            type="month"
-                            value={emp.endDate}
-                            onChange={(e) => updateEmployment(emp.id, 'endDate', e.target.value)}
-                            disabled={emp.current}
-                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all disabled:opacity-50"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={emp.current}
-                              onChange={(e) => updateEmployment(emp.id, 'current', e.target.checked)}
-                              className="w-4 h-4 rounded border-gray-300"
-                            />
-                            <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Currently Working Here</span>
-                          </label>
-                        </div>
-                        <div className="md:col-span-2 space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Description</label>
-                          <textarea
-                            rows={3}
-                            value={emp.description}
-                            onChange={(e) => updateEmployment(emp.id, 'description', e.target.value)}
+              ))}
+            </div>
+          </div>
+
+          {/* 6. CERTIFICATIONS */}
+          <CertificatesSection
+            userId={user?.id || ''}
+            certificates={certificates}
+            onRefresh={fetchCertificates}
+          />
+
+          {/* 7. LEADERSHIP & VOLUNTEERING (New) */}
+          <div className="space-y-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
+                <Heart className="w-5 h-5 text-[#facc15]" /> 7. Leadership & Volunteer Experience
+              </h2>
+              <button
+                onClick={addVolunteering}
+                className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+              >
+                <Plus className="w-3 h-3" /> Add Experience
+              </button>
+            </div>
+            <div className="space-y-6">
+              {volunteering.map((vol) => (
+                <div key={vol.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
+                  <button
+                    onClick={() => removeVolunteering(vol.id)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Organization / Club</label>
+                       <input
+                         type="text"
+                         value={vol.organization}
+                         onChange={(e) => updateVolunteering(vol.id, 'organization', e.target.value)}
+                         className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Role</label>
+                       <input
+                         type="text"
+                         value={vol.role}
+                         onChange={(e) => updateVolunteering(vol.id, 'role', e.target.value)}
+                         className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                       />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Description</label>
+                        <textarea
+                            rows={2}
+                            value={vol.description}
+                            onChange={(e) => updateVolunteering(vol.id, 'description', e.target.value)}
                             className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
-                            placeholder="Describe your responsibilities and achievements..."
-                          />
-                        </div>
-                      </div>
+                            placeholder="Briefly describe your contribution..."
+                        />
                     </div>
-                  ))}
-                  {employment.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-8 font-medium">No employment history yet. Click "Add Employment" to get started.</p>
-                  )}
+                  </div>
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <CertificatesSection
-                userId={user?.id || ''}
-                certificates={certificates}
-                onRefresh={fetchCertificates}
-              />
-            </>
-          )}
+          {/* 8. PROJECTS (New) */}
+           <div className="space-y-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
+                <Rocket className="w-5 h-5 text-[#facc15]" /> 8. Projects (Optional)
+              </h2>
+              <button
+                onClick={addProject}
+                className="px-4 py-2 bg-black text-[#facc15] text-[9px] font-black uppercase tracking-widest rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-all"
+              >
+                <Plus className="w-3 h-3" /> Add Project
+              </button>
+            </div>
+            <div className="space-y-6">
+              {projects.map((proj) => (
+                <div key={proj.id} className="p-6 bg-gray-50 rounded-2xl border-2 border-gray-100 space-y-4 relative">
+                  <button
+                    onClick={() => removeProject(proj.id)}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Project Title</label>
+                       <input
+                         type="text"
+                         value={proj.title}
+                         onChange={(e) => updateProject(proj.id, 'title', e.target.value)}
+                         className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Link (Optional)</label>
+                       <input
+                         type="url"
+                         value={proj.link}
+                         onChange={(e) => updateProject(proj.id, 'link', e.target.value)}
+                         className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                         placeholder="https://..."
+                       />
+                    </div>
+                    <div className="md:col-span-2 space-y-2">
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Description</label>
+                        <textarea
+                            rows={2}
+                            value={proj.description}
+                            onChange={(e) => updateProject(proj.id, 'description', e.target.value)}
+                            className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                            placeholder="Show innovation, impact, or technical ability..."
+                        />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 9. REFEREES (New) */}
+           <div className="space-y-8">
+            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
+              <Users className="w-5 h-5 text-[#facc15]" /> 9. Referees
+            </h2>
+            <div className="space-y-2">
+                <textarea
+                rows={3}
+                value={referees}
+                onChange={(e) => setReferees(e.target.value)}
+                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                placeholder="List 2-3 referees (Name, Title, Contact) OR write 'Available upon request'"
+                />
+            </div>
+          </div>
+
 
           <div className="pt-12 border-t-2 border-gray-50 flex justify-end gap-6">
             <button
@@ -929,7 +1160,7 @@ const CertificatesSection: React.FC<{
     <div className="space-y-8">
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
         <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-          <Award className="w-5 h-5 text-[#facc15]" /> Certificates
+          <Award className="w-5 h-5 text-[#facc15]" /> 6. Certifications & Professional Development
         </h2>
         <button
           onClick={() => setShowAddModal(true)}
