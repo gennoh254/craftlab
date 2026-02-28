@@ -63,15 +63,18 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
       <div className="max-w-7xl mx-auto h-full flex items-center justify-between gap-4">
         {/* Left: Logo & Search */}
         <div className="flex items-center gap-4 flex-1">
-          <div 
-            onClick={() => onViewChange('HOME')}
-            className="group flex items-center gap-2 cursor-pointer"
-          >
-            <div className="w-10 h-10 bg-[#facc15] rounded-lg flex items-center justify-center font-black text-black text-xl hover:scale-105 transition-transform">
-              CC
+         <div 
+              onClick={() => onViewChange('HOME')}
+              className="group flex items-center gap-2 cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center hover:scale-105 transition-transform">
+                <img 
+                  src="/assets/logo.png" 
+                  alt="Logo" 
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              </div>
             </div>
-            <span className="hidden lg:block text-[#facc15] font-black text-xl tracking-tighter">Craftlab Careers</span>
-          </div>
           <div className="hidden sm:block max-w-xs w-full relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
