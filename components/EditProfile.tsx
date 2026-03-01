@@ -538,7 +538,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                   placeholder="Nairobi, Kenya"
                 />
                 <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">
-                   ❌ Do NOT include: ID, marital status, religion, DOB, or full address.
+
                 </p>
               </div>
               <div className="space-y-2 md:col-span-2">

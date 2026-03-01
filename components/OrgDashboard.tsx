@@ -360,7 +360,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
         </div>
 
         {/* Analytics Summary */}
-        <div className="bg-black text-[#facc15] rounded-xl p-4 space-y-4 shadow-lg">
+        {/* <div className="bg-black text-[#facc15] rounded-xl p-4 space-y-4 shadow-lg">
            <h3 className="font-black flex items-center gap-2 text-[10px] uppercase tracking-widest">
              <BarChart2 className="w-3.5 h-3.5" /> Pipeline Analytics
            </h3>
@@ -374,7 +374,7 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
                <p className="text-[8px] font-black uppercase text-gray-500 tracking-tighter">Match Accuracy</p>
              </div>
            </div>
-        </div>
+        </div> */}
       </div>
 
       {/* CENTER COLUMN: Feed & Opportunity Posting */}
