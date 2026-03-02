@@ -45,6 +45,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
   useEffect(() => {
     if (!post.id) return;
 
+    fetchLikesCount();
+
     const subscription = supabase
       .channel(`post_likes:${post.id}`)
       .on(
@@ -55,15 +57,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
           table: 'post_likes',
           filter: `post_id=eq.${post.id}`
         },
-        async (payload) => {
-          const { data } = await supabase
-            .from('post_likes')
-            .select('id', { count: 'exact', head: true })
-            .eq('post_id', post.id);
-
-          if (data) {
-            setLikesCount(data.length || 0);
-          }
+        async () => {
+          await fetchLikesCount();
         }
       )
       .subscribe();
@@ -72,6 +67,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
       subscription.unsubscribe();
     };
   }, [post.id]);
+
+  const fetchLikesCount = async () => {
+    const { count } = await supabase
+      .from('post_likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('post_id', post.id);
+
+    setLikesCount(count || 0);
+  };
 
   const checkIfLiked = async () => {
     if (!user) return;
@@ -153,12 +157,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
           .eq('user_id', user.id);
 
         setIsLiked(false);
-        setLikesCount(likesCount - 1);
-
-        await supabase
-          .from('posts')
-          .update({ likes_count: likesCount - 1 })
-          .eq('id', post.id);
       } else {
         await supabase
           .from('post_likes')
@@ -168,15 +166,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
           });
 
         setIsLiked(true);
-        setLikesCount(likesCount + 1);
-
-        await supabase
-          .from('posts')
-          .update({ likes_count: likesCount + 1 })
-          .eq('id', post.id);
       }
+
+      await fetchLikesCount();
     } catch (error) {
       console.error('Error liking post:', error);
+      setIsLiked(!isLiked);
     }
   };
 
