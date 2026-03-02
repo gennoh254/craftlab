@@ -586,10 +586,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
              </div>
           </div>
 
-          {/* 2. PROFESSIONAL SUMMARY */}
+          {/* 2. PROFESSIONAL SUMMARY / COMPANY ABOUT */}
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <FileText className="w-5 h-5 text-[#facc15]" /> 2. Professional Summary
+              <FileText className="w-5 h-5 text-[#facc15]" /> 2. {userRole === UserRole.ORGANIZATION ? 'Company About' : 'Professional Summary'}
             </h2>
             <div className="space-y-2">
                 <textarea
@@ -663,7 +663,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
             </div>
           </div>
 
-          {/* 4. WORK EXPERIENCE (Most Important) */}
+          {/* 4. WORK EXPERIENCE (Most Important) - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
@@ -767,8 +768,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
               ))}
             </div>
           </div>
+          )}
 
-          {/* 5. EDUCATION */}
+          {/* 5. EDUCATION - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
@@ -846,6 +849,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
               ))}
             </div>
           </div>
+          )}
 
           {/* 6. CERTIFICATIONS */}
           <CertificatesSection
@@ -854,7 +858,8 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
             onRefresh={fetchCertificates}
           />
 
-          {/* 7. LEADERSHIP & VOLUNTEERING (New) */}
+          {/* 7. LEADERSHIP & VOLUNTEERING - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
@@ -910,8 +915,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
               ))}
             </div>
           </div>
+          )}
 
-          {/* 8. PROJECTS (New) */}
+          {/* 8. PROJECTS - Students Only */}
+          {userRole === UserRole.STUDENT && (
            <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
@@ -968,8 +975,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
               ))}
             </div>
           </div>
+          )}
 
-          {/* 9. REFEREES (New) */}
+          {/* 9. REFEREES - Students Only */}
+          {userRole === UserRole.STUDENT && (
            <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
               <Users className="w-5 h-5 text-[#facc15]" /> 9. Referees
@@ -984,6 +993,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 />
             </div>
           </div>
+          )}
 
 
           <div className="pt-12 border-t-2 border-gray-50 flex justify-end gap-6">

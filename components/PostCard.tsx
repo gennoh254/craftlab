@@ -92,33 +92,52 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
 
   const fetchComments = async () => {
     setLoadingComments(true);
-    const { data, error } = await supabase
-      .from('comments')
-      .select(`
-        id,
-        content,
-        created_at,
-        user_id,
-        profiles:user_id (
-          name,
-          avatar_url
-        )
-      `)
-      .eq('post_id', post.id)
-      .order('created_at', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          content,
+          created_at,
+          user_id
+        `)
+        .eq('post_id', post.id)
+        .order('created_at', { ascending: true });
 
-    if (data) {
-      const formattedComments: Comment[] = data.map((c: any) => ({
-        id: c.id,
-        userId: c.user_id,
-        userName: c.profiles.name,
-        userAvatar: c.profiles.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
-        content: c.content,
-        timestamp: formatTimestamp(c.created_at)
-      }));
-      setComments(formattedComments);
+      if (error) {
+        console.error('Error fetching comments:', error);
+        setLoadingComments(false);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, avatar_url')
+          .in('id', data.map(c => c.user_id));
+
+        const profileMap = profiles ? Object.fromEntries(profiles.map(p => [p.id, p])) : {};
+
+        const formattedComments: Comment[] = data.map((c: any) => {
+          const profile = profileMap[c.user_id];
+          return {
+            id: c.id,
+            userId: c.user_id,
+            userName: profile?.name || 'Anonymous',
+            userAvatar: profile?.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
+            content: c.content,
+            timestamp: formatTimestamp(c.created_at)
+          };
+        });
+        setComments(formattedComments);
+      } else {
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('Error in fetchComments:', error);
+    } finally {
+      setLoadingComments(false);
     }
-    setLoadingComments(false);
   };
 
   useEffect(() => {
