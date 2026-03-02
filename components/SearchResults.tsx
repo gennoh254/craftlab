@@ -8,7 +8,7 @@ import { useAuth } from '../lib/auth';
 interface SearchResultsProps {
   query: string;
   userRole: UserRole;
-  onNavigate: (view: string) => void;
+  onNavigate: (view: string, query?: string, userId?: string) => void;
   onViewPost: (post: Post) => void;
 }
 
@@ -79,7 +79,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNaviga
             id: post.id,
             authorId: post.author_id,
             authorName: authorProfile?.name || 'Unknown',
-            authorAvatar: authorProfile?.avatar_url || `https://picsum.photos/seed/${post.author_id}/100`,
+            authorAvatar: authorProfile?.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="50" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
             authorRole: authorProfile?.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION,
             authorVerified: false,
             type: 'Update',
@@ -211,7 +211,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNaviga
                   <div key={userItem.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-all">
                     <div className="flex items-center gap-4">
                       <img
-                        src={userItem.avatar_url || `https://picsum.photos/seed/${userItem.id}/100`}
+                        src={userItem.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="50" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E'}
                         alt={userItem.name}
                         className="w-14 h-14 rounded-2xl border border-gray-100 object-cover"
                       />
@@ -227,7 +227,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNaviga
                         )}
                       </div>
                     </div>
-                    <button className="px-6 py-2 bg-black text-[#facc15] font-black rounded-lg text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all">
+                    <button
+                      onClick={() => onNavigate('VIEW_USER', undefined, userItem.id)}
+                      className="px-6 py-2 bg-black text-[#facc15] font-black rounded-lg text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all"
+                    >
                       View Profile
                     </button>
                   </div>

@@ -12,6 +12,7 @@ import ViewMatchesPage from './components/ViewMatchesPage';
 import OpportunitiesPage from './components/OpportunitiesPage';
 import PostDetailPage from './components/PostDetailPage';
 import SearchResults from './components/SearchResults';
+import UserProfileView from './components/UserProfileView';
 import AuthPage from './components/AuthPage';
 import { UserRole, Post } from './types';
 import { useAuth } from './lib/auth';
@@ -28,12 +29,14 @@ export type ViewState =
   | 'VIEW_MATCHES'
   | 'ALL_OPPORTUNITIES'
   | 'POST_DETAIL'
-  | 'SEARCH';
+  | 'SEARCH'
+  | 'VIEW_USER';
 
 const App: React.FC = () => {
   const { user, profile, loading } = useAuth();
   const [activeView, setActiveView] = useState<ViewState>('HOME');
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const handleViewPost = (post: Post) => {
@@ -41,9 +44,12 @@ const App: React.FC = () => {
     setActiveView('POST_DETAIL');
   };
 
-  const handleViewChange = (view: ViewState, query?: string) => {
+  const handleViewChange = (view: ViewState, query?: string, userId?: string) => {
     if (query) {
       setSearchQuery(query);
+    }
+    if (userId) {
+      setSelectedUserId(userId);
     }
     setActiveView(view);
   };
@@ -92,7 +98,9 @@ const App: React.FC = () => {
       case 'POST_DETAIL':
         return selectedPost ? <PostDetailPage post={selectedPost} userRole={currentUserRole} onNavigate={setActiveView} /> : null;
       case 'SEARCH':
-        return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
+        return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={handleViewChange} onViewPost={handleViewPost} />;
+      case 'VIEW_USER':
+        return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={setActiveView} onViewPost={handleViewPost} /> : null;
       default:
         return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
     }

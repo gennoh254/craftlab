@@ -137,7 +137,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
           <div className="relative group">
             <button className="flex items-center gap-3 p-1 rounded-full hover:bg-gray-800 transition-colors">
               <img
-                src={profile.avatar_url || `https://picsum.photos/seed/${profile.id}/100`}
+                src={profile.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" font-size="50" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E'}
                 alt="Avatar"
                 className="w-8 h-8 rounded-lg border border-[#facc15]"
               />
