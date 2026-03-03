@@ -501,7 +501,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           {userRole === UserRole.ORGANIZATION && (
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <Mail className="w-5 h-5 text-[#facc15]" /> 1. Basic Organization Information
+              <Mail className="w-5 h-5 text-[#facc15]" />  Basic Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
