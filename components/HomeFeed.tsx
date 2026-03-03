@@ -122,34 +122,40 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
   };
 
   const fetchNetworkUsers = async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, name, user_type, avatar_url')
-      .limit(6);
+    if (!user || !profile) return;
 
-    if (data && user) {
-      const usersWithFollowStatus = await Promise.all(
-        data.map(async (u: any) => {
-          if (u.id === user.id) return null;
+    try {
+      const { data: followedUserIds } = await supabase
+        .from('connections')
+        .select('following_id')
+        .eq('follower_id', user.id);
 
-          const { data: isFollowing } = await supabase
-            .from('connections')
-            .select('id')
-            .eq('follower_id', user.id)
-            .eq('following_id', u.id)
-            .maybeSingle();
+      const followedIds = followedUserIds?.map((conn: any) => conn.following_id) || [];
 
-          return {
+      const profileUserType = profile.user_type === 'STUDENT' ? 'STUDENT' : 'ORGANIZATION';
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, name, user_type, avatar_url')
+        .eq('user_type', profileUserType)
+        .limit(20);
+
+      if (data && user) {
+        const usersWithFollowStatus = data
+          .filter((u: any) => u.id !== user.id && !followedIds.includes(u.id))
+          .slice(0, 6)
+          .map((u: any) => ({
             id: u.id,
             name: u.name,
             role: u.user_type === 'STUDENT' ? 'Student' : 'Organization',
             avatar: u.avatar_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"%3E%3Crect fill="%23f3f4f6" width="40" height="40"/%3E%3Ctext x="20" y="20" font-size="20" fill="%239ca3af" text-anchor="middle" dominant-baseline="middle" font-family="system-ui"%3E?%3C/text%3E%3C/svg%3E',
-            isFollowing: !!isFollowing
-          };
-        })
-      );
+            isFollowing: false
+          }));
 
-      setNetworkUsers(usersWithFollowStatus.filter((u): u is NetworkUser => u !== null));
+        setNetworkUsers(usersWithFollowStatus);
+      }
+    } catch (error) {
+      console.error('Error fetching network users:', error);
     }
   };
 
@@ -169,11 +175,17 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
           follower_id: user.id,
           following_id: userId
         });
+
+      setNetworkUsers(networkUsers.filter(u => u.id !== userId));
+      fetchNetworkUsers();
+      fetchFollowCounts();
+      return;
     }
 
     setNetworkUsers(networkUsers.map(u =>
       u.id === userId ? { ...u, isFollowing: !isCurrentlyFollowing } : u
     ));
+    fetchFollowCounts();
   };
 
   const handleDeletePost = async (postId: string) => {

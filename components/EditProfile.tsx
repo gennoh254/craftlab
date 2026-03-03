@@ -496,8 +496,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
         </div>
 
         <div className="pt-20 p-10 space-y-12">
-          
-          {/* 1. PERSONAL INFORMATION */}
+
+          {/* 1. PERSONAL INFORMATION - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
               <Mail className="w-5 h-5 text-[#facc15]" /> 1. Personal Information
@@ -590,8 +591,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 </div>
              </div>
           </div>
+          )}
 
-          {/* 2. PROFESSIONAL SUMMARY / COMPANY ABOUT */}
+          {/* 2. PROFESSIONAL SUMMARY / COMPANY ABOUT - Organizations Only */}
+          {userRole === UserRole.ORGANIZATION && (
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
               <FileText className="w-5 h-5 text-[#facc15]" /> 2. {userRole === UserRole.ORGANIZATION ? 'Company About' : 'Professional Summary'}
@@ -609,8 +612,10 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                 </p>
             </div>
           </div>
+          )}
 
-          {/* 3. KEY SKILLS */}
+          {/* 3. KEY SKILLS - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
@@ -667,6 +672,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
               )}
             </div>
           </div>
+          )}
 
           {/* 4. WORK EXPERIENCE (Most Important) - Students Only */}
           {userRole === UserRole.STUDENT && (
@@ -856,12 +862,14 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           </div>
           )}
 
-          {/* 6. CERTIFICATIONS */}
+          {/* 6. CERTIFICATIONS - Students Only */}
+          {userRole === UserRole.STUDENT && (
           <CertificatesSection
             userId={user?.id || ''}
             certificates={certificates}
             onRefresh={fetchCertificates}
           />
+          )}
 
           {/* 7. LEADERSHIP & VOLUNTEERING - Students Only */}
           {userRole === UserRole.STUDENT && (
