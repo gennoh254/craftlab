@@ -1,31 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
-import {
-  ArrowLeft,
-  Save,
-  Camera,
-  Plus,
-  X,
-  Loader2,
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Link as LinkIcon,
-  Trash2,
-  Upload,
-  FileText,
-  Linkedin,
-  Github,
-  Globe,
-  Check,
-  Heart,
-  Rocket,
-  Users
-} from 'lucide-react';
+import { ArrowLeft, Save, Camera, Plus, X, Loader as Loader2, Mail, Phone, MapPin, Briefcase, GraduationCap, Award, Link as LinkIcon, Trash2, Upload, FileText, Linkedin, Github, Globe, Check, Heart, Rocket, Users } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase, EducationEntry, EmploymentEntry, Certificate, SkillEntry } from '../lib/supabase';
 import { OrganizationProfileEditor } from './OrganizationProfileEditor';
