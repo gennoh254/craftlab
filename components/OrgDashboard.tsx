@@ -1,20 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  Target,
-  Users,
-  Calendar,
-  CheckCircle,
-  BarChart2,
-  Mail,
-  XCircle,
-  Clock,
-  Briefcase,
-  Loader2,
-  AlertCircle,
-  Trash2
-} from 'lucide-react';
+import { Plus, Target, Users, Calendar, CircleCheck as CheckCircle, ChartBar as BarChart2, Mail, Circle as XCircle, Clock, Briefcase, Loader as Loader2, CircleAlert as AlertCircle, Trash2 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';

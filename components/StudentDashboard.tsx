@@ -1,22 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  RefreshCw,
-  Edit3,
-  Briefcase,
-  Zap,
-  Calendar,
-  Heart,
-  Target,
-  Building,
-  Sparkles,
-  FileText,
-  Award,
-  Check,
-  Cpu,
-  Loader2
-} from 'lucide-react';
+import { Plus, RefreshCw, CreditCard as Edit3, Briefcase, Zap, Calendar, Heart, Target, Building, Sparkles, FileText, Award, Check, Cpu, Loader as Loader2 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
 import { UserRole, Post } from '../types';

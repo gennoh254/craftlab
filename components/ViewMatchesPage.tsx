@@ -2,19 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
-import {
-  ArrowLeft,
-  Search,
-  Mail,
-  CheckCircle,
-  ExternalLink,
-  RefreshCw,
-  Loader2,
-  Zap,
-  AlertCircle,
-  TrendingUp,
-  Target
-} from 'lucide-react';
+import { ArrowLeft, Search, Mail, CircleCheck as CheckCircle, ExternalLink, RefreshCw, Loader as Loader2, Zap, CircleAlert as AlertCircle, TrendingUp, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 

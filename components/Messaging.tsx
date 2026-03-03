@@ -1,21 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  Search,
-  MoreVertical,
-  Edit,
-  Send,
-  Image,
-  Paperclip,
-  Smile,
-  Phone,
-  Video,
-  MessageSquare,
-  Loader2,
-  X,
-  Plus,
-  Mail
-} from 'lucide-react';
+import { Search, MoveVertical as MoreVertical, CreditCard as Edit, Send, Image, Paperclip, Smile, Phone, Video, MessageSquare, Loader as Loader2, X, Plus, Mail } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
