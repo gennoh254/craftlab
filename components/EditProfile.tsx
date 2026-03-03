@@ -497,12 +497,105 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
         <div className="pt-20 p-10 space-y-12">
 
+          {/* 1. BASIC ORGANIZATION INFORMATION - Organizations Only */}
+          {userRole === UserRole.ORGANIZATION && (
+          <div className="space-y-8">
+            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
+              <Mail className="w-5 h-5 text-[#facc15]" /> 1. Basic Organization Information
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Organization Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                  placeholder="Your organization name"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Email</label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                  placeholder="contact@email.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Location (City & Country)</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                  placeholder="Nairobi, Kenya"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                   <Linkedin className="w-3 h-3" /> LinkedIn Profile
+                 </label>
+                 <input
+                   type="url"
+                   value={mediaLinks.linkedin}
+                   onChange={(e) => setMediaLinks({ ...mediaLinks, linkedin: e.target.value })}
+                   className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                   placeholder="https://linkedin.com/company/organization"
+                 />
+               </div>
+            </div>
+
+             <div className="pt-4 border-t border-gray-100">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <Github className="w-3 h-3" /> Website
+                        </label>
+                        <input
+                        type="url"
+                        value={mediaLinks.github}
+                        onChange={(e) => setMediaLinks({ ...mediaLinks, github: e.target.value })}
+                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="https://yourorganization.com"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                        <Globe className="w-3 h-3" /> Social Media
+                        </label>
+                        <input
+                        type="url"
+                        value={mediaLinks.portfolio}
+                        onChange={(e) => setMediaLinks({ ...mediaLinks, portfolio: e.target.value })}
+                        className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                        placeholder="https://social-media-profile.com"
+                        />
+                    </div>
+                </div>
+             </div>
+          </div>
+          )}
+
           {/* 1. PERSONAL INFORMATION - Students Only */}
           {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
               <Mail className="w-5 h-5 text-[#facc15]" /> 1. Personal Information
             </h2>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Full Name</label>
@@ -593,33 +686,12 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           </div>
           )}
 
-          {/* 2. PROFESSIONAL SUMMARY / COMPANY ABOUT - Organizations Only */}
-          {userRole === UserRole.ORGANIZATION && (
-          <div className="space-y-8">
-            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <FileText className="w-5 h-5 text-[#facc15]" /> 2. {userRole === UserRole.ORGANIZATION ? 'Company About' : 'Professional Summary'}
-            </h2>
-            <div className="space-y-2">
-                <textarea
-                rows={4}
-                value={professionalSummary}
-                onChange={(e) => setProfessionalSummary(e.target.value)}
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
-                placeholder="Example: Results-driven Business Administration graduate with experience in project coordination and innovation training. Skilled in stakeholder engagement, research, and facilitation..."
-                />
-                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
-                    Include: Profession/Field • Years of experience • Key strengths • Career goal/value offer.
-                </p>
-            </div>
-          </div>
-          )}
-
-          {/* 3. KEY SKILLS - Students Only */}
+          {/* 2. KEY SKILLS - Students Only */}
           {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                <Award className="w-5 h-5 text-[#facc15]" /> 3. Key Skills
+                <Award className="w-5 h-5 text-[#facc15]" /> 2. Key Skills
               </h2>
               <button
                 onClick={addSkill}
@@ -674,12 +746,12 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           </div>
           )}
 
-          {/* 4. WORK EXPERIENCE (Most Important) - Students Only */}
+          {/* 3. WORK EXPERIENCE (Most Important) - Students Only */}
           {userRole === UserRole.STUDENT && (
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                <Briefcase className="w-5 h-5 text-[#facc15]" /> 4. Work Experience
+                <Briefcase className="w-5 h-5 text-[#facc15]" /> 3. Work Experience
               </h2>
               <button
                 onClick={addEmployment}
@@ -786,7 +858,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                <GraduationCap className="w-5 h-5 text-[#facc15]" /> 5. Education
+                <GraduationCap className="w-5 h-5 text-[#facc15]" /> 4. Education
               </h2>
               <button
                 onClick={addEducation}
@@ -864,11 +936,13 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
           {/* 6. CERTIFICATIONS - Students Only */}
           {userRole === UserRole.STUDENT && (
+          <div>
           <CertificatesSection
             userId={user?.id || ''}
             certificates={certificates}
             onRefresh={fetchCertificates}
           />
+          </div>
           )}
 
           {/* 7. LEADERSHIP & VOLUNTEERING - Students Only */}
@@ -876,7 +950,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           <div className="space-y-8">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3">
-                <Heart className="w-5 h-5 text-[#facc15]" /> 7. Leadership & Volunteer Experience
+                <Heart className="w-5 h-5 text-[#facc15]" /> 5. Leadership & Volunteer Experience
               </h2>
               <button
                 onClick={addVolunteering}
