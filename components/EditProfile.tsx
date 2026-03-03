@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase, EducationEntry, EmploymentEntry, Certificate, SkillEntry } from '../lib/supabase';
+import { OrganizationProfileEditor } from './OrganizationProfileEditor';
 
 // Define interfaces for new sections if not in your supabase lib
 interface VolunteerEntry {
@@ -95,6 +96,28 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
   // 9. Referees
   const [referees, setReferees] = useState(profile?.referees || '');
+
+  // Organization Profile Data
+  const [organizationData, setOrganizationData] = useState({
+    org_type: profile?.org_type || '',
+    industry_sector: profile?.industry_sector || '',
+    year_established: profile?.year_established || new Date().getFullYear(),
+    registration_number: profile?.registration_number || '',
+    headquarters_location: profile?.headquarters_location || '',
+    branch_locations: profile?.branch_locations || [],
+    website: profile?.website || '',
+    official_email_domain: profile?.official_email_domain || '',
+    about_us: profile?.about_us || '',
+    mission_statement: profile?.mission_statement || '',
+    vision: profile?.vision || '',
+    core_values: profile?.core_values || [],
+    employee_count: profile?.employee_count || '',
+    countries_of_operation: profile?.countries_of_operation || [],
+    beneficiaries_served: profile?.beneficiaries_served || '',
+    work_culture_description: profile?.work_culture_description || '',
+    work_modes: profile?.work_modes || [],
+    organization_pace: profile?.organization_pace || ''
+  });
 
   const [uploading, setUploading] = useState<'avatar' | 'banner' | null>(null);
   const [saving, setSaving] = useState(false);
@@ -373,26 +396,32 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     try {
       const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s.length > 0);
 
+      const updatePayload: any = {
+        name: name,
+        avatar_url: avatarUrl,
+        banner_url: bannerUrl,
+        contact_email: contactEmail,
+        contact_phone: contactPhone,
+        address: location,
+        professional_summary: professionalSummary,
+        skills: skillsArray,
+        skills_detailed: skillsDetailed,
+        media_links: mediaLinks,
+        education: education,
+        employment_history: employment,
+        volunteering_history: volunteering,
+        projects: projects,
+        referees: referees,
+        updated_at: new Date().toISOString()
+      };
+
+      if (userRole === UserRole.ORGANIZATION) {
+        Object.assign(updatePayload, organizationData);
+      }
+
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          name: name,
-          avatar_url: avatarUrl,
-          banner_url: bannerUrl,
-          contact_email: contactEmail,
-          contact_phone: contactPhone,
-          address: location, // Storing Location in address field
-          professional_summary: professionalSummary,
-          skills: skillsArray,
-          skills_detailed: skillsDetailed,
-          media_links: mediaLinks,
-          education: education,
-          employment_history: employment,
-          volunteering_history: volunteering, // Ensure DB has this column
-          projects: projects, // Ensure DB has this column
-          referees: referees, // Ensure DB has this column
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', user.id);
 
       if (updateError) {
@@ -995,6 +1024,12 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
           </div>
           )}
 
+          {userRole === UserRole.ORGANIZATION && (
+            <OrganizationProfileEditor
+              profile={profile}
+              onDataChange={setOrganizationData}
+            />
+          )}
 
           <div className="pt-12 border-t-2 border-gray-50 flex justify-end gap-6">
             <button
