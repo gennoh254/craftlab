@@ -60,6 +60,7 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,6 +179,8 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
 
       setAllUsers(usersWithMessages);
       setFilteredUsers(usersWithMessages);
+      const unreadTotal = usersWithMessages.reduce((sum, user) => sum + user.unreadCount, 0);
+      setTotalUnreadCount(unreadTotal);
     }
     setLoading(false);
   };

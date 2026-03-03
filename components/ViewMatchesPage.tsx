@@ -271,6 +271,35 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
       setApplications(prev =>
         prev.map(app => (app.id === applicationId ? { ...app, status: newStatus } : app))
       );
+
+      if (newStatus === 'shortlisted') {
+        const application = applications.find(app => app.id === applicationId);
+        if (application && user && profile) {
+          try {
+            const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+            const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+            await fetch(`${supabaseUrl}/functions/v1/send_shortlist_notification`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${anonKey}`,
+              },
+              body: JSON.stringify({
+                applicationId: application.id,
+                studentId: application.student_id,
+                studentName: application.student?.name,
+                opportunityId: application.opportunity_id,
+                opportunityRole: application.opportunity?.role,
+                organizationId: user.id,
+                organizationName: profile.name,
+              }),
+            });
+          } catch (error) {
+            console.error('Error sending shortlist notification:', error);
+          }
+        }
+      }
     }
   };
 

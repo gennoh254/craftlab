@@ -20,12 +20,13 @@ import {
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
 import { UserRole, Post } from '../types';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Mail } from 'lucide-react';
 import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import FollowersModal from './FollowersModal';
 import CVBuilder from './CVBuilder';
+import { useUnreadMessages } from '../lib/useUnreadMessages';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -71,6 +72,7 @@ interface MatchedOpportunity {
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
   const { profile, user } = useAuth();
+  const unreadMessageCount = useUnreadMessages();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [matchedOpportunities, setMatchedOpportunities] = useState<MatchedOpportunity[]>([]);
@@ -332,6 +334,20 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
             </div>
 
             <div className="grid grid-cols-1 gap-3 pt-4">
+              <button
+                onClick={() => onNavigate('INBOX')}
+                className="w-full py-4 bg-gradient-to-r from-[#facc15] to-yellow-400 text-black font-black rounded-2xl text-[10px] uppercase tracking-widest hover:shadow-lg transition-all shadow-xl active:scale-95 relative"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Inbox
+                  {unreadMessageCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-black px-2 py-1 rounded-full min-w-[20px] text-center">
+                      {unreadMessageCount}
+                    </span>
+                  )}
+                </div>
+              </button>
               <button
                 onClick={() => onNavigate('EDIT_PROFILE')}
                 className="w-full py-4 bg-black text-[#facc15] font-black rounded-2xl text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-all shadow-xl active:scale-95"

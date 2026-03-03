@@ -21,6 +21,7 @@ import { ViewState } from '../App';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import FollowersModal from './FollowersModal';
+import { useUnreadMessages } from '../lib/useUnreadMessages';
 
 interface OrgDashboardProps {
   onNavigate: (view: ViewState) => void;
@@ -54,6 +55,7 @@ interface Candidate {
 
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
+  const unreadMessageCount = useUnreadMessages();
 
   if (!profile || profile.user_type !== 'ORGANIZATION') {
     return (
@@ -329,7 +331,21 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
             </div>
 
             <div className="space-y-2 pt-2">
-              <button 
+              <button
+                onClick={() => onNavigate('INBOX')}
+                className="w-full py-2 bg-gradient-to-r from-[#facc15] to-yellow-400 text-black font-black rounded-lg text-[10px] uppercase tracking-widest hover:shadow-md transition-all shadow-sm active:scale-95 relative"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Mail className="w-3.5 h-3.5" />
+                  Inbox
+                  {unreadMessageCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                      {unreadMessageCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
                 onClick={() => onNavigate('EDIT_PROFILE')}
                 className="w-full py-2 bg-black text-[#facc15] font-black rounded-lg text-[10px] uppercase tracking-widest hover:bg-gray-800 transition-colors shadow-sm active:scale-95"
               >
