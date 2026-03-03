@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Briefcase, ChevronRight, Loader2, Check } from 'lucide-react';
+import { TrendingUp, Users, Briefcase, ChevronRight, Loader as Loader2, Check } from 'lucide-react';
 import { PostComposer } from './PostComposer';
 import { PostCard } from './PostCard';
 import { UserRole, Post } from '../types';
