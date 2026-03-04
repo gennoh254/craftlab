@@ -13,10 +13,24 @@ interface StudentProfile {
   contact_phone: string | null;
   address: string | null;
   professional_summary: string | null;
+  bio: string | null;
   skills_detailed: any;
   education: any;
   employment_history: any;
   media_links: any;
+  languages: any;
+  certifications: any;
+  projects: any;
+  interests: any;
+}
+
+interface AIGeneratedContent {
+  summary: string;
+  highlights: string[];
+  keyStrengths: string[];
+  education: string;
+  skills: string;
+  projects: Array<{ title: string; description: string }>;
 }
 
 interface CVBuilderProps {
@@ -29,7 +43,9 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
   const [isPreview, setIsPreview] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [studentData, setStudentData] = useState<StudentProfile | null>(null);
+  const [aiContent, setAiContent] = useState<AIGeneratedContent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cvRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +54,36 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
       fetchStudentData();
     }
   }, [isOpen, user]);
+
+  const generateAIContent = async (profile: StudentProfile) => {
+    setAiLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate_cv`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ profile }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate CV content');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setAiContent(data.data);
+      }
+    } catch (err) {
+      console.error('Error generating AI content:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const fetchStudentData = async () => {
     if (!user) return;
@@ -59,6 +105,7 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
 
       if (data) {
         setStudentData(data);
+        await generateAIContent(data);
       } else {
         setError('No profile data found');
       }
@@ -123,6 +170,13 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
             </div>
           ) : !isPreview ? (
             <div className="space-y-6">
+              {aiLoading && (
+                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                  <p className="text-sm font-bold text-blue-900">Generating modern CV with AI assistance...</p>
+                </div>
+              )}
+
               <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                 <h3 className="text-lg font-black text-black mb-4 uppercase tracking-tight">CV Preview</h3>
                 <button
@@ -139,18 +193,20 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
                   <div className="text-xs text-blue-800 font-medium space-y-2">
                     <p className="flex items-center gap-2">
                       <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                      AI-Enhanced Professional Summary
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                      Key Strengths & Highlights
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
                       Contact Information
                     </p>
                     {studentData.media_links && Object.keys(studentData.media_links).length > 0 && (
                       <p className="flex items-center gap-2">
                         <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
-                        Media Links
-                      </p>
-                    )}
-                    {studentData.professional_summary && (
-                      <p className="flex items-center gap-2">
-                        <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
-                        Professional Summary
+                        Media Links & Portfolio
                       </p>
                     )}
                     {studentData.skills_detailed && Array.isArray(studentData.skills_detailed) && studentData.skills_detailed.length > 0 && (
@@ -171,13 +227,31 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
                         Employment History ({studentData.employment_history.length} positions)
                       </p>
                     )}
+                    {studentData.certifications && Array.isArray(studentData.certifications) && studentData.certifications.length > 0 && (
+                      <p className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                        Certifications & Awards ({studentData.certifications.length})
+                      </p>
+                    )}
+                    {studentData.projects && Array.isArray(studentData.projects) && studentData.projects.length > 0 && (
+                      <p className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                        Projects ({studentData.projects.length})
+                      </p>
+                    )}
+                    {studentData.languages && Array.isArray(studentData.languages) && studentData.languages.length > 0 && (
+                      <p className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                        Languages ({studentData.languages.length})
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           ) : (
             <div ref={cvRef} className="bg-white">
-              {studentData && <CVPreview studentData={studentData} />}
+              {studentData && <CVPreview studentData={studentData} aiContent={aiContent} />}
             </div>
           )}
         </div>
@@ -214,9 +288,10 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
 
 interface CVPreviewProps {
   studentData: StudentProfile;
+  aiContent: AIGeneratedContent | null;
 }
 
-const CVPreview: React.FC<CVPreviewProps> = ({ studentData }) => {
+const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
   const getMediaLinkText = (platform: string): string => {
     const platformMap: { [key: string]: string } = {
       linkedin: 'LinkedIn',
@@ -255,9 +330,11 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData }) => {
         <h1 style={{ fontSize: '32px', fontWeight: '900', margin: '0 0 8px 0', letterSpacing: '-0.5px' }}>
           {studentData.name}
         </h1>
-        <p style={{ fontSize: '11px', fontWeight: '700', color: '#6b7280', margin: '0', textTransform: 'uppercase', letterSpacing: '1px' }}>
-          Student Professional
-        </p>
+        {aiContent?.keyStrengths && aiContent.keyStrengths.length > 0 && (
+          <p style={{ fontSize: '11px', fontWeight: '700', color: '#6b7280', margin: '0', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            {aiContent.keyStrengths.slice(0, 2).join(' • ')}
+          </p>
+        )}
       </div>
 
       {/* CONTACT INFORMATION */}
@@ -292,63 +369,82 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData }) => {
       )}
 
       {/* PROFESSIONAL SUMMARY */}
-      {studentData.professional_summary && (
+      {(aiContent?.summary || studentData.professional_summary) && (
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
             Professional Summary
           </h2>
           <p style={{ fontSize: '11px', lineHeight: '1.6', margin: '0', color: '#374151' }}>
-            {studentData.professional_summary}
+            {aiContent?.summary || studentData.professional_summary}
           </p>
         </div>
       )}
 
-      {/* SKILLS & EXPERTISE */}
-      {skills.length > 0 && (
+      {/* KEY STRENGTHS */}
+      {aiContent?.keyStrengths && aiContent.keyStrengths.length > 0 && (
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
-            Skills & Expertise
+            Key Strengths
           </h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {skills.map((skill: string, idx: number) => (
-              <span key={idx} style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#f3f4f6', padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db' }}>
-                {skill}
+            {aiContent.keyStrengths.map((strength: string, idx: number) => (
+              <span key={idx} style={{ fontSize: '10px', fontWeight: '700', backgroundColor: '#f0f0f0', padding: '6px 12px', borderRadius: '4px', border: '1px solid #d1d5db' }}>
+                • {strength}
               </span>
             ))}
           </div>
         </div>
       )}
 
+      {/* SKILLS & EXPERTISE */}
+      {(aiContent?.skills || skills.length > 0) && (
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
+            Skills & Expertise
+          </h2>
+          <p style={{ fontSize: '10px', lineHeight: '1.6', margin: '0', color: '#374151' }}>
+            {aiContent?.skills || skills.join(' • ')}
+          </p>
+        </div>
+      )}
+
       {/* EDUCATION */}
-      {education.length > 0 && (
+      {(aiContent?.education || education.length > 0) && (
         <div style={{ marginBottom: '24px' }}>
           <h2 style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
             Education
           </h2>
-          <div>
-            {education.map((edu: any, idx: number) => (
-              <div key={idx} style={{ marginBottom: '12px', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                  <h3 style={{ fontSize: '12px', fontWeight: '900', margin: '0' }}>
-                    {edu.degree || edu.qualification || 'Degree'}
-                  </h3>
-                  {(edu.graduation_year || edu.end_year) && (
-                    <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: '600' }}>
-                      {edu.graduation_year || edu.end_year}
-                    </span>
+          {aiContent?.education && (
+            <p style={{ fontSize: '11px', lineHeight: '1.6', margin: '0', color: '#374151' }}>
+              {aiContent.education}
+            </p>
+          )}
+          {!aiContent?.education && education.length > 0 && (
+            <div>
+              {education.map((edu: any, idx: number) => (
+                <div key={idx} style={{ marginBottom: '12px', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                    <h3 style={{ fontSize: '12px', fontWeight: '900', margin: '0' }}>
+                      {edu.degree || edu.qualification || 'Degree'}
+                    </h3>
+                    {(edu.graduation_year || edu.end_year) && (
+                      <span style={{ fontSize: '10px', color: '#6b7280', fontWeight: '600' }}>
+                        {edu.graduation_year || edu.end_year}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '0 0 4px 0', color: '#4b5563', fontWeight: '700' }}>
+                    {edu.institution || edu.school || 'Institution'}
+                  </p>
+                  {edu.field_of_study && (
+                    <p style={{ margin: '0', fontSize: '10px', color: '#6b7280' }}>
+                      {edu.field_of_study}
+                    </p>
                   )}
                 </div>
-                <p style={{ margin: '0 0 4px 0', color: '#4b5563', fontWeight: '700' }}>
-                  {edu.institution || edu.school || 'Institution'}
-                </p>
-                {edu.field_of_study && (
-                  <p style={{ margin: '0', fontSize: '10px', color: '#6b7280' }}>
-                    {edu.field_of_study}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -382,6 +478,27 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData }) => {
                     {job.description}
                   </p>
                 )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* PROJECTS */}
+      {aiContent?.projects && aiContent.projects.length > 0 && (
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: '900', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '2px solid #000', paddingBottom: '8px' }}>
+            Projects
+          </h2>
+          <div>
+            {aiContent.projects.map((project: any, idx: number) => (
+              <div key={idx} style={{ marginBottom: '12px', fontSize: '11px' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '900', margin: '0 0 4px 0' }}>
+                  {project.title}
+                </h3>
+                <p style={{ margin: '0', fontSize: '10px', color: '#6b7280', lineHeight: '1.5' }}>
+                  {project.description}
+                </p>
               </div>
             ))}
           </div>
