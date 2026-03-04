@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, Eye, X, Loader2, AlertCircle } from 'lucide-react';
+import { Download, Eye, X, Loader as Loader2, CircleAlert as AlertCircle } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import html2pdf from 'html2pdf.js';
