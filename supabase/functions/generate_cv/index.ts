@@ -66,13 +66,19 @@ function generateProfessionalSummary(profile: StudentProfile): CVContent {
     : "strong academic foundation";
 
   const experienceText = hasExperience
-    ? "proven hands-on experience in professional environments"
-    : "eager to apply academic knowledge in real-world settings";
+    ? "proven hands-on experience in professional environments where I have successfully delivered impactful projects and contributed to team objectives"
+    : "eager to apply academic knowledge in real-world settings and gain practical experience in professional environments";
+
+  const jobResponsibilities = hasExperience
+    ? "In previous roles, I have demonstrated strong problem-solving abilities, effective communication, and the capacity to work collaboratively with diverse teams. I take pride in delivering quality work, meeting deadlines, and continuously seeking opportunities to improve processes and contribute to organizational success."
+    : "I am committed to continuous learning and professional development, ensuring I stay updated with industry trends and best practices. My approach to work combines meticulous attention to detail with a proactive mindset to identify and implement improvements.";
+
+  const futureGoals = topRoles.length > 0
+    ? `I am particularly interested in pursuing opportunities in ${topRoles.join(", ")}, where I can leverage my existing skills while developing new expertise.`
+    : "I am keen to explore diverse roles that will challenge me professionally and enable me to make meaningful contributions.";
 
   const summary =
-    `Results-driven professional ${skillText}, holding ${educationText}. ` +
-    `${experienceText}. Passionate about ${topRoles.join(", ") || "continuous learning and growth"}. ` +
-    `Seeking opportunities to contribute meaningfully while developing expertise in emerging technologies and collaborative environments.`;
+    `Results-driven professional ${skillText}, holding ${educationText}. I bring ${experienceText}. ${jobResponsibilities} ${futureGoals} I am passionate about ${topRoles.join(", ") || "continuous learning, innovation, and professional excellence"} and thrive in collaborative, fast-paced environments that encourage creativity and growth. I am confident in my ability to make significant contributions to any organization and am excited about the opportunity to bring my skills, dedication, and enthusiasm to a dynamic team.`;
 
   const highlights = [
     skills.length > 0
