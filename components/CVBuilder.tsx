@@ -22,6 +22,7 @@ interface StudentProfile {
   certifications: any;
   projects: any;
   interests: any;
+  referees: any;
 }
 
 interface AIGeneratedContent {
@@ -245,6 +246,12 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
                         Languages ({studentData.languages.length})
                       </p>
                     )}
+                    {studentData.referees && Array.isArray(studentData.referees) && studentData.referees.length > 0 && (
+                      <p className="flex items-center gap-2">
+                        <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[8px] font-black">✓</span>
+                        References ({studentData.referees.length})
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -323,17 +330,21 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
     ? Object.entries(studentData.media_links).filter(([_, url]) => url)
     : [];
 
+  const referees = Array.isArray(studentData.referees)
+    ? studentData.referees
+    : [];
+
   return (
-    <div style={{ fontFamily: 'Times New Roman, serif', color: '#000000', fontSize: '15px', lineHeight: '1.5' }} className="p-12 bg-white">
+    <div style={{ fontFamily: 'Times New Roman, serif', color: '#000000', fontSize: '18px', lineHeight: '1.8' }} className="p-12 bg-white">
       {/* HEADER - NAME */}
-      <div style={{ marginBottom: '12px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0', textAlign: 'left', color: '#000000' }}>
+      <div style={{ marginBottom: '36px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0', textAlign: 'left', color: '#000000' }}>
           {studentData.name}
         </h1>
       </div>
 
       {/* CONTACT INFORMATION - BLOCK FORMAT */}
-      <div style={{ marginBottom: '12px', fontSize: '15px' }}>
+      <div style={{ marginBottom: '36px', fontSize: '18px' }}>
         <div style={{ display: 'block' }}>
           {studentData.email && (
             <div style={{ margin: '0' }}>{studentData.email}</div>
@@ -352,7 +363,7 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* MEDIA LINKS - BLOCK FORMAT */}
       {mediaLinks.length > 0 && (
-        <div style={{ marginBottom: '12px', fontSize: '15px' }}>
+        <div style={{ marginBottom: '36px', fontSize: '18px' }}>
           {mediaLinks.map(([platform, url]: [string, any]) => (
             <div key={platform} style={{ margin: '0' }}>
               {getMediaLinkText(platform)}: {url}
@@ -363,11 +374,11 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* PROFESSIONAL SUMMARY - BLOCK FORMAT WITH 150+ WORDS */}
       {(aiContent?.summary || studentData.professional_summary) && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             PROFESSIONAL SUMMARY
           </h2>
-          <p style={{ fontSize: '15px', lineHeight: '1.5', margin: '0', color: '#000000', textAlign: 'justify' }}>
+          <p style={{ fontSize: '18px', lineHeight: '1.8', margin: '0', color: '#000000', textAlign: 'justify' }}>
             {aiContent?.summary || studentData.professional_summary}
           </p>
         </div>
@@ -375,13 +386,13 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* KEY STRENGTHS - BLOCK FORMAT */}
       {aiContent?.keyStrengths && aiContent.keyStrengths.length > 0 && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             KEY STRENGTHS
           </h2>
           <div style={{ display: 'block' }}>
             {aiContent.keyStrengths.map((strength: string, idx: number) => (
-              <div key={idx} style={{ fontSize: '15px', margin: '0', color: '#000000' }}>
+              <div key={idx} style={{ fontSize: '18px', margin: '0', lineHeight: '1.8', color: '#000000' }}>
                 • {strength}
               </div>
             ))}
@@ -391,11 +402,11 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* SKILLS & EXPERTISE - BLOCK FORMAT */}
       {(aiContent?.skills || skills.length > 0) && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             SKILLS & EXPERTISE
           </h2>
-          <p style={{ fontSize: '15px', lineHeight: '1.5', margin: '0', color: '#000000', textAlign: 'justify' }}>
+          <p style={{ fontSize: '18px', lineHeight: '1.8', margin: '0', color: '#000000', textAlign: 'justify' }}>
             {aiContent?.skills || skills.join(' • ')}
           </p>
         </div>
@@ -403,19 +414,19 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* EDUCATION - BLOCK FORMAT */}
       {(aiContent?.education || education.length > 0) && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             EDUCATION
           </h2>
           {aiContent?.education && (
-            <p style={{ fontSize: '15px', lineHeight: '1.5', margin: '0', color: '#000000', textAlign: 'justify' }}>
+            <p style={{ fontSize: '18px', lineHeight: '1.8', margin: '0', color: '#000000', textAlign: 'justify' }}>
               {aiContent.education}
             </p>
           )}
           {!aiContent?.education && education.length > 0 && (
             <div>
               {education.map((edu: any, idx: number) => (
-                <div key={idx} style={{ marginBottom: '8px', fontSize: '15px' }}>
+                <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
                   <div style={{ display: 'block', marginBottom: '0' }}>
                     <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
                       {edu.degree || edu.qualification || 'Degree'}
@@ -443,13 +454,13 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* EMPLOYMENT HISTORY - BLOCK FORMAT */}
       {employment.length > 0 && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             EMPLOYMENT HISTORY
           </h2>
           <div>
             {employment.map((job: any, idx: number) => (
-              <div key={idx} style={{ marginBottom: '8px', fontSize: '15px' }}>
+              <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
                 <div style={{ display: 'block', marginBottom: '0' }}>
                   <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
                     {job.job_title || job.position || 'Position'}
@@ -466,7 +477,7 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
                     {job.company_name || job.company || 'Company'}
                   </div>
                   {job.description && (
-                    <div style={{ margin: '0', color: '#000000', lineHeight: '1.5' }}>
+                    <div style={{ margin: '0', color: '#000000', lineHeight: '1.8' }}>
                       {job.description}
                     </div>
                   )}
@@ -479,17 +490,17 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
 
       {/* PROJECTS - BLOCK FORMAT */}
       {aiContent?.projects && aiContent.projects.length > 0 && (
-        <div style={{ marginBottom: '18px' }}>
-          <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '12px 0 6px 0', textAlign: 'left', color: '#000000' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             PROJECTS
           </h2>
           <div>
             {aiContent.projects.map((project: any, idx: number) => (
-              <div key={idx} style={{ marginBottom: '8px', fontSize: '15px' }}>
+              <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
                 <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
                   {project.title}
                 </div>
-                <p style={{ margin: '0', color: '#000000', lineHeight: '1.5' }}>
+                <p style={{ margin: '0', color: '#000000', lineHeight: '1.8' }}>
                   {project.description}
                 </p>
               </div>
@@ -498,8 +509,48 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
         </div>
       )}
 
+      {/* REFERENCES - BLOCK FORMAT */}
+      {referees.length > 0 && (
+        <div style={{ marginBottom: '36px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
+            REFERENCES
+          </h2>
+          <div>
+            {referees.map((referee: any, idx: number) => (
+              <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
+                <div style={{ display: 'block', marginBottom: '0' }}>
+                  <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
+                    {referee.name || 'Reference Name'}
+                  </div>
+                  {referee.position && (
+                    <div style={{ margin: '0', color: '#000000' }}>
+                      {referee.position}
+                    </div>
+                  )}
+                  {referee.company && (
+                    <div style={{ margin: '0', color: '#000000' }}>
+                      {referee.company}
+                    </div>
+                  )}
+                  {referee.email && (
+                    <div style={{ margin: '0', color: '#000000' }}>
+                      Email: {referee.email}
+                    </div>
+                  )}
+                  {referee.phone && (
+                    <div style={{ margin: '0', color: '#000000' }}>
+                      Phone: {referee.phone}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
-      <div style={{ marginTop: '18px', paddingTop: '8px', fontSize: '12px', color: '#000000', textAlign: 'center' }}>
+      <div style={{ marginTop: '36px', paddingTop: '12px', fontSize: '16px', color: '#000000', textAlign: 'center', borderTop: '1px solid #000000' }}>
         <p style={{ margin: '0' }}>Generated from CraftLab Careers • {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
     </div>
