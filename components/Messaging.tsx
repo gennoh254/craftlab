@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MoveVertical as MoreVertical, CreditCard as Edit, Send, Image, Paperclip, Smile, Phone, Video, MessageSquare, Loader as Loader2, X, Plus, Mail } from 'lucide-react';
+import { Search, MoveVertical as MoreVertical, CreditCard as Edit, Send, Image, Paperclip, Smile, Phone, Video, MessageSquare, Loader as Loader2, X, Plus, Mail, Trash2 } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -265,6 +265,20 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
     markMessagesAsRead(userId);
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!window.confirm('Delete this message?')) return;
+
+    try {
+      await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId);
+      setMessages(messages.filter(m => m.id !== messageId));
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  };
+
   const currentUser = allUsers.find(u => u.id === activeChat);
 
   if (loading) {
@@ -377,15 +391,26 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
               const isMine = msg.sender_id === user?.id;
               return (
                 <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-2xl p-4 shadow-sm ${
+                  <div className={`group max-w-[70%] rounded-2xl p-4 shadow-sm ${
                     isMine
                       ? 'bg-black text-white rounded-tr-none'
                       : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                   }`}>
                     <p className="text-xs leading-relaxed font-medium">{msg.content}</p>
-                    <p className={`text-[8px] mt-2 font-black uppercase ${isMine ? 'text-[#facc15]/80' : 'text-gray-400'}`}>
-                      {formatMessageTime(msg.created_at)}
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className={`text-[8px] font-black uppercase ${isMine ? 'text-[#facc15]/80' : 'text-gray-400'}`}>
+                        {formatMessageTime(msg.created_at)}
+                      </p>
+                      {isMine && (
+                        <button
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="ml-2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-700"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3 h-3 text-red-400" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );

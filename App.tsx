@@ -90,7 +90,7 @@ const App: React.FC = () => {
       case 'SEARCH':
         return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'VIEW_USER':
-        return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={setActiveView} /> : null;
+        return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={handleViewChange} /> : null;
       default:
         return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} />;
     }
