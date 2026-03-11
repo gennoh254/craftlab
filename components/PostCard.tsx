@@ -1,22 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  ThumbsUp,
-  MessageSquare,
-  Bookmark,
-  Share2,
-  MoreHorizontal,
-  CheckCircle,
-  Send,
-  Paperclip,
-  Loader2,
-  Trash2,
-  UserPlus,
-  UserCheck,
-  Mail,
-  Maximize2,
-  X
-} from 'lucide-react';
+import { ThumbsUp, MessageSquare, Bookmark, Share2, MoveHorizontal as MoreHorizontal, CircleCheck as CheckCircle, Send, Paperclip, Loader as Loader2, Trash2, UserPlus, UserCheck, Mail, Maximize2, X } from 'lucide-react';
 import { Post, UserRole, Comment } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, ArrowLeft, Loader2 } from 'lucide-react';
+import { Users, FileText, ArrowLeft, Loader as Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { UserRole, Post } from '../types';
 import { PostCard } from './PostCard';

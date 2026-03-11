@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ArrowLeft,
-  Users,
-  UserPlus,
-  UserCheck,
-  FileText,
-  Loader2,
-  Mail,
-  MapPin,
-  Link as LinkIcon
-} from 'lucide-react';
+import { ArrowLeft, Users, UserPlus, UserCheck, FileText, Loader as Loader2, Mail, MapPin, Link as LinkIcon } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { Post, UserRole } from '../types';
