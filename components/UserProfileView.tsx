@@ -18,7 +18,6 @@ import { PostCard } from './PostCard';
 interface UserProfileViewProps {
   userId: string;
   onNavigate: (view: string) => void;
-  onViewPost: (post: Post) => void;
 }
 
 interface UserProfile {
@@ -39,7 +38,7 @@ interface ProfileStats {
   postsCount: number;
 }
 
-const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onNavigate, onViewPost }) => {
+const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onNavigate }) => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats>({ followers: 0, following: 0, postsCount: 0 });
@@ -401,9 +400,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onNavigate, o
                   <PostCard
                     key={post.id}
                     post={post}
-                    onViewPost={onViewPost}
                     isOwnPost={isOwnProfile}
                     onDelete={handleDeletePost}
+                    onNavigate={onNavigate}
                   />
                 ))
               )}

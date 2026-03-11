@@ -10,11 +10,10 @@ import CreatePostPage from './components/CreatePostPage';
 import PostOpportunityPage from './components/PostOpportunityPage';
 import ViewMatchesPage from './components/ViewMatchesPage';
 import OpportunitiesPage from './components/OpportunitiesPage';
-import PostDetailPage from './components/PostDetailPage';
 import SearchResults from './components/SearchResults';
 import UserProfileView from './components/UserProfileView';
 import AuthPage from './components/AuthPage';
-import { UserRole, Post } from './types';
+import { UserRole } from './types';
 import { useAuth } from './lib/auth';
 
 export type ViewState =
@@ -28,21 +27,14 @@ export type ViewState =
   | 'POST_OPPORTUNITY'
   | 'VIEW_MATCHES'
   | 'ALL_OPPORTUNITIES'
-  | 'POST_DETAIL'
   | 'SEARCH'
   | 'VIEW_USER';
 
 const App: React.FC = () => {
   const { user, profile, loading } = useAuth();
   const [activeView, setActiveView] = useState<ViewState>('HOME');
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  const handleViewPost = (post: Post) => {
-    setSelectedPost(post);
-    setActiveView('POST_DETAIL');
-  };
 
   const handleViewChange = (view: ViewState, query?: string, userId?: string) => {
     if (query) {
@@ -76,10 +68,10 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'HOME':
-        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
+        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} />;
       case 'DASHBOARD':
         return currentUserRole === UserRole.STUDENT ? (
-          <StudentDashboard onNavigate={setActiveView} onViewPost={handleViewPost} />
+          <StudentDashboard onNavigate={setActiveView} />
         ) : (
           <OrgDashboard onNavigate={setActiveView} />
         );
@@ -94,15 +86,13 @@ const App: React.FC = () => {
       case 'VIEW_MATCHES':
         return <ViewMatchesPage userRole={currentUserRole} onNavigate={setActiveView} />;
       case 'ALL_OPPORTUNITIES':
-        return <OpportunitiesPage userRole={currentUserRole} onNavigate={setActiveView} />;
-      case 'POST_DETAIL':
-        return selectedPost ? <PostDetailPage post={selectedPost} userRole={currentUserRole} onNavigate={setActiveView} /> : null;
+        return <OpportunitiesPage userRole={currentUserRole} />;
       case 'SEARCH':
-        return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={handleViewChange} onViewPost={handleViewPost} />;
+        return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'VIEW_USER':
-        return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={setActiveView} onViewPost={handleViewPost} /> : null;
+        return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={setActiveView} /> : null;
       default:
-        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} onViewPost={handleViewPost} />;
+        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} />;
     }
   };
 

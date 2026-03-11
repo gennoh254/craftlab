@@ -9,7 +9,6 @@ interface SearchResultsProps {
   query: string;
   userRole: UserRole;
   onNavigate: (view: string, query?: string, userId?: string) => void;
-  onViewPost: (post: Post) => void;
 }
 
 interface UserResult {
@@ -20,7 +19,7 @@ interface UserResult {
   professional_summary?: string;
 }
 
-const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNavigate, onViewPost }) => {
+const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNavigate }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<UserResult[]>([]);
@@ -192,9 +191,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({ query, userRole, onNaviga
                   <PostCard
                     key={post.id}
                     post={post}
-                    onViewPost={onViewPost}
                     isOwnPost={post.authorId === user?.id}
                     onDelete={handleDeletePost}
+                    onNavigate={onNavigate}
                   />
                 ))
               )}

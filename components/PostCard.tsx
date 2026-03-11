@@ -7,11 +7,15 @@ import {
   Share2,
   MoreHorizontal,
   CheckCircle,
-  Link,
   Send,
   Paperclip,
   Loader2,
-  Trash2
+  Trash2,
+  UserPlus,
+  UserCheck,
+  Mail,
+  Maximize2,
+  X
 } from 'lucide-react';
 import { Post, UserRole, Comment } from '../types';
 import { supabase } from '../lib/supabase';
@@ -20,12 +24,12 @@ import { useAuth } from '../lib/auth';
 interface PostCardProps {
   post: Post;
   isOrgView?: boolean;
-  onViewPost?: (post: Post) => void;
   onDelete?: (postId: string) => void;
   isOwnPost?: boolean;
+  onNavigate?: (view: string, userId?: string) => void;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, isOwnPost }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onDelete, isOwnPost, onNavigate }) => {
   const { user } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -35,12 +39,36 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
   const [loadingComments, setLoadingComments] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [checkingFollow, setCheckingFollow] = useState(false);
+  const [fullscreenMedia, setFullscreenMedia] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
       checkIfLiked();
+      if (!isOwnPost && user.id !== post.author_id) {
+        checkFollowStatus();
+      }
     }
-  }, [user, post.id]);
+  }, [user, post.id, isOwnPost]);
+
+  const checkFollowStatus = async () => {
+    if (!user || user.id === post.author_id) return;
+    setCheckingFollow(true);
+    try {
+      const { data } = await supabase
+        .from('connections')
+        .select('id')
+        .eq('follower_id', user.id)
+        .eq('following_id', post.author_id)
+        .maybeSingle();
+      setIsFollowing(!!data);
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    } finally {
+      setCheckingFollow(false);
+    }
+  };
 
   useEffect(() => {
     if (!post.id) return;
@@ -242,6 +270,38 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
     }
   };
 
+  const handleFollowToggle = async () => {
+    if (!user || user.id === post.author_id) return;
+    try {
+      if (isFollowing) {
+        await supabase
+          .from('connections')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', post.author_id);
+        setIsFollowing(false);
+      } else {
+        await supabase
+          .from('connections')
+          .insert({
+            follower_id: user.id,
+            following_id: post.author_id
+          });
+        setIsFollowing(true);
+      }
+      setShowMoreMenu(false);
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+    }
+  };
+
+  const handleMessageClick = () => {
+    if (onNavigate && user?.id !== post.author_id) {
+      onNavigate('INBOX');
+      setShowMoreMenu(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-[2rem] shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300">
       <div className="p-6 flex items-center justify-between">
@@ -273,23 +333,49 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
           >
             <MoreHorizontal className="w-6 h-6" />
           </button>
-          {showMoreMenu && isOwnPost && (
-            <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="w-full px-4 py-2 text-left text-red-500 hover:bg-red-50 flex items-center gap-2 font-bold text-sm rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4" /> Delete Post
-                  </>
-                )}
-              </button>
+          {showMoreMenu && (
+            <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-200 z-10 min-w-[180px]">
+              {isOwnPost ? (
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="w-full px-4 py-2 text-left text-red-500 hover:bg-red-50 flex items-center gap-2 font-bold text-sm rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" /> Delete Post
+                    </>
+                  )}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleFollowToggle}
+                    disabled={checkingFollow}
+                    className="w-full px-4 py-2 text-left text-black hover:bg-gray-50 flex items-center gap-2 font-bold text-sm transition-colors disabled:opacity-50"
+                  >
+                    {isFollowing ? (
+                      <>
+                        <UserCheck className="w-4 h-4" /> Unfollow
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="w-4 h-4" /> Follow
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleMessageClick}
+                    className="w-full px-4 py-2 text-left text-black hover:bg-gray-50 flex items-center gap-2 font-bold text-sm transition-colors"
+                  >
+                    <Mail className="w-4 h-4" /> Message
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -302,11 +388,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
         </p>
         
         {post.mediaUrl && (
-          <div className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 group relative shadow-inner">
+          <div className="rounded-3xl overflow-hidden border border-gray-100 bg-gray-50 group relative shadow-inner cursor-pointer">
             {post.mediaType === 'image' ? (
-              <img src={post.mediaUrl} alt="Post media" className="w-full max-h-96 object-cover group-hover:opacity-90 transition-opacity duration-300" />
+              <img
+                src={post.mediaUrl}
+                alt="Post media"
+                className="w-full max-h-96 object-cover group-hover:opacity-90 transition-opacity duration-300"
+                onClick={() => setFullscreenMedia(post.mediaUrl)}
+              />
             ) : post.mediaType === 'video' ? (
-              <video src={post.mediaUrl} controls className="w-full max-h-96 object-cover" />
+              <div onClick={() => setFullscreenMedia(post.mediaUrl)} className="w-full max-h-96 bg-black flex items-center justify-center">
+                <video src={post.mediaUrl} className="max-w-full max-h-96 object-cover" />
+              </div>
             ) : (
               <div className="p-6 bg-gray-50 flex items-center justify-center min-h-[200px]">
                 <a href={post.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-black text-[#facc15] rounded-lg font-bold text-sm hover:bg-gray-800">
@@ -314,14 +407,30 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onViewPost, onDelete, 
                 </a>
               </div>
             )}
+            {post.mediaType !== 'file' && (
+              <button
+                onClick={() => setFullscreenMedia(post.mediaUrl)}
+                className="absolute top-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-xl text-white transition-all opacity-0 group-hover:opacity-100"
+              >
+                <Maximize2 className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {fullscreenMedia && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
             <button
-              onClick={() => onViewPost?.(post)}
-              className="absolute inset-0 w-full h-full flex items-center justify-center bg-black/0 hover:bg-black/40 transition-all duration-300 group/btn"
+              onClick={() => setFullscreenMedia(null)}
+              className="absolute top-4 right-4 p-2 bg-white rounded-xl hover:bg-gray-100 transition-colors"
             >
-              <div className="bg-white/95 backdrop-blur-md px-6 py-3 rounded-2xl shadow-2xl border border-gray-200 text-xs font-black text-black uppercase tracking-widest flex items-center gap-3 opacity-0 group-hover/btn:opacity-100 transition-opacity">
-                <Link className="w-4 h-4 text-[#facc15]" /> View Detail
-              </div>
+              <X className="w-6 h-6 text-black" />
             </button>
+            {post.mediaType === 'image' ? (
+              <img src={fullscreenMedia} alt="Fullscreen" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <video src={fullscreenMedia} controls autoPlay className="max-w-full max-h-full object-contain" />
+            )}
           </div>
         )}
 

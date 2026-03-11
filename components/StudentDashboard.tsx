@@ -14,7 +14,6 @@ import { useUnreadMessages } from '../lib/useUnreadMessages';
 
 interface StudentDashboardProps {
   onNavigate: (view: ViewState) => void;
-  onViewPost?: (post: Post) => void;
 }
 
 interface DbPost {
@@ -54,7 +53,7 @@ interface MatchedOpportunity {
   };
 }
 
-const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewPost }) => {
+const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate }) => {
   const { profile, user } = useAuth();
   const unreadMessageCount = useUnreadMessages();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -392,9 +391,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ onNavigate, onViewP
                 <div key={post.id} className="relative">
                   <PostCard
                     post={post}
-                    onViewPost={onViewPost}
                     onDelete={handleDeletePost}
                     isOwnPost={true}
+                    onNavigate={onNavigate}
                   />
                   <button
                     onClick={() => handleDeletePost(post.id)}

@@ -11,7 +11,6 @@ import { useAuth } from '../lib/auth';
 interface HomeFeedProps {
   userRole: UserRole;
   onNavigate: (view: ViewState) => void;
-  onViewPost?: (post: Post) => void;
 }
 
 interface DbPost {
@@ -41,7 +40,7 @@ interface NetworkUser {
   isFollowing: boolean;
 }
 
-const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost }) => {
+const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate }) => {
   const { profile, user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,9 +287,9 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate, onViewPost })
               <PostCard
                 key={post.id}
                 post={post}
-                onViewPost={onViewPost}
                 isOwnPost={post.authorId === user?.id}
                 onDelete={handleDeletePost}
+                onNavigate={onNavigate}
               />
             ))}
           </div>
