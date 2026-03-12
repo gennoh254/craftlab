@@ -24,6 +24,15 @@ interface ProjectEntry {
   description: string;
 }
 
+interface RefereeEntry {
+  id: string;
+  name: string;
+  position: string;
+  company: string;
+  email: string;
+  phone: string;
+}
+
 interface EditProfileProps {
   userRole: UserRole;
   onNavigate: (view: ViewState) => void;
@@ -71,7 +80,9 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
   const [projects, setProjects] = useState<ProjectEntry[]>([]);
 
   // 9. Referees
-  const [referees, setReferees] = useState(profile?.referees || '');
+  const [referees, setReferees] = useState<RefereeEntry[]>(
+    Array.isArray(profile?.referees) ? profile.referees : []
+  );
 
   // Organization Profile Data
   const [organizationData, setOrganizationData] = useState({
@@ -363,6 +374,32 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
     setProjects(projects.filter((proj) => proj.id !== id));
   };
 
+  const addReferee = () => {
+    setReferees([
+      ...referees,
+      {
+        id: Date.now().toString(),
+        name: '',
+        position: '',
+        company: '',
+        email: '',
+        phone: '',
+      },
+    ]);
+  };
+
+  const updateReferee = (id: string, field: keyof RefereeEntry, value: any) => {
+    setReferees(
+      referees.map((ref) =>
+        ref.id === id ? { ...ref, [field]: value } : ref
+      )
+    );
+  };
+
+  const removeReferee = (id: string) => {
+    setReferees(referees.filter((ref) => ref.id !== id));
+  };
+
   const handleSaveChanges = async () => {
     if (!user) return;
 
@@ -405,7 +442,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          window.location.reload();
+          onNavigate('DASHBOARD');
         }, 1000);
       }
     } catch (err: any) {
@@ -1066,20 +1103,82 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
 
           {/* 9. REFEREES - Students Only */}
           {userRole === UserRole.STUDENT && (
-           <div className="space-y-8">
-            <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
-              <Users className="w-5 h-5 text-[#facc15]" /> 9. Referees
-            </h2>
-            <div className="space-y-2">
-                <textarea
-                rows={3}
-                value={referees}
-                onChange={(e) => setReferees(e.target.value)}
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
-                placeholder="List 2-3 referees (Name, Title, Contact) OR write 'Available upon request'"
-                />
+            <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-black text-black uppercase tracking-widest flex items-center gap-3 border-b border-gray-100 pb-4">
+                  <Users className="w-5 h-5 text-[#facc15]" /> 9. Referees
+                </h2>
+                <button
+                  type="button"
+                  onClick={addReferee}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#facc15] text-black font-black rounded-lg text-xs uppercase tracking-widest hover:bg-yellow-500 transition-all"
+                >
+                  <Plus className="w-4 h-4" /> Add Referee
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {referees.map((referee) => (
+                  <div key={referee.id} className="p-6 bg-gray-50 border-2 border-gray-100 rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-black text-black uppercase tracking-widest">Referee {referees.indexOf(referee) + 1}</h3>
+                      <button
+                        type="button"
+                        onClick={() => removeReferee(referee.id)}
+                        className="p-2 hover:bg-red-100 rounded-lg transition-all"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        placeholder="Full Name"
+                        value={referee.name}
+                        onChange={(e) => updateReferee(referee.id, 'name', e.target.value)}
+                        className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Position/Title"
+                        value={referee.position}
+                        onChange={(e) => updateReferee(referee.id, 'position', e.target.value)}
+                        className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Company"
+                        value={referee.company}
+                        onChange={(e) => updateReferee(referee.id, 'company', e.target.value)}
+                        className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={referee.email}
+                        onChange={(e) => updateReferee(referee.id, 'email', e.target.value)}
+                        className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all"
+                      />
+                      <input
+                        type="tel"
+                        placeholder="Phone Number"
+                        value={referee.phone}
+                        onChange={(e) => updateReferee(referee.id, 'phone', e.target.value)}
+                        className="bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-black transition-all col-span-2"
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {referees.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p className="text-sm font-medium">No referees added yet</p>
+                    <p className="text-xs text-gray-400 mt-1">Add at least 2-3 professional referees</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
           )}
 
           {userRole === UserRole.ORGANIZATION && (
