@@ -40,6 +40,13 @@ interface StudentProfile {
   certifications?: Array<{ title: string; issuer?: string; year?: number }>;
   projects?: Array<{ title: string; description?: string; link?: string }>;
   interests?: string[];
+  referees?: Array<{
+    name?: string;
+    position?: string;
+    company?: string;
+    email?: string;
+    phone?: string;
+  }>;
 }
 
 interface CVContent {
@@ -158,6 +165,31 @@ function enhanceProjectDescriptions(
   }));
 }
 
+function formatReferees(
+  referees: StudentProfile["referees"]
+): Array<{
+  name: string;
+  position: string;
+  company: string;
+  contact: string;
+}> {
+  if (!referees || referees.length === 0) {
+    return [];
+  }
+
+  return referees
+    .filter((ref) => ref.name)
+    .map((ref) => ({
+      name: ref.name || "Reference",
+      position: ref.position || "Professional",
+      company: ref.company || "Organization",
+      contact:
+        ref.email || ref.phone
+          ? `${ref.email || ""}${ref.email && ref.phone ? " • " : ""}${ref.phone || ""}`
+          : "Contact available upon request",
+    }));
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -190,6 +222,7 @@ Deno.serve(async (req: Request) => {
     const enhancedEducation = enhanceEducationEntries(profile.education);
     const enhancedSkills = enhanceSkillsPresentation(profile.skills_detailed);
     const enhancedProjects = enhanceProjectDescriptions(profile.projects);
+    const formattedReferees = formatReferees(profile.referees);
 
     return new Response(
       JSON.stringify({
@@ -201,6 +234,7 @@ Deno.serve(async (req: Request) => {
           education: enhancedEducation,
           skills: enhancedSkills,
           projects: enhancedProjects,
+          referees: formattedReferees,
           generatedAt: new Date().toISOString(),
         },
       }),

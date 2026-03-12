@@ -32,6 +32,12 @@ interface AIGeneratedContent {
   education: string;
   skills: string;
   projects: Array<{ title: string; description: string }>;
+  referees: Array<{
+    name: string;
+    position: string;
+    company: string;
+    contact: string;
+  }>;
 }
 
 interface CVBuilderProps {
@@ -510,44 +516,62 @@ const CVPreview: React.FC<CVPreviewProps> = ({ studentData, aiContent }) => {
       )}
 
       {/* REFERENCES - BLOCK FORMAT */}
-      {referees.length > 0 && (
+      {(aiContent?.referees && aiContent.referees.length > 0) || referees.length > 0 ? (
         <div style={{ marginBottom: '36px' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 18px 0', textAlign: 'left', color: '#000000' }}>
             REFERENCES
           </h2>
           <div>
-            {referees.map((referee: any, idx: number) => (
-              <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
-                <div style={{ display: 'block', marginBottom: '0' }}>
-                  <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
-                    {referee.name || 'Reference Name'}
+            {aiContent?.referees && aiContent.referees.length > 0 ? (
+              aiContent.referees.map((referee: any, idx: number) => (
+                <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
+                  <div style={{ display: 'block', marginBottom: '0' }}>
+                    <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
+                      {referee.name}
+                    </div>
+                    <div style={{ margin: '0', color: '#000000' }}>
+                      {referee.position} at {referee.company}
+                    </div>
+                    <div style={{ margin: '0', color: '#000000', fontSize: '17px' }}>
+                      {referee.contact}
+                    </div>
                   </div>
-                  {referee.position && (
-                    <div style={{ margin: '0', color: '#000000' }}>
-                      {referee.position}
-                    </div>
-                  )}
-                  {referee.company && (
-                    <div style={{ margin: '0', color: '#000000' }}>
-                      {referee.company}
-                    </div>
-                  )}
-                  {referee.email && (
-                    <div style={{ margin: '0', color: '#000000' }}>
-                      Email: {referee.email}
-                    </div>
-                  )}
-                  {referee.phone && (
-                    <div style={{ margin: '0', color: '#000000' }}>
-                      Phone: {referee.phone}
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              referees.map((referee: any, idx: number) => (
+                <div key={idx} style={{ marginBottom: '18px', fontSize: '18px' }}>
+                  <div style={{ display: 'block', marginBottom: '0' }}>
+                    <div style={{ margin: '0', fontWeight: 'bold', color: '#000000' }}>
+                      {referee.name || 'Reference Name'}
+                    </div>
+                    {referee.position && (
+                      <div style={{ margin: '0', color: '#000000' }}>
+                        {referee.position}
+                      </div>
+                    )}
+                    {referee.company && (
+                      <div style={{ margin: '0', color: '#000000' }}>
+                        {referee.company}
+                      </div>
+                    )}
+                    {referee.email && (
+                      <div style={{ margin: '0', color: '#000000' }}>
+                        Email: {referee.email}
+                      </div>
+                    )}
+                    {referee.phone && (
+                      <div style={{ margin: '0', color: '#000000' }}>
+                        Phone: {referee.phone}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* FOOTER */}
       <div style={{ marginTop: '36px', paddingTop: '12px', fontSize: '16px', color: '#000000', textAlign: 'center', borderTop: '1px solid #000000' }}>

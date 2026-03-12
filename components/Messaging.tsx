@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MoveVertical as MoreVertical, CreditCard as Edit, Send, Image, Paperclip, Smile, Phone, Video, MessageSquare, Loader as Loader2, X, Plus, Mail, Trash2 } from 'lucide-react';
+import { Search, MoveVertical as MoreVertical, CreditCard as Edit, Send, Image, Paperclip, Smile, Phone, Video, MessageSquare, Loader as Loader2, X, Plus, Mail, Trash2, Trash } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -279,6 +279,30 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
     }
   };
 
+  const handleClearAllChats = async () => {
+    if (!user) return;
+
+    const confirmClear = window.confirm(
+      'This will delete all your messages locally. Other users will still see their copies. Are you sure?'
+    );
+
+    if (!confirmClear) return;
+
+    try {
+      await supabase
+        .from('messages')
+        .delete()
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
+
+      setMessages([]);
+      setActiveChat(null);
+      fetchAllUsers();
+    } catch (error) {
+      console.error('Error clearing chats:', error);
+      alert('Failed to clear chats. Please try again.');
+    }
+  };
+
   const currentUser = allUsers.find(u => u.id === activeChat);
 
   if (loading) {
@@ -292,8 +316,17 @@ const Messaging: React.FC<MessagingProps> = ({ userRole }) => {
   return (
     <div className="h-[calc(100vh-120px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex">
       <div className="w-80 border-r border-gray-200 flex flex-col bg-gray-50/50">
-        <div className="p-4 border-b border-gray-200 bg-black text-white">
-          <h2 className="font-black text-[10px] uppercase tracking-widest mb-3">All Users</h2>
+        <div className="p-4 border-b border-gray-200 bg-black text-white space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-black text-[10px] uppercase tracking-widest">All Users</h2>
+            <button
+              onClick={handleClearAllChats}
+              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-red-400"
+              title="Clear all chats"
+            >
+              <Trash className="w-4 h-4" />
+            </button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input
