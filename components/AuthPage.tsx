@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Loader2, CheckCircle2 } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 const AuthPage: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -32,53 +33,65 @@ const AuthPage: React.FC = () => {
         if (error) setError(error.message);
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to connect to server");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* LEFT SIDE: Branding & Image Section (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0a0f0d] p-12 flex-col justify-between relative overflow-hidden">
-        {/* Abstract background decorative element */}
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-[#facc15] opacity-10 blur-[120px] rounded-full" />
+    <div className="flex min-h-screen bg-white font-sans">
+      {/* LEFT SIDE: Branding Section with Background Image */}
+      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden">
+        {/* BACKGROUND IMAGE & OVERLAY */}
+        <img 
+          src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200" 
+          alt="Background" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Dark Gradient Overlay to make text readable */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-black/80 to-transparent" />
         
+        {/* LOGO AREA */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 bg-[#facc15] rounded-xl flex items-center justify-center shadow-lg shadow-yellow-500/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#facc15] rounded-xl flex items-center justify-center shadow-lg">
               <span className="font-black text-black">CC</span>
             </div>
             <span className="text-white font-bold text-xl tracking-tight">Craftlab Careers</span>
           </div>
-
-          <div className="max-w-md">
-            <h1 className="text-5xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
-              {isSignUp ? "Join the future of professional growth." : "Empowering your digital career future."}
-            </h1>
-            <p className="text-gray-400 text-lg font-medium leading-relaxed">
-              Join the most inclusive ecosystem designed for career growth, 
-              skill building, and community integration.
-            </p>
-          </div>
         </div>
 
+        {/* CENTER CONTENT */}
+        <div className="relative z-10 max-w-md">
+          <h1 className="text-5xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
+            {isSignUp 
+              ? "Join Africa's Most Inclusive Financial Network." 
+              : "Empowering Africa's digital future."}
+          </h1>
+          <p className="text-gray-300 text-lg font-medium leading-relaxed">
+            {isSignUp 
+              ? "Start your journey towards seamless payments, micro-savings, and accessible credit today."
+              : "Join the most inclusive financial ecosystem designed for growth and community integration."}
+          </p>
+        </div>
+
+        {/* BOTTOM STATS / FOOTER */}
         <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-4 mb-6">
                 <div className="flex -space-x-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0a0f0d] bg-gray-700 flex items-center justify-center overflow-hidden">
-                           <div className="w-full h-full bg-gradient-to-br from-gray-600 to-gray-800" />
+                        <div key={i} className="w-10 h-10 rounded-full border-2 border-black bg-gray-800 overflow-hidden">
+                           <img src={`https://i.pravatar.cc/100?u=${i}`} alt="user" />
                         </div>
                     ))}
-                    <div className="w-10 h-10 rounded-full border-2 border-[#0a0f0d] bg-[#facc15] flex items-center justify-center text-[10px] font-black">
+                    <div className="w-10 h-10 rounded-full border-2 border-black bg-[#facc15] flex items-center justify-center text-[10px] font-black">
                         +12k
                     </div>
                 </div>
-                <p className="text-gray-400 text-sm">Over 12,000+ users already onboarded.</p>
+                <p className="text-gray-300 text-sm font-medium">Over 1.2 million users already onboarded.</p>
             </div>
-            <p className="text-gray-600 text-xs">© 2024 Craftlab Technologies. All rights reserved.</p>
+            <p className="text-gray-500 text-xs">© 2024 Craftlab Technologies. All rights reserved.</p>
         </div>
       </div>
 
@@ -90,106 +103,70 @@ const AuthPage: React.FC = () => {
                 {isSignUp ? "Create an account" : "Sign in to Craftlab"}
             </h2>
             <p className="text-gray-500 font-medium">
-                {isSignUp ? "Sign up to start your digital career journey." : "Welcome back! Please enter your details."}
+                {isSignUp ? "Sign up to start your digital financial journey." : "Welcome back! Please enter your details."}
             </p>
-          </div>
-
-          {/* Toggle Switch */}
-          <div className="flex gap-2 p-1.5 bg-gray-100 rounded-2xl mb-8">
-            <button
-              onClick={() => setIsSignUp(false)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                !isSignUp ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => setIsSignUp(true)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                isSignUp ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              }`}
-            >
-              Sign Up
-            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
               <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="John Doe"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
                   required={isSignUp}
                 />
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Email or Phone</label>
+              <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Email or Phone Number</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
                 <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Password</label>
-                    {!isSignUp && (
-                        <button type="button" className="text-[11px] font-bold text-[#facc15] hover:underline uppercase tracking-widest">
-                            Forgot?
-                        </button>
-                    )}
+                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Password</label>
                 </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
-                required
-              />
+                <div className="relative">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
+                        required
+                    />
+                    <button 
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                </div>
             </div>
 
-            {isSignUp && (
-              <div className="space-y-2">
-                <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Type</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setUserType('STUDENT')}
-                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                      userType === 'STUDENT'
-                        ? 'bg-black text-[#facc15] border-black'
-                        : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    {userType === 'STUDENT' && <CheckCircle2 className="w-3 h-3" />}
-                    Student
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUserType('ORGANIZATION')}
-                    className={`py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                      userType === 'ORGANIZATION'
-                        ? 'bg-black text-[#facc15] border-black'
-                        : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    {userType === 'ORGANIZATION' && <CheckCircle2 className="w-3 h-3" />}
-                    Organization
-                  </button>
+            {!isSignUp && (
+                <div className="flex items-center justify-between px-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#facc15] focus:ring-[#facc15]" />
+                        <span className="text-xs font-bold text-gray-600">Remember me</span>
+                    </label>
+                    <button type="button" className="text-xs font-black text-[#facc15] uppercase tracking-widest">
+                        Forgot password?
+                    </button>
                 </div>
-              </div>
             )}
 
             {error && (
@@ -201,7 +178,7 @@ const AuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-black text-[#facc15] rounded-xl text-xs font-black uppercase tracking-widest hover:bg-zinc-800 transition-all shadow-xl shadow-black/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#facc15] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:brightness-95 transition-all shadow-lg shadow-yellow-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -217,9 +194,17 @@ const AuthPage: React.FC = () => {
             </button>
           </form>
 
-          <p className="text-center text-[11px] text-gray-400 mt-8 font-medium">
-            By continuing, you agree to our <span className="text-gray-900 underline cursor-pointer">Terms of Service</span> and <span className="text-gray-900 underline cursor-pointer">Privacy Policy</span>.
-          </p>
+          <div className="mt-8 text-center">
+            <p className="text-sm font-medium text-gray-500">
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}
+                <button 
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="ml-2 font-black text-[#facc15] uppercase text-xs tracking-widest hover:underline"
+                >
+                    {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
