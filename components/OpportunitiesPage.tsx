@@ -2,21 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserRole, DbOpportunity } from '../types';
 import { ViewState } from '../App';
-import {
-  ArrowLeft,
-  Search,
-  Briefcase,
-  MapPin,
-  Clock,
-  ExternalLink,
-  Filter,
-  CheckCircle,
-  Building,
-  Zap,
-  Loader2,
-  AlertCircle,
-  X
-} from 'lucide-react';
+import { ArrowLeft, Search, Briefcase, MapPin, Clock, ExternalLink, ListFilter as Filter, CircleCheck as CheckCircle, Building, Zap, Loader as Loader2, CircleAlert as AlertCircle, X, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 
@@ -190,6 +176,27 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
       setAppliedOpportunities(prev => new Set([...prev, opportunityId]));
     }
     setApplying(null);
+  };
+
+  const handleDeleteOpportunity = async (opportunityId: string) => {
+    if (!window.confirm('Are you sure you want to delete this opportunity? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('opportunities')
+        .delete()
+        .eq('id', opportunityId)
+        .eq('org_id', user?.id);
+
+      if (error) throw error;
+
+      setOpportunities(opportunities.filter(opp => opp.id !== opportunityId));
+    } catch (error) {
+      console.error('Error deleting opportunity:', error);
+      alert('Failed to delete opportunity. Please try again.');
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -454,9 +461,20 @@ const OpportunitiesPage: React.FC<OpportunitiesPageProps> = ({ userRole, onNavig
                           {opp.type}
                         </p>
                       </div>
-                      <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm shrink-0">
-                        <ExternalLink className="w-4 h-4 text-gray-400" />
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                          <ExternalLink className="w-4 h-4 text-gray-400" />
+                        </button>
+                        {opp.org_id === user?.id && (
+                          <button
+                            onClick={() => handleDeleteOpportunity(opp.id)}
+                            className="p-2.5 bg-white border border-red-100 rounded-xl hover:bg-red-50 transition-colors shadow-sm text-red-500 hover:text-red-600"
+                            title="Delete opportunity"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-2">
