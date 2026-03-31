@@ -587,25 +587,6 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
           </button>
         </div>
 
-        <div className="bg-black text-white rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-black flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#facc15]">
-              <Mail className="w-3.5 h-3.5" /> Inbox
-            </h3>
-            <span className="w-4 h-4 bg-[#facc15] text-black text-[9px] font-black rounded-full flex items-center justify-center">2</span>
-          </div>
-          <div className="space-y-2">
-             <div onClick={() => onNavigate('MESSAGES')} className="flex items-center justify-between text-[10px] font-bold p-2 rounded bg-gray-900 border border-gray-800 cursor-pointer hover:border-[#facc15]/30">
-                <span className="truncate pr-2">New: Sarah M. Applied</span>
-                <span className="text-[#facc15] shrink-0 text-[8px]">Now</span>
-             </div>
-             <div onClick={() => onNavigate('MESSAGES')} className="flex items-center justify-between text-[10px] font-bold p-2 rounded bg-gray-900 border border-gray-800 cursor-pointer hover:border-[#facc15]/30">
-                <span className="truncate pr-2">Collab: Meta Lab Message</span>
-                <span className="text-gray-500 shrink-0 text-[8px]">2h</span>
-             </div>
-          </div>
-        </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           <div className="p-4 bg-black text-white flex items-center justify-between">
             <h3 className="font-black text-[10px] uppercase tracking-widest text-[#facc15]">Posted Roles</h3>
