@@ -39,6 +39,13 @@ interface Candidate {
   seeking: string[];
 }
 
+interface Opportunity {
+  id: string;
+  role: string;
+  type: string;
+  work_mode: string;
+}
+
 const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const { profile } = useAuth();
   const unreadMessageCount = useUnreadMessages();
@@ -73,12 +80,16 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [followModalType, setFollowModalType] = useState<'followers' | 'following'>('followers');
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loadingOpportunities, setLoadingOpportunities] = useState(false);
+  const [deletingOpportId, setDeletingOpportId] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
     fetchPosts();
     fetchFollowCounts();
     fetchMatchedStudents();
+    fetchOpportunities();
   }, []);
 
   const fetchFollowCounts = async () => {
@@ -267,6 +278,47 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
   const handleInviteCandidate = async (candidate: Candidate) => {
     await sendInviteMessage(candidate.id, candidate.name);
     onNavigate('INBOX');
+  };
+
+  const fetchOpportunities = async () => {
+    if (!user) return;
+
+    setLoadingOpportunities(true);
+    try {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('id, role, type, work_mode')
+        .eq('org_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching opportunities:', error);
+      } else if (data) {
+        setOpportunities(data);
+      }
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+    } finally {
+      setLoadingOpportunities(false);
+    }
+  };
+
+  const handleDeleteOpportunity = async (opportunityId: string) => {
+    if (!window.confirm('Are you sure you want to delete this role? This will also remove any associated applications.')) return;
+
+    setDeletingOpportId(opportunityId);
+    try {
+      await supabase
+        .from('opportunities')
+        .delete()
+        .eq('id', opportunityId);
+
+      setOpportunities(opportunities.filter(opp => opp.id !== opportunityId));
+    } catch (error) {
+      console.error('Error deleting opportunity:', error);
+    } finally {
+      setDeletingOpportId(null);
+    }
   };
 
   return (
@@ -552,6 +604,63 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
                 <span className="text-gray-500 shrink-0 text-[8px]">2h</span>
              </div>
           </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          <div className="p-4 bg-black text-white flex items-center justify-between">
+            <h3 className="font-black text-[10px] uppercase tracking-widest text-[#facc15]">Posted Roles</h3>
+            <span className="text-[9px] font-black bg-white/10 px-2 py-0.5 rounded tracking-tighter uppercase">{opportunities.length}</span>
+          </div>
+
+          <div className="p-4 space-y-2 max-h-[400px] overflow-y-auto scrollbar-hide">
+            {loadingOpportunities ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="w-5 h-5 text-[#facc15] animate-spin" />
+              </div>
+            ) : opportunities.length === 0 ? (
+              <div className="text-center py-6">
+                <Briefcase className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">No roles posted yet</p>
+                <button
+                  onClick={() => onNavigate('POST_OPPORTUNITY')}
+                  className="mt-3 text-[9px] font-black text-[#facc15] hover:text-yellow-500 transition-colors uppercase tracking-widest"
+                >
+                  Post First Role
+                </button>
+              </div>
+            ) : (
+              opportunities.map((opportunity) => (
+                <div key={opportunity.id} className="group flex items-start justify-between gap-3 p-3 border border-gray-100 rounded-lg hover:border-[#facc15] hover:bg-gray-50 transition-all">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-black leading-tight truncate">{opportunity.role}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[8px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded uppercase tracking-tighter">{opportunity.type}</span>
+                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-tighter">{opportunity.work_mode}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteOpportunity(opportunity.id)}
+                    disabled={deletingOpportId === opportunity.id}
+                    className="shrink-0 p-2 text-gray-300 hover:text-red-500 transition-colors disabled:opacity-50 group-hover:opacity-100 opacity-0"
+                    title="Delete role"
+                  >
+                    {deletingOpportId === opportunity.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <button
+            onClick={() => onNavigate('POST_OPPORTUNITY')}
+            className="w-full p-3 text-center text-[10px] font-black text-[#facc15] hover:bg-gray-50 border-t border-gray-100 uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
+          >
+            <Plus className="w-3.5 h-3.5" /> Post New Role
+          </button>
         </div>
       </div>
 
