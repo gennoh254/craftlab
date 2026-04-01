@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import StudentDashboard from './components/StudentDashboard';
 import OrgDashboard from './components/OrgDashboard';
-import HomeFeed from './components/HomeFeed';
+import FeedPage from './components/FeedPage';
 import Messaging from './components/Messaging';
 import EditProfile from './components/EditProfile';
 import CreatePostPage from './components/CreatePostPage';
@@ -13,6 +13,7 @@ import OpportunitiesPage from './components/OpportunitiesPage';
 import SearchResults from './components/SearchResults';
 import UserProfileView from './components/UserProfileView';
 import AuthPage from './components/AuthPage';
+import LandingPage from './components/LandingPage';
 import { UserRole } from './types';
 import { useAuth } from './lib/auth';
 
@@ -60,7 +61,7 @@ const App: React.FC = () => {
   }
 
   if (!user || !profile) {
-    return <AuthPage />;
+    return <LandingPage onGetStarted={() => {}} />;
   }
 
   const currentUserRole = profile.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION;
@@ -68,7 +69,7 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'HOME':
-        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <FeedPage userRole={currentUserRole} onNavigate={setActiveView} />;
       case 'DASHBOARD':
         return currentUserRole === UserRole.STUDENT ? (
           <StudentDashboard onNavigate={setActiveView} />
@@ -92,7 +93,7 @@ const App: React.FC = () => {
       case 'VIEW_USER':
         return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={handleViewChange} /> : null;
       default:
-        return <HomeFeed userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <FeedPage userRole={currentUserRole} onNavigate={setActiveView} />;
     }
   };
 

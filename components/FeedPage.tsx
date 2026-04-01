@@ -8,7 +8,7 @@ import { ViewState } from '../App';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 
-interface HomeFeedProps {
+interface FeedPageProps {
   userRole: UserRole;
   onNavigate: (view: ViewState) => void;
 }
@@ -40,7 +40,7 @@ interface NetworkUser {
   isFollowing: boolean;
 }
 
-const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate }) => {
+const FeedPage: React.FC<FeedPageProps> = ({ userRole, onNavigate }) => {
   const { profile, user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -340,4 +340,4 @@ const HomeFeed: React.FC<HomeFeedProps> = ({ userRole, onNavigate }) => {
   );
 };
 
-export default HomeFeed;
+export default FeedPage;
