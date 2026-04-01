@@ -61,7 +61,7 @@ const App: React.FC = () => {
   }
 
   if (!user || !profile) {
-    return <LandingPage onGetStarted={() => {}} />;
+    return <LandingPage />;
   }
 
   const currentUserRole = profile.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION;

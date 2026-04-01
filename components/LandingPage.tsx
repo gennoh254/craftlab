@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, Users, Briefcase, Award, Zap, TrendingUp } from 'lucide-react';
+import AuthPage from './AuthPage';
 
 interface LandingPageProps {
-  onGetStarted: () => void;
+  onGetStarted?: () => void;
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
+  const [showAuth, setShowAuth] = useState(false);
+
+  if (showAuth) {
+    return <AuthPage />;
+  }
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
       <div
@@ -55,7 +61,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted }) => {
             </div>
 
             <button
-              onClick={onGetStarted}
+              onClick={() => setShowAuth(true)}
               className="inline-flex items-center gap-2 bg-[#facc15] text-black px-8 py-4 rounded-xl font-black text-lg hover:bg-yellow-400 transition-all transform hover:scale-105 active:scale-95 shadow-lg"
             >
               Get Started <ChevronRight className="w-5 h-5" />
