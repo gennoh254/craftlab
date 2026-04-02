@@ -39,7 +39,7 @@ interface EditProfileProps {
 }
 
 const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   
   // 1. Personal Information
   const [name, setName] = useState(profile?.name || '');
@@ -441,6 +441,7 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
         setError(updateError.message);
       } else {
         setSuccess(true);
+        await refreshProfile();
         setTimeout(() => {
           onNavigate('DASHBOARD');
         }, 1000);
