@@ -69,11 +69,13 @@ const AuthPage: React.FC = () => {
         </div>
 
         <div className="relative z-10 max-w-md">
-          <h1 className="text-5xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
-            {isSignUp ? "Join Africa's Most Inclusive Financial Network." : "Empowering Africa's digital future."}
+          <h1 className="text-6xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
+            Match. <br />
+            Grow. <br />
+            Thrive.
           </h1>
-          <p className="text-gray-300 text-lg font-medium leading-relaxed">
-            Join the most inclusive financial ecosystem designed for growth and community integration.
+          <p className="text-gray-300 text-xl font-medium leading-relaxed">
+            Join the most inclusive space where talent meets opportunity.
           </p>
         </div>
 
@@ -89,7 +91,7 @@ const AuthPage: React.FC = () => {
                         +12k
                     </div>
                 </div>
-                <p className="text-gray-300 text-sm font-medium">Over 1.2 million users already onboarded.</p>
+                <p className="text-gray-300 text-sm font-medium">Connecting thousands of talents to their dream careers.</p>
             </div>
             <p className="text-gray-500 text-xs">© 2024 Craftlab Technologies. All rights reserved.</p>
         </div>
@@ -100,10 +102,12 @@ const AuthPage: React.FC = () => {
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2 className="text-3xl font-black text-gray-900 mb-2">
-                {isSignUp ? "Create an account" : "Sign in to Craftlab"}
+                {isSignUp ? "Create an account" : "Welcome back"}
             </h2>
             <p className="text-gray-500 font-medium">
-                {isSignUp ? "Sign up to start your digital financial journey." : "Welcome back! Please enter your details."}
+                {isSignUp 
+                  ? "Join the most inclusive space where talent meets opportunity." 
+                  : "Log in to continue your journey at Craftlab."}
             </p>
           </div>
 
@@ -118,7 +122,7 @@ const AuthPage: React.FC = () => {
                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Sign in with Google
+            Continue with Google
           </button>
 
           {/* DIVIDER */}
@@ -127,7 +131,7 @@ const AuthPage: React.FC = () => {
                 <div className="w-full border-t border-gray-100"></div>
             </div>
             <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-                <span className="bg-white px-4 text-gray-400">Or continue with</span>
+                <span className="bg-white px-4 text-gray-400">Or continue with email</span>
             </div>
           </div>
 
@@ -147,7 +151,7 @@ const AuthPage: React.FC = () => {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Email or Phone Number</label>
+              <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Email Address</label>
               <input
                 type="email"
                 value={email}
@@ -204,7 +208,7 @@ const AuthPage: React.FC = () => {
               disabled={loading}
               className="w-full py-4 bg-[#facc15] text-black rounded-xl text-xs font-black uppercase tracking-widest hover:brightness-95 transition-all shadow-lg shadow-yellow-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isSignUp ? 'Create Account' : 'Sign In')}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isSignUp ? 'Get Started' : 'Sign In')}
             </button>
           </form>
 
