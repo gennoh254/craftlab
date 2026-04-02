@@ -771,6 +771,16 @@ const EditProfile: React.FC<EditProfileProps> = ({ userRole, onNavigate }) => {
                         <option value="Expert">Expert</option>
                       </select>
                     </div>
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Skill Description</label>
+                      <textarea
+                        value={skill.description || ''}
+                        onChange={(e) => updateSkill(skill.id, 'description', e.target.value)}
+                        rows={2}
+                        className="w-full bg-white border-2 border-gray-200 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none focus:border-black transition-all resize-none"
+                        placeholder="e.g., Proficient in Excel, statistical analysis, and creating dashboards..."
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
