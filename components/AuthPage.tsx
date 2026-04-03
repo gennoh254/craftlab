@@ -50,7 +50,7 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-white font-sans">
-      {/* LEFT SIDE: Branding Section with Background Image */}
+      {/* LEFT SIDE: Branding Section */}
       <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-16 overflow-hidden">
         <img 
           src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200" 
@@ -68,13 +68,12 @@ const AuthPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="relative z-10 max-w-md">
-          <h1 className="text-6xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
-            Match. <br />
-            Grow. <br />
-            Thrive.
+        <div className="relative z-10 max-w-lg">
+          {/* HORIZONTAL TEXT HERE */}
+          <h1 className="text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
+            Match. Grow. Thrive.
           </h1>
-          <p className="text-gray-300 text-xl font-medium leading-relaxed">
+          <p className="text-gray-200 text-xl font-medium leading-relaxed">
             Join the most inclusive space where talent meets opportunity.
           </p>
         </div>
@@ -111,7 +110,6 @@ const AuthPage: React.FC = () => {
             </p>
           </div>
 
-          {/* GOOGLE SIGN IN BUTTON */}
           <button 
             onClick={handleGoogleSignIn}
             className="w-full flex items-center justify-center gap-3 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all font-bold text-gray-700 shadow-sm"
@@ -125,7 +123,6 @@ const AuthPage: React.FC = () => {
             Continue with Google
           </button>
 
-          {/* DIVIDER */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-100"></div>
@@ -163,9 +160,7 @@ const AuthPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-                <div className="flex justify-between items-center px-1">
-                    <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Password</label>
-                </div>
+                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Password</label>
                 <div className="relative">
                     <input
                         type={showPassword ? "text" : "password"}
@@ -184,18 +179,6 @@ const AuthPage: React.FC = () => {
                     </button>
                 </div>
             </div>
-
-            {!isSignUp && (
-                <div className="flex items-center justify-between px-1">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-[#facc15] focus:ring-[#facc15]" />
-                        <span className="text-xs font-bold text-gray-600">Remember me</span>
-                    </label>
-                    <button type="button" className="text-xs font-black text-[#facc15] uppercase tracking-widest">
-                        Forgot password?
-                    </button>
-                </div>
-            )}
 
             {error && (
               <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-[11px] font-bold text-red-600 uppercase tracking-wider">
