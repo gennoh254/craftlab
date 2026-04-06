@@ -481,8 +481,8 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
                               <h3 className="text-sm font-black text-black truncate">
                                 {match.student?.name}
                               </h3>
-                              <span className="text-xs font-black text-[#facc15] shrink-0">
-                                {match.match_score}%
+                              <span className="text-xs font-black text-[#facc15] bg-[#facc15]/10 px-2 py-1 rounded-md shrink-0">
+                                ★ Top Match
                               </span>
                             </div>
                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">
@@ -704,8 +704,9 @@ const AnalysisSection: React.FC<{
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <div className="text-3xl font-black text-[#facc15]">{match.match_score}%</div>
-                        <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Match</p>
+                        <div className="inline-block px-3 py-1 bg-[#facc15]/10 text-[#facc15] text-[10px] font-black rounded-lg uppercase tracking-widest">
+                          ★ Highly Matched
+                        </div>
                       </div>
                     </div>
 
