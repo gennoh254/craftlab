@@ -134,15 +134,29 @@ const CVBuilder: React.FC<CVBuilderProps> = ({ isOpen, onClose }) => {
     setIsDownloading(true);
     try {
       const element = cvRef.current;
+      const contentDiv = element.querySelector('div[style]');
+
       const opt = {
-        margin: 10,
+        margin: 0,
         filename: `${studentData.name.replace(/\s+/g, '_')}_CV.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        image: { type: 'png', quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          allowTaint: true
+        },
+        jsPDF: {
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          hotfixes: ['px_scaling']
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
       };
 
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(contentDiv || element).save();
     } catch (error) {
       console.error('Error generating PDF:', error);
       setError('Failed to generate PDF. Please try again.');

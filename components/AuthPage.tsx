@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, UserPlus, Loader2, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { LogIn, UserPlus, Loader as Loader2, CircleCheck as CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
 const AuthPage: React.FC = () => {
@@ -134,17 +134,31 @@ const AuthPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {isSignUp && (
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
-                  required={isSignUp}
-                />
-              </div>
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Account Type</label>
+                  <select
+                    value={userType}
+                    onChange={(e) => setUserType(e.target.value as 'STUDENT' | 'ORGANIZATION')}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
+                  >
+                    <option value="STUDENT">Student</option>
+                    <option value="ORGANIZATION">Organization</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black text-gray-500 uppercase tracking-widest ml-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="John Doe"
+                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#facc15]/20 focus:border-[#facc15] transition-all"
+                    required={isSignUp}
+                  />
+                </div>
+              </>
             )}
 
             <div className="space-y-1.5">
