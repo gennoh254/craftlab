@@ -77,6 +77,8 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<MatchError | null>(null);
   const [analysisSuccess, setAnalysisSuccess] = useState(false);
+  const [refreshingMatches, setRefreshingMatches] = useState(false);
+  const [refreshSuccess, setRefreshSuccess] = useState(false);
 
   useEffect(() => {
     if (userRole === UserRole.ORGANIZATION && user) {
@@ -311,6 +313,56 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
     await sendInviteMessage(studentId, studentName);
   };
 
+  const refreshMatchesForNewOpportunities = async () => {
+    if (!user) return;
+
+    setRefreshingMatches(true);
+    setRefreshSuccess(false);
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/match_students_to_org_opportunities`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${anonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ orgId: user.id }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRefreshSuccess(true);
+        setTimeout(() => {
+          fetchAiMatches();
+          setRefreshSuccess(false);
+        }, 1500);
+      } else {
+        setAnalysisError({
+          error: 'Refresh Failed',
+          message: data.message || 'Failed to refresh matches',
+          completionPercentage: 0,
+          requiredFields: {},
+        });
+      }
+    } catch (err: any) {
+      setAnalysisError({
+        error: 'Refresh Failed',
+        message: err.message,
+        completionPercentage: 0,
+        requiredFields: {},
+      });
+    } finally {
+      setRefreshingMatches(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto pb-20">
       <div className="flex items-center justify-between mb-8">
@@ -445,7 +497,7 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
 
           {/* AI MATCHED STUDENTS SECTION */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+            <div className="p-4 border-b border-gray-100 bg-gray-50/50 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-black text-black uppercase tracking-tight flex items-center gap-2">
                   <Zap className="w-5 h-5 text-[#facc15]" /> AI Matched Students
@@ -454,6 +506,12 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
                   {aiMatches.length}
                 </span>
               </div>
+              {refreshSuccess && (
+                <div className="p-3 bg-green-50 border border-green-100 rounded-lg flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" fill="currentColor" />
+                  <span className="text-[9px] font-black text-green-900 uppercase">Matches refreshed successfully!</span>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto max-h-[600px]">
@@ -533,10 +591,19 @@ const ViewMatchesPage: React.FC<ViewMatchesPageProps> = ({ userRole, onNavigate 
             </div>
 
             <button
-              onClick={() => fetchAiMatches()}
-              className="w-full p-3 text-center text-[9px] font-black text-gray-400 hover:text-black border-t border-gray-100 uppercase tracking-widest bg-gray-50/30 transition-colors"
+              onClick={refreshMatchesForNewOpportunities}
+              disabled={refreshingMatches}
+              className="w-full p-3 text-center text-[9px] font-black text-gray-400 hover:text-black border-t border-gray-100 uppercase tracking-widest bg-gray-50/30 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Refresh Matches
+              {refreshingMatches ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" /> Analyzing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3 h-3" /> Refresh Matches
+                </>
+              )}
             </button>
           </div>
         </div>
