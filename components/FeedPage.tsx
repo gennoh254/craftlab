@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Users, Briefcase, ChevronRight, Loader as Loader2, Check } from 'lucide-react';
+import { Users, Briefcase, ChevronRight, Loader as Loader2, Check } from 'lucide-react';
 import { PostComposer } from './PostComposer';
 import { PostCard } from './PostCard';
 import { UserRole, Post } from '../types';
@@ -249,18 +249,6 @@ const FeedPage: React.FC<FeedPageProps> = ({ userRole, onNavigate }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <h4 className="text-[10px] font-black text-black flex items-center gap-2 mb-3 uppercase tracking-widest">
-            <TrendingUp className="w-3.5 h-3.5 text-[#facc15]" /> Trending Topics
-          </h4>
-          <div className="space-y-3">
-            {['#SpatialComputing', '#UXDesign', '#OpenSource', '#FutureTalent'].map(tag => (
-              <div key={tag} className="text-[11px] font-bold text-gray-500 hover:text-black cursor-pointer transition-colors">
-                {tag}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* CENTER COLUMN: The Feed */}

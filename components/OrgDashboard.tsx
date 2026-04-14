@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Target, Users, Calendar, CircleCheck as CheckCircle, ChartBar as BarChart2, Mail, Circle as XCircle, Clock, Briefcase, Loader as Loader2, CircleAlert as AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Target, Users, CircleCheck as CheckCircle, ChartBar as BarChart2, Mail, Circle as XCircle, Clock, Briefcase, Loader as Loader2, CircleAlert as AlertCircle, Trash2 } from 'lucide-react';
 import { PostCard } from './PostCard';
 import { UserRole, Post } from '../types';
 import { ViewState } from '../App';
@@ -338,12 +338,16 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
                 <h2 className="text-lg font-black text-black tracking-tight">{profile?.name}</h2>
                 <CheckCircle className="w-3.5 h-3.5 text-[#facc15]" fill="currentColor" />
               </div>
-              <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Technology & Research • SF</p>
+              {profile?.industry && (
+                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{profile.industry}{profile.location ? ` • ${profile.location}` : ''}</p>
+              )}
             </div>
-            
-            <p className="text-xs text-gray-700 leading-relaxed font-medium italic">
-              "Developing next-gen spatial computing platforms."
-            </p>
+
+            {profile?.about && (
+              <p className="text-xs text-gray-700 leading-relaxed font-medium italic">
+                "{profile.about}"
+              </p>
+            )}
 
             <div className="flex justify-around items-center gap-4 py-3 border-t border-b border-gray-100">
               <button
@@ -391,26 +395,6 @@ const OrgDashboard: React.FC<OrgDashboardProps> = ({ onNavigate }) => {
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Hiring Calendar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-4">
-           <div className="flex items-center justify-between">
-              <h3 className="font-black text-black flex items-center gap-2 text-[10px] uppercase tracking-widest">
-                <Calendar className="w-3.5 h-3.5 text-[#facc15]" /> Hiring Calendar
-              </h3>
-              <Plus className="w-3.5 h-3.5 text-gray-400 cursor-pointer hover:text-black" />
-           </div>
-           <div className="space-y-3">
-              <div className="border-l-4 border-[#facc15] pl-3 py-1">
-                <p className="text-[11px] font-black text-black">UX Internship Q3</p>
-                <p className="text-[9px] font-bold text-gray-500 uppercase">Ends Aug 15</p>
-              </div>
-              <div className="border-l-4 border-gray-200 pl-3 py-1">
-                <p className="text-[11px] font-black text-gray-400">Graduate Trainee</p>
-                <p className="text-[9px] font-bold text-gray-300 uppercase">Opens Sept 1</p>
-              </div>
-           </div>
         </div>
 
         {/* Analytics Summary */}
