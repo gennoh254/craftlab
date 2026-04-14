@@ -1,17 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import {
-  Image,
-  Paperclip,
-  Github,
-  Globe,
-  Eye,
-  Lock,
-  ChevronDown,
-  Loader2,
-  CheckCircle,
-  X
-} from 'lucide-react';
+import { Image, Paperclip, Github, Globe, Eye, Lock, ChevronDown, Loader as Loader2, CircleCheck as CheckCircle, X } from 'lucide-react';
 import { UserRole } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -36,15 +25,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const studentPostTypes = [
-    'Showcase', 'Skill Demo', 'Learning Update', 'Opportunity Request'
-  ];
-
-  const orgPostTypes = [
-    'Update', 'Talent Call', 'Success Story', 'Event'
-  ];
-
-  const currentTypes = userRole === UserRole.STUDENT ? studentPostTypes : orgPostTypes;
+  const currentTypes: string[] = [];
 
   const getMediaType = (file: File): 'image' | 'video' | 'file' => {
     if (file.type.startsWith('image/')) return 'image';
@@ -135,7 +116,7 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
         .from('posts')
         .insert({
           author_id: user.id,
-          type: postType || currentTypes[0],
+          type: postType || 'post',
           title: title || 'Untitled Post',
           content: content.trim(),
           tags: tagsArray,
@@ -176,21 +157,6 @@ export const PostComposer: React.FC<PostComposerProps> = ({ userRole, onPostCrea
           className="w-10 h-10 rounded-full border-2 border-gray-100"
           alt="User"
         />
-        <div className="flex-1 flex gap-2 overflow-x-auto scrollbar-hide py-1">
-          {currentTypes.map(type => (
-            <button
-              key={type}
-              onClick={() => setPostType(type)}
-              className={`px-3 py-1.5 text-[10px] font-black rounded-full uppercase tracking-widest transition-all border whitespace-nowrap ${
-                postType === type
-                  ? 'bg-[#facc15] text-black border-[#facc15]'
-                  : 'bg-gray-50 text-gray-600 border-gray-100 hover:bg-[#facc15] hover:text-black'
-              }`}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="p-4 space-y-3">
