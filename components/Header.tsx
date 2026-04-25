@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
                     >
                       <div className="relative w-10 h-10 flex items-center justify-center hover:scale-105 transition-transform">
                         <img 
-                          src="/assets/logo.png" 
+                          src="/assets/withnamebrc.png" 
                           alt="Logo" 
                           className="w-16 h-16 object-contain absolute -top-3"
                         />
