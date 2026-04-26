@@ -121,7 +121,7 @@ const FeedPage: React.FC<FeedPageProps> = ({ userRole, onNavigate }) => {
   };
 
   const fetchNetworkUsers = async () => {
-    if (!user || !profile) return;
+    if (!user) return;
 
     try {
       const { data: followedUserIds } = await supabase
@@ -131,12 +131,9 @@ const FeedPage: React.FC<FeedPageProps> = ({ userRole, onNavigate }) => {
 
       const followedIds = followedUserIds?.map((conn: any) => conn.following_id) || [];
 
-      const profileUserType = profile.user_type === 'STUDENT' ? 'STUDENT' : 'ORGANIZATION';
-
       const { data } = await supabase
         .from('profiles')
         .select('id, name, user_type, avatar_url')
-        .eq('user_type', profileUserType)
         .limit(20);
 
       if (data && user) {
