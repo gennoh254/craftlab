@@ -13,12 +13,13 @@ import OpportunitiesPage from './components/OpportunitiesPage';
 import SearchResults from './components/SearchResults';
 import UserProfileView from './components/UserProfileView';
 import AuthPage from './components/AuthPage';
-import LandingPage from './components/LandingPage';
+import LandingHomePage from './components/LandingHomePage';
 import { UserRole } from './types';
 import { useAuth } from './lib/auth';
 
 export type ViewState =
   | 'HOME'
+  | 'FEED'
   | 'DASHBOARD'
   | 'NETWORK'
   | 'JOBS'
@@ -69,31 +70,33 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'HOME':
-        return <FeedPage userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <LandingHomePage onNavigate={handleViewChange} />;
+      case 'FEED':
+        return <FeedPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'DASHBOARD':
         return currentUserRole === UserRole.STUDENT ? (
-          <StudentDashboard onNavigate={setActiveView} />
+          <StudentDashboard onNavigate={handleViewChange} />
         ) : (
-          <OrgDashboard onNavigate={setActiveView} />
+          <OrgDashboard onNavigate={handleViewChange} />
         );
       case 'INBOX':
         return <Messaging userRole={currentUserRole} />;
       case 'EDIT_PROFILE':
-        return <EditProfile userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <EditProfile userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'CREATE_POST':
-        return <CreatePostPage userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <CreatePostPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'POST_OPPORTUNITY':
-        return <PostOpportunityPage userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <PostOpportunityPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'VIEW_MATCHES':
-        return <ViewMatchesPage userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <ViewMatchesPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'ALL_OPPORTUNITIES':
-        return <OpportunitiesPage userRole={currentUserRole} />;
+        return <OpportunitiesPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'SEARCH':
         return <SearchResults query={searchQuery} userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'VIEW_USER':
         return selectedUserId ? <UserProfileView userId={selectedUserId} onNavigate={handleViewChange} /> : null;
       default:
-        return <FeedPage userRole={currentUserRole} onNavigate={setActiveView} />;
+        return <LandingHomePage onNavigate={handleViewChange} />;
     }
   };
 
