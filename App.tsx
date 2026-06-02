@@ -62,7 +62,29 @@ const App: React.FC = () => {
   }
 
   if (!user || !profile) {
-    return <AuthPage />;
+    return (
+      <div className="min-h-screen pb-12">
+        <div className="fixed top-0 left-0 right-0 h-16 bg-black border-b border-[#facc15]/30 z-50 px-4 shadow-md">
+          <div className="max-w-7xl mx-auto h-full flex items-center justify-between">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <div className="w-8 h-8 bg-[#facc15] rounded-lg flex items-center justify-center">
+                  <span className="font-black text-black text-xs">CC</span>
+                </div>
+              </div>
+              <span className="font-bold text-lg text-black select-none">CraftLab-Careers</span>
+            </div>
+          </div>
+        </div>
+        <main className="max-w-7xl mx-auto px-4 pt-20">
+          <LandingHomePage onNavigate={(view) => {
+            if (view === 'ALL_OPPORTUNITIES') {
+              // All non-home navigations from unauthenticated landing page go to signup
+            }
+          }} />
+        </main>
+      </div>
+    );
   }
 
   const currentUserRole = profile.user_type === 'STUDENT' ? UserRole.STUDENT : UserRole.ORGANIZATION;

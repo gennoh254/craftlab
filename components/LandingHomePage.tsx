@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, ChevronRight } from 'lucide-react';
+import { ArrowRight, Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, ChevronRight, Hop as HomeIcon } from 'lucide-react';
 import { ViewState } from '../App';
 import { supabase } from '../lib/supabase';
 
@@ -110,6 +110,17 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 pt-28 pb-20 w-full">
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-[#facc15] rounded-xl flex items-center justify-center shadow-lg shadow-[#facc15]/20">
+                <HomeIcon className="w-6 h-6 text-black" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-[#facc15] uppercase tracking-[0.3em]">Craftlab Careers</p>
+                <p className="text-xs text-gray-400 font-medium">Where Opportunities Begin</p>
+              </div>
+            </div>
+          </div>
           <div className="max-w-3xl">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-[#facc15]/10 border border-[#facc15]/30 px-4 py-2 rounded-full mb-8">
@@ -138,18 +149,11 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => onNavigate('FEED')}
+                onClick={() => onNavigate('ALL_OPPORTUNITIES')}
                 className="group flex items-center justify-center gap-3 px-8 py-4 bg-[#facc15] text-black font-black rounded-2xl text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#facc15]/20"
               >
-                Explore Feed
+                Start Your Journey
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
-              <button
-                onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-                className="flex items-center justify-center gap-3 px-8 py-4 bg-white/10 border border-white/30 text-white font-black rounded-2xl text-sm uppercase tracking-widest hover:bg-white/20 transition-all backdrop-blur-sm"
-              >
-                <Briefcase className="w-4 h-4" />
-                Browse Opportunities
               </button>
             </div>
           </div>
@@ -237,7 +241,7 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('ALL_OPPORTUNITIES')}
               className="group inline-flex items-center gap-3 px-8 py-4 bg-[#facc15] text-black font-black rounded-2xl text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-[#facc15]/10"
             >
-              Start Your Journey
+              Get Started
               <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -281,56 +285,18 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
           <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#facc15]/5 rounded-full blur-3xl" />
         </div>
         <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* For Students */}
-            <div className="bg-[#facc15] rounded-3xl p-10 space-y-6">
-              <div className="w-12 h-12 bg-black rounded-xl flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-[#facc15]" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-black/60 uppercase tracking-[0.2em] mb-2">For Students</p>
-                <h3 className="text-3xl font-black text-black leading-tight tracking-tight">Launch Your Career Today</h3>
-              </div>
-              <ul className="space-y-2">
-                {['Free AI matching analysis', 'Professional CV builder', 'Direct org messaging', 'Application tracking'].map(item => (
-                  <li key={item} className="flex items-center gap-2 text-sm font-bold text-black/80">
-                    <CheckCircle className="w-4 h-4 text-black shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => onNavigate('FEED')}
-                className="w-full py-4 bg-black text-[#facc15] font-black rounded-2xl text-xs uppercase tracking-widest hover:bg-gray-900 transition-all flex items-center justify-center gap-2"
-              >
-                Go to Feed <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* For Organizations */}
-            <div className="bg-gray-900 border border-[#facc15]/20 rounded-3xl p-10 space-y-6">
-              <div className="w-12 h-12 bg-[#facc15]/10 border border-[#facc15]/30 rounded-xl flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-[#facc15]" />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-[#facc15]/60 uppercase tracking-[0.2em] mb-2">For Organizations</p>
-                <h3 className="text-3xl font-black text-white leading-tight tracking-tight">Find Your Next Star</h3>
-              </div>
-              <ul className="space-y-2">
-                {['Post unlimited opportunities', 'AI candidate pipeline', 'Applicant shortlisting tools', 'Direct student messaging'].map(item => (
-                  <li key={item} className="flex items-center gap-2 text-sm font-bold text-gray-300">
-                    <CheckCircle className="w-4 h-4 text-[#facc15] shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-                className="w-full py-4 bg-[#facc15] text-black font-black rounded-2xl text-xs uppercase tracking-widest hover:brightness-95 transition-all flex items-center justify-center gap-2"
-              >
-                Post a Role <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Ready to Launch Your Career?</h2>
+            <p className="text-gray-300 font-medium max-w-2xl mx-auto">Join thousands of African students and organizations already using Craftlab to connect and grow.</p>
+          </div>
+          <div className="text-center">
+            <button
+              onClick={() => onNavigate('ALL_OPPORTUNITIES')}
+              className="group inline-flex items-center gap-3 px-12 py-5 bg-[#facc15] text-black font-black rounded-2xl text-base uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-[#facc15]/20"
+            >
+              Create Your Account
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
           </div>
         </div>
       </section>
