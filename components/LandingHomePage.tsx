@@ -89,7 +89,7 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate, onShowAut
   const opportunityTypes = ['Internships', 'Attachments', 'Apprenticeships', 'Volunteer Roles'];
 
   return (
-    <div className="relative -mx-4 -mt-20 overflow-x-hidden">
+    <div className="relative overflow-x-hidden">
       {/* HERO SECTION */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
         {/* Background */}
@@ -99,8 +99,8 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate, onShowAut
             alt="Background"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-black via-black/90 to-black/70" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         </div>
 
         {/* Animated accent lines */}

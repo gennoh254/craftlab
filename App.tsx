@@ -96,7 +96,7 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        <main className="max-w-7xl mx-auto px-4 pt-20">
+        <main className="pt-16">
           <LandingHomePage onNavigate={() => {}} onShowAuth={(mode) => { setAuthMode(mode); setActiveView('AUTH'); }} />
         </main>
       </div>
@@ -108,7 +108,11 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeView) {
       case 'HOME':
-        return <LandingHomePage onNavigate={handleViewChange} />;
+        return (
+          <div className="-mx-4 -mt-20">
+            <LandingHomePage onNavigate={handleViewChange} />
+          </div>
+        );
       case 'FEED':
         return <FeedPage userRole={currentUserRole} onNavigate={handleViewChange} />;
       case 'DASHBOARD':
