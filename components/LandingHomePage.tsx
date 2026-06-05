@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, ChevronRight, Hop as HomeIcon } from 'lucide-react';
+import { Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, Hop as HomeIcon } from 'lucide-react';
 import { ViewState } from '../App';
 import { supabase } from '../lib/supabase';
 
 interface LandingHomePageProps {
   onNavigate: (view: ViewState) => void;
+  onShowAuth?: (mode: 'login' | 'register') => void;
 }
 
-const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
+const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate, onShowAuth }) => {
   const [stats, setStats] = useState({ opportunities: 0, users: 0, organizations: 0, matches: 0 });
   const [visibleSection, setVisibleSection] = useState(0);
 
@@ -146,16 +147,6 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
                 </span>
               ))}
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-                className="group flex items-center justify-center gap-3 px-8 py-4 bg-[#facc15] text-black font-black rounded-2xl text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#facc15]/20"
-              >
-                Start Your Journey
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -235,16 +226,6 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
               </div>
             ))}
           </div>
-
-          <div className="text-center mt-16">
-            <button
-              onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#facc15] text-black font-black rounded-2xl text-sm uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-[#facc15]/10"
-            >
-              Get Started
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
         </div>
       </section>
 
@@ -284,20 +265,9 @@ const LandingHomePage: React.FC<LandingHomePageProps> = ({ onNavigate }) => {
           <div className="absolute top-0 left-1/4 w-64 h-64 bg-[#facc15]/5 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#facc15]/5 rounded-full blur-3xl" />
         </div>
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Ready to Launch Your Career?</h2>
-            <p className="text-gray-300 font-medium max-w-2xl mx-auto">Join thousands of African students and organizations already using Craftlab to connect and grow.</p>
-          </div>
-          <div className="text-center">
-            <button
-              onClick={() => onNavigate('ALL_OPPORTUNITIES')}
-              className="group inline-flex items-center gap-3 px-12 py-5 bg-[#facc15] text-black font-black rounded-2xl text-base uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-[#facc15]/20"
-            >
-              Create Your Account
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Ready to Launch Your Career?</h2>
+          <p className="text-gray-300 font-medium max-w-2xl mx-auto">Join thousands of African students and organizations already using Craftlab to connect and grow.</p>
         </div>
       </section>
 

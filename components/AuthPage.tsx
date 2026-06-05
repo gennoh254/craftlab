@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { LogIn, UserPlus, Loader as Loader2, CircleCheck as CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 
-const AuthPage: React.FC = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+interface AuthPageProps {
+  initialMode?: 'login' | 'register';
+}
+
+const AuthPage: React.FC<AuthPageProps> = ({ initialMode = 'register' }) => {
+  const [isSignUp, setIsSignUp] = useState(initialMode === 'register');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

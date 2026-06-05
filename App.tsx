@@ -30,13 +30,15 @@ export type ViewState =
   | 'VIEW_MATCHES'
   | 'ALL_OPPORTUNITIES'
   | 'SEARCH'
-  | 'VIEW_USER';
+  | 'VIEW_USER'
+  | 'AUTH';
 
 const App: React.FC = () => {
   const { user, profile, loading } = useAuth();
   const [activeView, setActiveView] = useState<ViewState>('HOME');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
 
   const handleViewChange = (view: ViewState, query?: string, userId?: string) => {
     if (query) {
@@ -62,6 +64,10 @@ const App: React.FC = () => {
   }
 
   if (!user || !profile) {
+    if (activeView === 'AUTH') {
+      return <AuthPage initialMode={authMode} />;
+    }
+
     return (
       <div className="min-h-screen pb-12">
         <div className="fixed top-0 left-0 right-0 h-16 bg-black border-b border-[#facc15]/30 z-50 px-4 shadow-md">
@@ -74,14 +80,24 @@ const App: React.FC = () => {
               </div>
               <span className="font-bold text-lg text-black select-none">CraftLab-Careers</span>
             </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setAuthMode('login'); setActiveView('AUTH'); }}
+                className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-white border border-white/30 rounded-lg hover:bg-white/10 transition-all"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => { setAuthMode('register'); setActiveView('AUTH'); }}
+                className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-black bg-[#facc15] rounded-lg hover:brightness-95 transition-all"
+              >
+                Register
+              </button>
+            </div>
           </div>
         </div>
         <main className="max-w-7xl mx-auto px-4 pt-20">
-          <LandingHomePage onNavigate={(view) => {
-            if (view === 'ALL_OPPORTUNITIES') {
-              // All non-home navigations from unauthenticated landing page go to signup
-            }
-          }} />
+          <LandingHomePage onNavigate={() => {}} onShowAuth={(mode) => { setAuthMode(mode); setActiveView('AUTH'); }} />
         </main>
       </div>
     );
