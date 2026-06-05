@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, MessageSquare, Hop as Home, User, CircleCheck as CheckCircle, ChevronDown, LogOut, Briefcase, X } from 'lucide-react';
+import { Search, MessageSquare, House, User, CircleCheck as CheckCircle, ChevronDown, LogOut, Briefcase, X } from 'lucide-react';
 import { UserRole } from '../types';
 import { ViewState } from '../App';
 import { Profile } from '../lib/supabase';
@@ -42,7 +42,7 @@ const Header: React.FC<HeaderProps> = ({ userRole, activeView, onViewChange, pro
   };
 
   const navItems = [
-    { id: 'HOME', label: 'Home', icon: Home },
+    { id: 'HOME', label: 'Home', icon: House },
     { id: 'FEED', label: 'Feed', icon: Home },
     { id: 'ALL_OPPORTUNITIES', label: 'Opportunities', icon: Briefcase },
     { id: 'INBOX', label: 'Inbox', icon: MessageSquare },

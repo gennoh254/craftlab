@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, Hop as HomeIcon } from 'lucide-react';
+import { Zap, Users, Briefcase, Star, TrendingUp, Shield, CircleCheck as CheckCircle, House as HomeIcon } from 'lucide-react';
 import { ViewState } from '../App';
 import { supabase } from '../lib/supabase';
 
