@@ -107,6 +107,7 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeView) {
+      case 'AUTH':
       case 'HOME':
         return (
           <div className="-mx-4 -mt-20">
